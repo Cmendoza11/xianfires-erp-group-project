@@ -1,0 +1,51 @@
+{{#if currentUser}}
+<details class="relative no-print" data-user-menu>
+  <summary data-user-summary
+           class="flex cursor-pointer select-none items-center gap-2.5 rounded-xl border border-white/10 bg-[#171717] px-2 py-1.5 transition hover:border-yellow-400/40">
+    <div class="hidden sm:block text-right leading-tight">
+      <p class="text-xs font-semibold text-yellow-400 max-w-[10rem] truncate">{{currentUser.name}}</p>
+      <p class="text-[10px] text-gray-500 capitalize">{{currentUser.role}}</p>
+    </div>
+    <div class="grid h-9 w-9 place-items-center rounded-full bg-yellow-400 font-bold uppercase text-black">
+      {{currentUser.name.[0]}}
+    </div>
+    <svg class="hidden sm:block h-3.5 w-3.5 text-gray-500" aria-hidden="true"><use href="#i-chevron-down"></use></svg>
+  </summary>
+
+  <div class="absolute right-0 z-50 mt-2 w-64 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-white/10 bg-[#171717] shadow-2xl shadow-black/40">
+    <div class="flex items-center gap-3 border-b border-white/5 p-4">
+      <div class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-yellow-400 font-bold uppercase text-black">
+        {{currentUser.name.[0]}}
+      </div>
+      <div class="min-w-0">
+        <p class="truncate text-sm font-semibold">{{currentUser.name}}</p>
+        <p class="truncate text-xs text-gray-500">{{currentUser.email}}</p>
+      </div>
+    </div>
+
+    <div class="p-1.5">
+      <a href="/profile" class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-gray-300 transition hover:bg-yellow-400/10 hover:text-yellow-400">
+        <svg class="h-4 w-4" aria-hidden="true"><use href="#i-user"></use></svg>
+        Edit profile
+      </a>
+      <a href="/profile#password" class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-gray-300 transition hover:bg-yellow-400/10 hover:text-yellow-400">
+        <svg class="h-4 w-4" aria-hidden="true"><use href="#i-settings"></use></svg>
+        Change password
+      </a>
+      <button type="button" data-theme-toggle
+              class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-gray-300 transition hover:bg-yellow-400/10 hover:text-yellow-400">
+        <svg class="h-4 w-4" data-theme-icon="sun" aria-hidden="true"><use href="#i-sun"></use></svg>
+        <svg class="h-4 w-4 hidden" data-theme-icon="moon" aria-hidden="true"><use href="#i-moon"></use></svg>
+        <span data-theme-label>Light mode</span>
+      </button>
+    </div>
+
+    <div class="border-t border-white/5 p-1.5">
+      <a href="/logout" class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-red-400 transition hover:bg-red-500/10">
+        <svg class="h-4 w-4" aria-hidden="true"><use href="#i-logout"></use></svg>
+        Sign out
+      </a>
+    </div>
+  </div>
+</details>
+{{/if}}

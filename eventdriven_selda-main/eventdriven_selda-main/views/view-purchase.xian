@@ -1,0 +1,245 @@
+{{> head}}
+<style>
+  @media print {
+    aside, header, footer, .no-print {
+      display: none !important;
+    }
+    body {
+      background: white !important;
+      color: black !important;
+    }
+    .print-card {
+      border: none !important;
+      background: white !important;
+      color: black !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .print-text-dark {
+      color: black !important;
+    }
+    .print-text-gray {
+      color: #4b5563 !important;
+    }
+    .print-border {
+      border-color: #d1d5db !important;
+    }
+    .print-bg-light {
+      background-color: #f3f4f6 !important;
+    }
+  }
+</style>
+
+<body class="bg-black text-gray-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Toast Notification Popups -->
+  {{#if successMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-emerald-950 border border-emerald-800 text-emerald-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 no-print">
+      <i class="fas fa-check-circle text-emerald-400"></i>
+      <span class="text-xs font-semibold">{{successMessage}}</span>
+    </div>
+  {{/if}}
+  {{#if errorMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-red-950 border border-red-800 text-red-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 no-print">
+      <i class="fas fa-exclamation-triangle text-red-400"></i>
+      <span class="text-xs font-semibold">{{errorMessage}}</span>
+    </div>
+  {{/if}}
+
+  <div class="flex flex-1">
+    <!-- Master Sidebar -->
+    {{> sidebar}}
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-8 overflow-y-auto bg-black">
+      
+      <!-- Top Action Toolbar (Hidden in Print) -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-zinc-900/60 border border-zinc-800/80 p-5 rounded-2xl backdrop-blur-md no-print">
+        <div class="flex items-center space-x-3">
+          <a href="/purchase-orders" class="p-2 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded-xl transition">
+            <i class="fas fa-arrow-left"></i>
+          </a>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h2 class="text-lg font-bold text-white tracking-wide">Purchase Order {{order.poNumber}}</h2>
+              {{{statusBadge order.status}}}
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">Order Voucher & Historical Price Snapshot</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <!-- Print Button -->
+          <button onclick="window.print()" class="bg-zinc-800 hover:bg-zinc-700 text-gray-200 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-2">
+            <i class="fas fa-print"></i>
+            <span>Print / PDF</span>
+          </button>
+
+          {{#eq order.status 'Draft'}}
+            <form action="/purchase-orders/approve/{{order.id}}" method="POST" class="inline">
+              <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1.5">
+                <i class="fas fa-check"></i>
+                <span>Approve Order</span>
+              </button>
+            </form>
+          {{/eq}}
+
+          {{#eq order.status 'Pending Approval'}}
+            <form action="/purchase-orders/approve/{{order.id}}" method="POST" class="inline">
+              <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1.5">
+                <i class="fas fa-check"></i>
+                <span>Authorize & Approve</span>
+              </button>
+            </form>
+          {{/eq}}
+
+          {{#eq order.status 'Approved'}}
+            <form action="/purchase-orders/send/{{order.id}}" method="POST" class="inline">
+              <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1.5">
+                <i class="fas fa-paper-plane"></i>
+                <span>Mark as Sent to Supplier</span>
+              </button>
+            </form>
+          {{/eq}}
+
+          {{#eq order.status 'Sent to Supplier'}}
+            <a href="/goods-receipts/receive?poId={{order.id}}" class="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1.5">
+              <i class="fas fa-dolly"></i>
+              <span>Record Delivery Receipt</span>
+            </a>
+          {{/eq}}
+        </div>
+      </div>
+
+      <!-- Printable Purchase Order Voucher Document -->
+      <div class="print-card max-w-4xl mx-auto bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-2xl">
+        
+        <!-- Voucher Document Header -->
+        <div class="flex justify-between items-start border-b border-zinc-800 print-border pb-6 mb-6">
+          <div class="flex items-center space-x-4">
+            <img src="/images/logo.png" alt="DJ's FoodHub Logo" class="w-14 h-14 object-contain rounded-2xl p-1 bg-black/60 border border-yellow-400/60 shadow-md">
+            <div>
+              <h1 class="text-xl font-bold text-yellow-400 print-text-dark">DJ's FoodHub Restaurant</h1>
+              <p class="text-xs text-gray-400 print-text-gray">Mindoro State University Campus Road, Calapan City</p>
+              <p class="text-[11px] text-gray-500 print-text-gray">TIN: 123-456-789-000 | Phone: +63 (043) 288-7000</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Official Document</span>
+            <h2 class="text-2xl font-mono font-bold text-white print-text-dark">{{order.poNumber}}</h2>
+            <p class="text-xs text-gray-400 print-text-gray mt-1">Date: <span class="font-bold text-white print-text-dark">{{formatDate order.orderDate}}</span></p>
+            {{#if order.PurchaseRequest}}
+              <p class="text-[10px] text-yellow-400 print-text-dark font-mono">Ref: {{order.PurchaseRequest.requestNumber}}</p>
+            {{/if}}
+          </div>
+        </div>
+
+        <!-- Vendor & Shipment Information Grid -->
+        <div class="grid grid-cols-2 gap-6 bg-black/50 print-bg-light p-5 rounded-2xl border border-zinc-800 print-border mb-6 text-xs">
+          <div>
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">VENDOR DETAILS:</span>
+            <h3 class="text-sm font-bold text-yellow-400 print-text-dark">{{order.Supplier.name}}</h3>
+            <p class="text-gray-300 print-text-gray font-mono text-[11px] mt-0.5">Vendor Code: {{order.Supplier.supplierCode}}</p>
+            <p class="text-gray-300 print-text-gray mt-0.5">Contact: {{order.Supplier.contactPerson}}</p>
+            <p class="text-gray-300 print-text-gray">Phone: {{order.Supplier.phone}} | Email: {{order.Supplier.email}}</p>
+            <p class="text-gray-400 print-text-gray mt-1">{{order.Supplier.address}}</p>
+          </div>
+
+          <div class="border-l border-zinc-800 print-border pl-6">
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">SHIPPING & PAYMENT TERMS:</span>
+            <p class="text-gray-300 print-text-gray">Department: <span class="font-bold text-white print-text-dark">{{order.Department.name}} ({{order.Department.code}})</span></p>
+            <p class="text-gray-300 print-text-gray mt-0.5">Payment Terms: <span class="font-mono font-bold text-yellow-400 print-text-dark">{{order.paymentTerms}}</span></p>
+            <p class="text-gray-300 print-text-gray mt-0.5">Expected Delivery: <span class="font-bold text-white print-text-dark">{{formatDate order.expectedDeliveryDate}}</span></p>
+            <p class="text-gray-300 print-text-gray mt-0.5">Issued By: <span class="text-white print-text-dark">{{order.Creator.name}}</span></p>
+            {{#if order.notes}}
+              <p class="text-gray-400 print-text-gray text-[11px] mt-2 italic bg-black/30 p-2 rounded-lg">Notes: {{order.notes}}</p>
+            {{/if}}
+          </div>
+        </div>
+
+        <!-- Ordered Items Table with Snapshot Prices -->
+        <div class="overflow-x-auto mb-6">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b-2 border-zinc-800 print-border text-gray-400 uppercase text-[10px] bg-black/40 print-bg-light">
+                <th class="py-3 px-4">#</th>
+                <th class="py-3 px-4">Item Description</th>
+                <th class="py-3 px-4 text-center">Qty</th>
+                <th class="py-3 px-4 text-center">Unit</th>
+                <th class="py-3 px-4 text-right">Unit Price</th>
+                <th class="py-3 px-4 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-800/60 print-border">
+              {{#each order.Items}}
+                <tr>
+                  <td class="py-3 px-4 font-mono text-gray-500">{{math @index "+" 1}}</td>
+                  <td class="py-3 px-4 font-bold text-white print-text-dark">{{productName}}</td>
+                  <td class="py-3 px-4 text-center font-mono text-gray-300 print-text-dark">{{quantity}}</td>
+                  <td class="py-3 px-4 text-center text-gray-400 print-text-gray">{{unit}}</td>
+                  <td class="py-3 px-4 text-right font-mono text-gray-300 print-text-dark">{{formatCurrency unitPrice}}</td>
+                  <td class="py-3 px-4 text-right font-mono font-bold text-yellow-400 print-text-dark">{{formatCurrency subtotal}}</td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Calculation & Summary Box -->
+        <div class="flex justify-end border-t-2 border-zinc-800 print-border pt-4 mb-8">
+          <div class="w-72 space-y-2 text-xs">
+            <div class="flex justify-between text-gray-400 print-text-gray">
+              <span>Subtotal:</span>
+              <span class="font-mono text-white print-text-dark font-bold">{{formatCurrency order.totalAmount}}</span>
+            </div>
+            <div class="flex justify-between text-gray-400 print-text-gray">
+              <span>Tax / VAT (Inclusive):</span>
+              <span class="font-mono text-gray-300 print-text-dark">₱0.00</span>
+            </div>
+            <div class="flex justify-between border-t border-zinc-800 print-border pt-2 text-sm font-bold text-yellow-400 print-text-dark">
+              <span>Total Purchase Value:</span>
+              <span class="font-mono text-lg">{{formatCurrency order.totalAmount}}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signature Authorization Blocks -->
+        <div class="grid grid-cols-2 gap-12 pt-8 border-t border-zinc-800 print-border text-xs">
+          <div class="text-center">
+            <div class="border-b border-zinc-700 print-border pb-1 mb-1 font-bold text-white print-text-dark">
+              {{order.Creator.name}}
+            </div>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Purchasing Officer / Prepared By</p>
+          </div>
+
+          <div class="text-center">
+            <div class="border-b border-zinc-700 print-border pb-1 mb-1 font-bold text-white print-text-dark">
+              {{#if order.Approver}}{{order.Approver.name}}{{else}}___________________________{{/if}}
+            </div>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider">
+              Authorized Approver / Date: {{#if order.approvedAt}}{{formatDate order.approvedAt}}{{else}}Pending{{/if}}
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <footer class="bg-zinc-950 border-t border-zinc-800/80 px-8 py-4 text-center text-xs text-gray-600 no-print">
+    © 2026 DJ's FoodHub. All rights reserved. Supplier Management Module v2.0.
+  </footer>
+
+  <script>
+    setTimeout(() => {
+      const toast = document.getElementById('toastMessage');
+      if (toast) {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 400);
+      }
+    }, 3500);
+  </script>
+
+</body>
+</html>

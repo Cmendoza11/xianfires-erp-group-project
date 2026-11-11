@@ -1,0 +1,13 @@
+<header class="bg-zinc-950 border-b border-zinc-800 px-6 py-4 flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-white">DJ's FoodHub Portal</h1>
+    <p class="text-xs text-gray-400">Supplier & Inventory Management</p>
+  </div>
+
+  <div class="flex items-center space-x-4">
+    <!-- Status Badge -->
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-400/10 text-yellow-400 border border-yellow-400/30">
+      <span class="w-2 h-2 mr-2 rounded-full bg-yellow-400 animate-pulse"></span> System Active
+    </span>
+  </div>
+</header>

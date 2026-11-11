@@ -1,0 +1,277 @@
+{{> head}}
+<body class="bg-black text-gray-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Toast Notification Popups -->
+  {{#if successMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-emerald-950 border border-emerald-800 text-emerald-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-check-circle text-emerald-400"></i>
+      <span class="text-xs font-semibold">{{successMessage}}</span>
+    </div>
+  {{/if}}
+  {{#if errorMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-red-950 border border-red-800 text-red-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-exclamation-triangle text-red-400"></i>
+      <span class="text-xs font-semibold">{{errorMessage}}</span>
+    </div>
+  {{/if}}
+
+  <div class="flex flex-1">
+    <!-- Master Sidebar -->
+    {{> sidebar}}
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-8 overflow-y-auto bg-black">
+      
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-zinc-900/60 border border-zinc-800/80 p-6 rounded-2xl backdrop-blur-md">
+        <div>
+          <div class="flex items-center space-x-3">
+            <h2 class="text-xl font-bold text-white tracking-wide">Purchase History & Transaction Audit</h2>
+            <span class="bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Module 10
+            </span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Comprehensive historical record of all purchase orders, fulfillment progress, and monetary spend.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="window.print()" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition border border-zinc-700 flex items-center space-x-2">
+            <i class="fas fa-print"></i>
+            <span>Print History</span>
+          </button>
+          <a href="/purchase-history/export/csv?supplierId={{filterSupplier}}&departmentId={{filterDepartment}}&status={{filterStatus}}&startDate={{filterStartDate}}&endDate={{filterEndDate}}&search={{filterSearch}}" class="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center space-x-2">
+            <i class="fas fa-file-csv"></i>
+            <span>Export to CSV</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick KPI Summary Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Orders Matched</p>
+            <h3 class="text-2xl font-bold text-white mt-1">{{totalOrdersCount}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-yellow-400/10 text-yellow-400 flex items-center justify-center">
+            <i class="fas fa-receipt text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Value</p>
+            <h3 class="text-2xl font-bold text-emerald-400 mt-1 font-mono">₱{{formatCurrency totalPurchasesValue}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-400/10 text-emerald-400 flex items-center justify-center">
+            <i class="fas fa-coins text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Fully Received</p>
+            <h3 class="text-2xl font-bold text-blue-400 mt-1">{{completedOrdersCount}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-blue-400/10 text-blue-400 flex items-center justify-center">
+            <i class="fas fa-circle-check text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Active In-Flight</p>
+            <h3 class="text-2xl font-bold text-amber-400 mt-1">{{pendingOrdersCount}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center">
+            <i class="fas fa-truck-fast text-base"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced Filter & Search Controls -->
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-5 mb-6 shadow-xl">
+        <form action="/purchase-history" method="GET" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3">
+          
+          <!-- Search PO Number -->
+          <div class="md:col-span-2">
+            <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Search PO #</label>
+            <input type="text" name="search" value="{{filterSearch}}" placeholder="e.g. PO-202611-0001" class="w-full bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 font-mono">
+          </div>
+
+          <!-- Supplier Dropdown -->
+          <div>
+            <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Supplier</label>
+            <select name="supplierId" class="w-full bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              <option value="All">All Suppliers</option>
+              {{#each suppliers}}
+                <option value="{{id}}" {{#eq ../filterSupplier id}}selected{{/eq}}>{{name}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <!-- Department Dropdown -->
+          <div>
+            <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Department</label>
+            <select name="departmentId" class="w-full bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              <option value="All">All Departments</option>
+              {{#each departments}}
+                <option value="{{id}}" {{#eq ../filterDepartment id}}selected{{/eq}}>{{name}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          <!-- Status Dropdown -->
+          <div>
+            <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Status</label>
+            <select name="status" class="w-full bg-black border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              <option value="All" {{#eq filterStatus 'All'}}selected{{/eq}}>All Statuses</option>
+              <option value="Draft" {{#eq filterStatus 'Draft'}}selected{{/eq}}>Draft</option>
+              <option value="Pending Approval" {{#eq filterStatus 'Pending Approval'}}selected{{/eq}}>Pending Approval</option>
+              <option value="Approved" {{#eq filterStatus 'Approved'}}selected{{/eq}}>Approved</option>
+              <option value="Sent to Supplier" {{#eq filterStatus 'Sent to Supplier'}}selected{{/eq}}>Sent to Supplier</option>
+              <option value="Partially Received" {{#eq filterStatus 'Partially Received'}}selected{{/eq}}>Partially Received</option>
+              <option value="Fully Received" {{#eq filterStatus 'Fully Received'}}selected{{/eq}}>Fully Received</option>
+              <option value="Cancelled" {{#eq filterStatus 'Cancelled'}}selected{{/eq}}>Cancelled</option>
+            </select>
+          </div>
+
+          <!-- Filter Submit Buttons -->
+          <div class="flex items-end space-x-2">
+            <button type="submit" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-yellow-400 font-bold py-2 rounded-xl text-xs transition">
+              Filter
+            </button>
+            <a href="/purchase-history" class="px-3 py-2 text-gray-400 hover:text-white text-xs transition">
+              Reset
+            </a>
+          </div>
+
+          <!-- Date Range Row -->
+          <div class="sm:col-span-2 md:col-span-3">
+            <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Start Date</label>
+            <input type="date" name="startDate" value="{{filterStartDate}}" class="w-full bg-black border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div class="sm:col-span-2 md:col-span-3">
+            <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">End Date</label>
+            <input type="date" name="endDate" value="{{filterEndDate}}" class="w-full bg-black border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+
+        </form>
+      </div>
+
+      <!-- History Table -->
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
+        <div class="p-4 border-b border-zinc-800/80 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Purchase Order Records</h3>
+          </div>
+          <span class="text-[11px] text-gray-500 font-medium">{{orders.length}} Records</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-zinc-950 text-gray-400 uppercase text-[10px] tracking-wider border-b border-zinc-800">
+              <tr>
+                <th class="py-3.5 px-4 font-semibold">PO #</th>
+                <th class="py-3.5 px-4 font-semibold">Supplier</th>
+                <th class="py-3.5 px-4 font-semibold">Department</th>
+                <th class="py-3.5 px-4 font-semibold">Order Date</th>
+                <th class="py-3.5 px-4 font-semibold">Expected Delivery</th>
+                <th class="py-3.5 px-4 font-semibold text-center">Items Ordered</th>
+                <th class="py-3.5 px-4 font-semibold text-right">Total Cost</th>
+                <th class="py-3.5 px-4 font-semibold text-center">Status</th>
+                <th class="py-3.5 px-4 font-semibold text-center">Receiving Status</th>
+                <th class="py-3.5 px-4 font-semibold text-center">Voucher</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-800/60 text-gray-300">
+              {{#if orders.length}}
+                {{#each orders}}
+                  <tr class="hover:bg-zinc-800/40 transition">
+                    <td class="py-3.5 px-4 font-mono font-bold text-yellow-400">
+                      {{poNumber}}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-semibold text-white">{{Supplier.name}}</div>
+                      <div class="text-[10px] text-gray-500 font-mono">{{Supplier.supplierCode}}</div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span class="bg-zinc-800 text-gray-300 px-2 py-0.5 rounded text-[10px] font-medium">
+                        {{Department.name}}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-gray-400 font-mono">
+                      {{formatDate orderDate}}
+                    </td>
+                    <td class="py-3.5 px-4 text-gray-400 font-mono">
+                      {{formatDate expectedDeliveryDate}}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      <span class="text-white font-semibold">{{Items.length}} line items</span>
+                      <div class="text-[10px] text-gray-500">({{totalItemsOrdered}} units)</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-mono font-bold text-white">
+                      ₱{{formatCurrency totalAmount}}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      {{{statusBadge status}}}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      {{#eq status 'Fully Received'}}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          <i class="fas fa-check-circle mr-1 text-[8px]"></i> 100% Received
+                        </span>
+                      {{/eq}}
+                      {{#eq status 'Partially Received'}}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">
+                          <i class="fas fa-clock mr-1 text-[8px]"></i> Partial ({{totalItemsReceived}}/{{totalItemsOrdered}})
+                        </span>
+                      {{/eq}}
+                      {{#eq status 'Sent to Supplier'}}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                          <i class="fas fa-truck mr-1 text-[8px]"></i> Pending Arrival
+                        </span>
+                      {{/eq}}
+                      {{#eq status 'Approved'}}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                          Not Dispatched
+                        </span>
+                      {{/eq}}
+                      {{#eq status 'Pending Approval'}}
+                        <span class="text-[10px] text-gray-500">—</span>
+                      {{/eq}}
+                      {{#eq status 'Cancelled'}}
+                        <span class="text-[10px] text-red-400 font-semibold">Cancelled</span>
+                      {{/eq}}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      <a href="/purchase-orders/view/{{id}}" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-gray-300 hover:text-white transition inline-block" title="View Full PO Voucher">
+                        <i class="fas fa-file-invoice text-xs"></i>
+                      </a>
+                    </td>
+                  </tr>
+                {{/each}}
+              {{else}}
+                <tr>
+                  <td colspan="10" class="py-12 text-center text-gray-500">
+                    <i class="fas fa-folder-open text-4xl mb-3 text-zinc-700"></i>
+                    <p class="text-sm font-medium">No purchase transactions matched the selected criteria.</p>
+                    <p class="text-xs text-gray-600 mt-1">Adjust filters or create new purchase orders to populate the audit record.</p>
+                  </td>
+                </tr>
+              {{/if}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    setTimeout(() => {
+      const toast = document.getElementById('toastMessage');
+      if (toast) toast.style.display = 'none';
+    }, 4500);
+  </script>
+</body>
+</html>

@@ -1,0 +1,421 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+<div class="flex flex-col md:flex-row min-h-screen">
+
+  {{> sidebar}}
+
+  <main class="flex-1 min-w-0">
+
+    <header class="bg-[#111111] border-b border-white/5 px-5 md:px-8 py-4 flex flex-wrap items-center justify-between gap-4 no-print">
+      <div class="min-w-0">
+        <h2 class="text-lg md:text-xl font-bold">Dashboard</h2>
+        <p class="text-xs md:text-sm text-gray-500 mt-0.5">
+          {{#if personal}}Your personal HR overview{{else}}Human Resource Management System{{/if}}
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 md:gap-3">
+        {{#unless personal}}
+          <form method="GET" action="/employees" class="hidden lg:flex items-center gap-2 rounded-xl border border-white/10 bg-[#171717] px-3 py-2">
+            <svg class="h-4 w-4 text-gray-500" aria-hidden="true"><use href="#i-search"></use></svg>
+            <input type="search" name="search" placeholder="Search employees, department"
+                   class="w-56 bg-transparent text-sm text-gray-200 placeholder-gray-600 outline-none">
+          </form>
+
+          <a href="/leaves?status=Pending" class="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-[#171717] text-gray-400 hover:text-yellow-400" aria-label="Pending leave requests">
+            <svg class="h-[18px] w-[18px]" aria-hidden="true"><use href="#i-bell"></use></svg>
+            {{#if stats.pendingLeaves}}
+            <span class="absolute -right-1 -top-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-yellow-400 px-1 text-[10px] font-bold text-black">{{stats.pendingLeaves}}</span>
+            {{/if}}
+          </a>
+        {{/unless}}
+
+        <button type="button" data-theme-toggle aria-pressed="false" aria-label="Switch to light mode" title="Switch to light mode"
+                class="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-[#171717] text-gray-400 transition hover:text-yellow-400">
+          <svg class="hidden h-[18px] w-[18px]" data-theme-icon="sun" aria-hidden="true"><use href="#i-sun"></use></svg>
+          <svg class="h-[18px] w-[18px]" data-theme-icon="moon" aria-hidden="true"><use href="#i-moon"></use></svg>
+        </button>
+
+        {{> user-menu}}
+      </div>
+    </header>
+
+    <section class="p-5 md:p-8 space-y-6">
+
+      {{> flash}}
+
+      {{#if personal}}
+
+        {{#if noEmployeeRecord}}
+          <div class="rounded-2xl border border-white/5 bg-[#171717] p-10 text-center">
+            <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-yellow-400/10 text-yellow-400">
+              <svg class="h-6 w-6" aria-hidden="true"><use href="#i-user"></use></svg>
+            </div>
+            <h3 class="text-xl font-bold">No employee record linked</h3>
+            <p class="mt-2 text-sm text-gray-400 max-w-md mx-auto">
+              Your account is active, but it is not connected to an employee profile yet.
+              Ask HR to create or link your employee record using <span class="text-yellow-400">{{currentUser.email}}</span>.
+            </p>
+            <a href="/profile" class="mt-6 inline-block rounded-xl bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300">
+              View my account
+            </a>
+          </div>
+        {{else}}
+          <div class="rounded-3xl bg-gradient-to-r from-yellow-500 to-yellow-300 p-6 md:p-8 text-black">
+            <p class="text-sm font-semibold uppercase tracking-wider">Welcome back, {{employee.firstName}}!</p>
+            <h3 class="text-2xl md:text-3xl font-black mt-2">{{employee.position}}</h3>
+            <p class="mt-1 text-sm opacity-80">{{employee.department}} · {{employee.employeeCode}}</p>
+
+            <div class="mt-5 flex flex-wrap gap-3">
+              <form method="POST" action="/attendance/check-in">
+                <button class="rounded-xl bg-black px-4 py-2.5 text-xs font-bold text-yellow-400 hover:bg-black/80">Check In</button>
+              </form>
+              <form method="POST" action="/attendance/check-out">
+                <button class="rounded-xl bg-black/10 px-4 py-2.5 text-xs font-bold text-black hover:bg-black/20">Check Out</button>
+              </form>
+              <a href="/leaves/create" class="rounded-xl bg-black/10 px-4 py-2.5 text-xs font-bold text-black hover:bg-black/20">File Leave</a>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+            <div class="bg-[#171717] border border-white/5 rounded-2xl p-5">
+              <p class="text-sm text-gray-400">Present this month</p>
+              <h3 class="text-3xl font-black mt-3">{{stats.presentThisMonth}}</h3>
+              <p class="text-xs text-gray-500 mt-2">Recorded workdays</p>
+            </div>
+            <div class="bg-[#171717] border border-white/5 rounded-2xl p-5">
+              <p class="text-sm text-gray-400">Pending leaves</p>
+              <h3 class="text-3xl font-black mt-3">{{stats.pendingLeaves}}</h3>
+              <p class="text-xs text-gray-500 mt-2">Awaiting HR approval</p>
+            </div>
+            <div class="bg-[#171717] border border-white/5 rounded-2xl p-5">
+              <p class="text-sm text-gray-400">Approved leave days</p>
+              <h3 class="text-3xl font-black mt-3">{{stats.approvedLeaveDays}}</h3>
+              <p class="text-xs text-gray-500 mt-2">This year</p>
+            </div>
+            <div class="bg-[#171717] border border-white/5 rounded-2xl p-5">
+              <p class="text-sm text-gray-400">Latest net pay</p>
+              <h3 class="text-2xl font-black mt-3 text-yellow-400">
+                {{#if latestPayslip}}{{formatMoney latestPayslip.netSalary}}{{else}}—{{/if}}
+              </h3>
+              <p class="text-xs text-gray-500 mt-2">
+                {{#if latestPayslip}}{{formatDate latestPayslip.periodEnd}}{{else}}No payslip yet{{/if}}
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div class="bg-[#171717] border border-white/5 rounded-2xl overflow-hidden">
+              <div class="p-5 border-b border-white/5 flex items-center justify-between">
+                <h3 class="font-bold">Recent Attendance</h3>
+                <a href="/my-attendance" class="text-xs text-yellow-400 hover:underline">View all →</a>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                  <thead class="bg-white/5 text-gray-400 uppercase text-[11px]">
+                    <tr><th class="px-5 py-3">Date</th><th class="px-5 py-3">In</th><th class="px-5 py-3">Out</th><th class="px-5 py-3">Status</th></tr>
+                  </thead>
+                  <tbody class="divide-y divide-white/5">
+                    {{#each recentAttendance}}
+                    <tr>
+                      <td class="px-5 py-3">{{formatDate date}}</td>
+                      <td class="px-5 py-3 text-gray-400">{{formatTime checkIn}}</td>
+                      <td class="px-5 py-3 text-gray-400">{{formatTime checkOut}}</td>
+                      <td class="px-5 py-3">
+                        <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Late")}}bg-orange-500/10 text-orange-400{{else}}{{#if (eq status "Absent")}}bg-red-500/10 text-red-400{{else}}bg-green-500/10 text-green-400{{/if}}{{/if}}">{{status}}</span>
+                      </td>
+                    </tr>
+                    {{else}}
+                    <tr><td colspan="4" class="px-5 py-8 text-center text-gray-500">No attendance yet.</td></tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="bg-[#171717] border border-white/5 rounded-2xl overflow-hidden">
+              <div class="p-5 border-b border-white/5 flex items-center justify-between">
+                <h3 class="font-bold">My Leave Requests</h3>
+                <a href="/leaves" class="text-xs text-yellow-400 hover:underline">View all →</a>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                  <thead class="bg-white/5 text-gray-400 uppercase text-[11px]">
+                    <tr><th class="px-5 py-3">Type</th><th class="px-5 py-3">Dates</th><th class="px-5 py-3">Status</th></tr>
+                  </thead>
+                  <tbody class="divide-y divide-white/5">
+                    {{#each recentLeaves}}
+                    <tr>
+                      <td class="px-5 py-3 font-medium">{{type}}</td>
+                      <td class="px-5 py-3 text-gray-400 text-xs">{{formatDate startDate}} → {{formatDate endDate}}</td>
+                      <td class="px-5 py-3">
+                        <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Approved")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Rejected")}}bg-red-500/10 text-red-400{{else}}bg-yellow-500/10 text-yellow-400{{/if}}{{/if}}">{{status}}</span>
+                      </td>
+                    </tr>
+                    {{else}}
+                    <tr><td colspan="3" class="px-5 py-8 text-center text-gray-500">No leave requests yet.</td></tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+
+      {{else}}
+
+        <div class="rounded-3xl bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-300 p-6 md:p-8 text-black">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-widest opacity-70">Welcome back, {{currentUser.name}}</p>
+              <h3 class="text-2xl md:text-3xl font-black mt-2">DJs Human Resource Management</h3>
+              <p class="mt-1 text-sm font-medium opacity-80">Manage your employees, attendance, leaves, and payroll in one place.</p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+              <a href="/employees/create" class="inline-flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-xs font-bold text-yellow-400 hover:bg-black/80">
+                <svg class="h-4 w-4" aria-hidden="true"><use href="#i-plus"></use></svg> Add employee
+              </a>
+              <a href="/reports" class="inline-flex items-center gap-2 rounded-xl bg-black/10 px-4 py-2.5 text-xs font-bold text-black hover:bg-black/20">
+                <svg class="h-4 w-4" aria-hidden="true"><use href="#i-chart"></use></svg> View reports
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          <div class="rounded-2xl border border-white/5 bg-[#171717] p-5">
+            <div class="flex items-start justify-between">
+              <p class="text-sm text-gray-400">Total employees</p>
+              <span class="grid h-10 w-10 place-items-center rounded-xl bg-yellow-400/10 text-yellow-400">
+                <svg class="h-5 w-5" aria-hidden="true"><use href="#i-users"></use></svg>
+              </span>
+            </div>
+            <p class="mt-4 text-3xl font-black">{{stats.total}}</p>
+            <p class="mt-1 flex items-center gap-1 text-xs text-gray-500">
+              <svg class="h-3.5 w-3.5 text-green-400" aria-hidden="true"><use href="#i-trending-up"></use></svg>
+              {{stats.newThisMonth}} new this month
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-white/5 bg-[#171717] p-5">
+            <div class="flex items-start justify-between">
+              <p class="text-sm text-gray-400">Present today</p>
+              <span class="grid h-10 w-10 place-items-center rounded-xl bg-green-500/10 text-green-400">
+                <svg class="h-5 w-5" aria-hidden="true"><use href="#i-check"></use></svg>
+              </span>
+            </div>
+            <p class="mt-4 text-3xl font-black">{{stats.presentToday}}</p>
+            <p class="mt-1 text-xs text-gray-500">of {{stats.total}} employees · <span class="text-green-400">{{stats.presentPercent}}%</span></p>
+          </div>
+
+          <div class="rounded-2xl border border-white/5 bg-[#171717] p-5">
+            <div class="flex items-start justify-between">
+              <p class="text-sm text-gray-400">Pending leaves</p>
+              <span class="grid h-10 w-10 place-items-center rounded-xl bg-orange-500/10 text-orange-400">
+                <svg class="h-5 w-5" aria-hidden="true"><use href="#i-calendar"></use></svg>
+              </span>
+            </div>
+            <p class="mt-4 text-3xl font-black">{{stats.pendingLeaves}}</p>
+            <p class="mt-1 text-xs text-gray-500">Awaiting approval</p>
+          </div>
+
+          <div class="rounded-2xl border border-white/5 bg-[#171717] p-5">
+            <div class="flex items-start justify-between">
+              <p class="text-sm text-gray-400">Monthly payroll</p>
+              <span class="grid h-10 w-10 place-items-center rounded-xl bg-yellow-400/10 text-yellow-400">
+                <svg class="h-5 w-5" aria-hidden="true"><use href="#i-wallet"></use></svg>
+              </span>
+            </div>
+            <p class="mt-4 text-2xl md:text-3xl font-black text-yellow-400">{{stats.payrollTotal}}</p>
+            <p class="mt-1 text-xs text-gray-500">{{stats.payrollCount}} record(s) · {{monthLabel}}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <div class="xl:col-span-2 rounded-2xl border border-white/5 bg-[#171717] p-5 md:p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <h3 class="font-bold text-lg">Weekly attendance</h3>
+              <div class="flex items-center gap-4 text-xs text-gray-500">
+                <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-yellow-400"></span> Present</span>
+                <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-gray-600"></span> Absent / late</span>
+              </div>
+            </div>
+
+            <div class="mt-6 flex h-52 items-end justify-between gap-2 md:gap-4">
+              {{#each weekly}}
+              <div class="flex h-full flex-1 flex-col items-center justify-end gap-2">
+                <div class="flex h-full w-full max-w-[46px] flex-col justify-end">
+                  <div class="w-full rounded-t-md bg-gray-600/80" style="height: {{absentPct}}%"></div>
+                  {{#if present}}
+                  <div class="w-full bg-yellow-400" style="height: {{presentPct}}%"></div>
+                  {{/if}}
+                  {{#unless total}}
+                  <div class="h-[3px] w-full rounded-full bg-white/10"></div>
+                  {{/unless}}
+                </div>
+                <span class="text-xs {{#if total}}text-gray-400{{else}}text-gray-600{{/if}}">{{label}}</span>
+              </div>
+              {{/each}}
+            </div>
+
+            <p class="mt-4 text-xs text-gray-600">Attendance recorded for the current week (Monday to Sunday).</p>
+          </div>
+
+          <div class="rounded-2xl border border-white/5 bg-[#171717] p-5 md:p-6">
+            <h3 class="font-bold text-lg mb-4">Quick actions</h3>
+            <div class="space-y-2.5">
+              <a href="/employees/create" class="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3.5 text-sm hover:border-yellow-400/30 hover:bg-yellow-400/10">
+                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-yellow-400/10 text-yellow-400">
+                  <svg class="h-4 w-4" aria-hidden="true"><use href="#i-user-plus"></use></svg>
+                </span>
+                <div><p class="font-semibold">Add employee</p><p class="text-xs text-gray-500">Register a new employee</p></div>
+              </a>
+              <a href="/attendance" class="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3.5 text-sm hover:border-yellow-400/30 hover:bg-yellow-400/10">
+                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-yellow-400/10 text-yellow-400">
+                  <svg class="h-4 w-4" aria-hidden="true"><use href="#i-clock"></use></svg>
+                </span>
+                <div><p class="font-semibold">Attendance</p><p class="text-xs text-gray-500">Manage employee attendance</p></div>
+              </a>
+              <a href="/leaves" class="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3.5 text-sm hover:border-yellow-400/30 hover:bg-yellow-400/10">
+                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-yellow-400/10 text-yellow-400">
+                  <svg class="h-4 w-4" aria-hidden="true"><use href="#i-calendar"></use></svg>
+                </span>
+                <div><p class="font-semibold">Leave requests</p><p class="text-xs text-gray-500">Review employee leaves</p></div>
+              </a>
+              {{#if isAdmin}}
+              <a href="/payroll" class="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3.5 text-sm hover:border-yellow-400/30 hover:bg-yellow-400/10">
+                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-yellow-400/10 text-yellow-400">
+                  <svg class="h-4 w-4" aria-hidden="true"><use href="#i-wallet"></use></svg>
+                </span>
+                <div><p class="font-semibold">Payroll</p><p class="text-xs text-gray-500">Manage employee salaries</p></div>
+              </a>
+              {{else}}
+              <a href="/reports" class="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3.5 text-sm hover:border-yellow-400/30 hover:bg-yellow-400/10">
+                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-yellow-400/10 text-yellow-400">
+                  <svg class="h-4 w-4" aria-hidden="true"><use href="#i-chart"></use></svg>
+                </span>
+                <div><p class="font-semibold">Reports</p><p class="text-xs text-gray-500">Generate printable reports</p></div>
+              </a>
+              {{/if}}
+            </div>
+          </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <div class="xl:col-span-2 rounded-2xl border border-white/5 bg-[#171717] overflow-hidden">
+            <div class="p-5 border-b border-white/5 flex items-center justify-between">
+              <h3 class="font-bold text-lg">Employee overview</h3>
+              <a href="/employees" class="inline-flex items-center gap-1 text-sm text-yellow-400 hover:underline">View all <svg class="h-3.5 w-3.5" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left">
+                <thead class="bg-white/5 text-gray-400 uppercase text-[11px]">
+                  <tr>
+                    <th class="px-5 py-3">Employee</th>
+                    <th class="px-5 py-3">Department</th>
+                    <th class="px-5 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                  {{#each recentEmployees}}
+                  <tr class="hover:bg-white/5 transition">
+                    <td class="px-5 py-4">
+                      <a href="/employees/{{id}}" class="flex items-center gap-3">
+                        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-yellow-400/10 text-xs font-bold text-yellow-400">
+                          {{firstName.[0]}}{{lastName.[0]}}
+                        </span>
+                        <span class="min-w-0">
+                          <span class="block font-medium hover:text-yellow-400 truncate">{{firstName}} {{lastName}}</span>
+                          <span class="block text-xs text-gray-500 truncate">{{position}} · {{employeeCode}}</span>
+                        </span>
+                      </a>
+                    </td>
+                    <td class="px-5 py-4 text-gray-400">{{department}}</td>
+                    <td class="px-5 py-4">
+                      <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Active")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "On Leave")}}bg-orange-500/10 text-orange-400{{else}}bg-red-500/10 text-red-400{{/if}}{{/if}}">{{status}}</span>
+                    </td>
+                  </tr>
+                  {{else}}
+                  <tr>
+                    <td colspan="3" class="px-5 py-12 text-center">
+                      <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-white/5 text-gray-500">
+                        <svg class="h-6 w-6" aria-hidden="true"><use href="#i-users"></use></svg>
+                      </div>
+                      <p class="text-gray-400">No employee records yet.</p>
+                      <a href="/employees/create" class="mt-4 inline-block rounded-xl bg-yellow-400 px-4 py-2.5 text-xs font-bold text-black hover:bg-yellow-300">Add employee</a>
+                    </td>
+                  </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-white/5 bg-[#171717] p-5 md:p-6">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-lg">Headcount by department</h3>
+              <a href="/departments" class="text-xs text-yellow-400 hover:underline">Manage</a>
+            </div>
+            <div class="mt-5 space-y-4">
+              {{#each departmentStats}}
+              <div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-300 truncate">{{name}}</span>
+                  <span class="text-gray-500">{{count}}</span>
+                </div>
+                <div class="mt-1.5 h-2 rounded-full bg-white/5">
+                  <div class="h-2 rounded-full bg-yellow-400" style="width: {{pct}}%"></div>
+                </div>
+              </div>
+              {{else}}
+              <p class="text-sm text-gray-500">No departments yet.</p>
+              {{/each}}
+            </div>
+          </div>
+
+        </div>
+
+        <div class="rounded-2xl border border-white/5 bg-[#171717] overflow-hidden">
+          <div class="p-5 border-b border-white/5 flex items-center justify-between">
+            <h3 class="font-bold text-lg">Pending leave requests</h3>
+            <a href="/leaves?status=Pending" class="text-yellow-400 text-sm hover:underline">Review all →</a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-white/5 text-gray-400 uppercase text-[11px]">
+                <tr>
+                  <th class="px-5 py-3">Employee</th>
+                  <th class="px-5 py-3">Type</th>
+                  <th class="px-5 py-3">Dates</th>
+                  <th class="px-5 py-3">Days</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                {{#each recentLeaves}}
+                <tr class="hover:bg-white/5">
+                  <td class="px-5 py-4 font-medium">{{employee.firstName}} {{employee.lastName}}</td>
+                  <td class="px-5 py-4 text-gray-400">{{type}}</td>
+                  <td class="px-5 py-4 text-gray-400 text-xs">{{formatDate startDate}} → {{formatDate endDate}}</td>
+                  <td class="px-5 py-4 text-gray-400">{{days}}</td>
+                </tr>
+                {{else}}
+                <tr><td colspan="4" class="px-5 py-8 text-center text-gray-500">No pending leave requests.</td></tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      {{/if}}
+
+    </section>
+  </main>
+</div>
+
+{{> footer}}

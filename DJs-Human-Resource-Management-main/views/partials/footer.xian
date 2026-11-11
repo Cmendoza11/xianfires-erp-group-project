@@ -1,0 +1,57 @@
+  <footer class="mt-10 py-6 text-center text-xs text-gray-600 no-print">
+    © 2026 DJs Human Resource Management System · Powered by XianFire Framework
+  </footer>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var KEY = "hrms-theme";
+
+      function apply(theme) {
+        var light = theme === "light";
+        root.classList.toggle("light", light);
+        root.classList.toggle("dark", !light);
+        root.style.colorScheme = light ? "light" : "dark";
+
+        document.querySelectorAll("[data-theme-toggle]").forEach(function (button) {
+          button.setAttribute("aria-pressed", String(light));
+          button.setAttribute("aria-label", light ? "Switch to dark mode" : "Switch to light mode");
+          button.title = light ? "Switch to dark mode" : "Switch to light mode";
+
+          button.querySelectorAll("[data-theme-icon]").forEach(function (icon) {
+            var name = icon.getAttribute("data-theme-icon");
+            icon.classList.toggle("hidden", name !== (light ? "sun" : "moon"));
+          });
+
+          var label = button.querySelector("[data-theme-label]");
+          if (label) label.textContent = light ? "Light mode" : "Dark mode";
+        });
+      }
+
+      apply(root.classList.contains("light") ? "light" : "dark");
+
+      document.addEventListener("click", function (event) {
+        var toggle = event.target.closest("[data-theme-toggle]");
+        if (toggle) {
+          event.preventDefault();
+          var next = root.classList.contains("light") ? "dark" : "light";
+          apply(next);
+          try { localStorage.setItem(KEY, next); } catch (error) { /* storage blocked */ }
+          return;
+        }
+
+        document.querySelectorAll("details[data-user-menu][open]").forEach(function (menu) {
+          if (!menu.contains(event.target)) menu.open = false;
+        });
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape") return;
+        document.querySelectorAll("details[data-user-menu][open]").forEach(function (menu) {
+          menu.open = false;
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

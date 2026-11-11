@@ -1,0 +1,9 @@
+<div>
+  <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 px-3">DJ's ERP Modules</p>
+  {{#each erpModules}}{{#unless current}}
+  <a href="{{url}}" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition text-gray-400 hover:bg-zinc-900 hover:text-yellow-400">
+    <span class="w-4 text-center" aria-hidden="true">{{icon}}</span>
+    <span>{{label}}</span>
+  </a>
+  {{/unless}}{{/each}}
+</div>

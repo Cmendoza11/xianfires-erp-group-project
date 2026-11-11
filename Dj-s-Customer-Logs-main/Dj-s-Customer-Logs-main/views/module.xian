@@ -1,0 +1,334 @@
+{{> head}}
+<body class="bg-[#fffdf2] dark:bg-[#0f0f0f] min-h-screen">
+  <div class="min-h-screen md:flex">
+    {{> staffSidebar activeSection=moduleKey}}
+    <main class="flex-1 px-4 py-8 lg:px-8">
+      <section class="rounded-2xl bg-[#171717] p-6 text-white shadow-lg mb-6">
+        <p class="text-xs uppercase tracking-widest text-[#f7d83d] font-semibold">Customer Logs module</p>
+        <h1 class="mt-2 text-3xl font-bold">{{ module.title }}</h1>
+        <p class="mt-2 text-[#f5edbd] opacity-80">{{ module.description }}</p>
+      </section>
+
+      {{!-- CUSTOMERS --}}
+      {{#ifEquals moduleKey "customers"}}
+      <section class="mb-6 rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-[#171717] dark:text-white">Customer Directory</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Search and manage registered customers.</p>
+          </div>
+          <button id="open-customer-modal" class="flex items-center gap-2 rounded-xl bg-[#171717] dark:bg-[#f7d83d] px-5 py-2.5 font-semibold text-[#f7d83d] dark:text-[#171717] hover:opacity-90 transition-all shadow-sm" type="button">
+            <span>+</span> Add Customer
+          </button>
+        </div>
+        <form class="mt-4 flex gap-2" method="GET">
+          <input class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="search" value="{{ search }}" placeholder="Search name, contact number, or Customer ID" />
+          <button class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] px-5 py-2.5 text-sm font-semibold text-[#75651d] dark:text-[#f7d83d] hover:bg-[#f7d83d] hover:text-[#171717] transition-all" type="submit">Search</button>
+        </form>
+        <div class="mt-5 overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-[#ead36a] dark:border-[#2d2d2d]">
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Customer ID</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Name</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Contact</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Purchases</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each records}}
+              <tr class="border-b border-[#f1e8ae] dark:border-[#1f1f1f] hover:bg-[#fffdf2] dark:hover:bg-[#111] transition-colors">
+                <td class="p-3 text-xs text-gray-500 dark:text-gray-400 font-mono">{{customerId}}</td>
+                <td class="p-3 font-semibold text-[#171717] dark:text-white">{{name}}</td>
+                <td class="p-3 text-gray-600 dark:text-gray-300">{{contactNumber}}</td>
+                <td class="p-3"><span class="inline-flex items-center justify-center rounded-full bg-[#fff8d8] dark:bg-[#2a2500] px-3 py-1 text-xs font-bold text-[#75651d] dark:text-[#f7d83d] min-w-[32px]">{{totalPurchases}}</span></td>
+                <td class="p-3">
+                  <div class="flex flex-wrap gap-2">
+                    <button class="rounded-lg bg-[#171717] dark:bg-[#f7d83d] px-3 py-1.5 text-xs font-semibold text-[#f7d83d] dark:text-[#171717] hover:opacity-80 transition-all" type="button" onclick="document.getElementById('edit-{{customerId}}').classList.remove('hidden'); document.getElementById('edit-{{customerId}}').classList.add('flex')">Edit</button>
+                    <a class="rounded-lg border border-[#ead36a] dark:border-[#2d2d2d] px-3 py-1.5 text-xs font-semibold text-[#75651d] dark:text-[#f7d83d] hover:bg-[#f7d83d] hover:text-[#171717] transition-all" href="/staff/modules/logs?search={{customerId}}">Profile</a>
+                    {{#ifEquals totalPurchases 0}}
+                    <form method="POST" action="/staff/customers/{{customerId}}/delete" onsubmit="return confirm('Delete this customer? This cannot be undone.')">
+                      <button class="rounded-lg border border-red-300 dark:border-red-800 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all" type="submit">Delete</button>
+                    </form>
+                    {{/ifEquals}}
+                  </div>
+                  <div id="edit-{{customerId}}" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/60 px-4">
+                    <form class="w-full max-w-lg rounded-2xl bg-white dark:bg-[#1a1a1a] p-6 text-left shadow-2xl" method="POST" action="/staff/customers/{{customerId}}">
+                      <h3 class="text-lg font-bold text-[#171717] dark:text-white mb-4">Edit Customer</h3>
+                      <div class="grid gap-3">
+                        <input class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="name" value="{{name}}" placeholder="Customer name" required />
+                        <input class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="contactNumber" value="{{contactNumber}}" placeholder="Contact number" required />
+                        <input class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="email" value="{{email}}" type="email" placeholder="Email (optional)" />
+                        <div class="flex gap-2 mt-1">
+                          <button class="flex-1 rounded-xl bg-[#171717] dark:bg-[#f7d83d] py-2.5 text-sm font-semibold text-[#f7d83d] dark:text-[#171717]" type="submit">Save Changes</button>
+                          <button class="flex-1 rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] py-2.5 text-sm font-semibold text-[#75651d] dark:text-[#f5edbd]" type="button" onclick="this.closest('.fixed').classList.add('hidden'); this.closest('.fixed').classList.remove('flex')">Cancel</button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {{else}}
+              <tr><td class="p-4 text-center text-gray-400 dark:text-gray-500" colspan="5">No customer records found.</td></tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {{/ifEquals}}
+
+      {{!-- LOGS --}}
+      {{#ifEquals moduleKey "logs"}}
+      <section class="mb-6 rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm">
+        <button id="open-purchase-modal" class="rounded-xl bg-[#171717] dark:bg-[#f7d83d] px-5 py-3 font-semibold text-[#f7d83d] dark:text-[#171717] hover:opacity-90 transition-all shadow-sm" type="button">Record Purchase</button>
+      </section>
+      <div id="purchase-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 px-4" role="dialog" aria-modal="true" aria-labelledby="purchase-modal-title">
+        <div class="w-full max-w-2xl rounded-2xl bg-white dark:bg-[#1a1a1a] p-6 shadow-2xl">
+          <div class="mb-5 flex items-center justify-between">
+            <div>
+              <h2 id="purchase-modal-title" class="text-xl font-bold text-[#171717] dark:text-white">Record Purchase</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Select an existing customer, then record the purchase details from POS.</p>
+            </div>
+            <button id="close-purchase-modal" class="rounded-lg p-1.5 text-xl leading-none text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2d2d2d]" type="button" aria-label="Close">&times;</button>
+          </div>
+          <form class="grid gap-4 md:grid-cols-2" method="POST" action="/staff/customer-logs">
+            <label class="grid gap-1.5 text-sm font-semibold text-[#171717] dark:text-white">Select Customer
+              <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 font-normal focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="customerId" list="customer-options" placeholder="Search customer name, contact, or ID" required />
+              <datalist id="customer-options">{{#each customers}}<option value="{{customerId}}" label="{{name}} · {{contactNumber}}">{{name}} · {{contactNumber}}</option>{{/each}}</datalist>
+            </label>
+            <label class="grid gap-1.5 text-sm font-semibold text-[#171717] dark:text-white">Purchase Amount
+              <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 font-normal focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="amount" type="number" min="0" step="0.01" placeholder="₱0.00" required />
+            </label>
+            <label class="grid gap-1.5 text-sm font-semibold text-[#171717] dark:text-white">Transaction Reference
+              <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 font-normal focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="transactionReference" placeholder="Reference number from POS" />
+            </label>
+            <label class="grid gap-1.5 text-sm font-semibold text-[#171717] dark:text-white">Purchase Date and Time
+              <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 font-normal focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="activityAt" type="datetime-local" required />
+            </label>
+            <input type="hidden" name="activityType" value="purchase" />
+            <div class="flex gap-3 md:col-span-2">
+              <button id="cancel-purchase-modal" class="flex-1 rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] py-2.5 text-sm font-semibold text-[#75651d] dark:text-[#f5edbd]" type="button">Cancel</button>
+              <button class="flex-1 rounded-xl bg-[#171717] dark:bg-[#f7d83d] py-2.5 text-sm font-semibold text-[#f7d83d] dark:text-[#171717]" type="submit">Save Purchase Log</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {{/ifEquals}}
+
+      {{!-- LOYALTY --}}
+      {{#ifEquals moduleKey "loyalty"}}
+      <section class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm">
+        <div class="flex flex-wrap gap-3 items-end mb-5">
+          <form class="flex flex-wrap gap-2 flex-1" method="GET">
+            <input class="min-w-0 flex-1 rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="search" value="{{search}}" placeholder="Search customer name or ID" />
+            <select class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm" name="status">
+              <option value="">All statuses</option>
+              <option value="Regular" {{#ifEquals status "Regular"}}selected{{/ifEquals}}>Regular</option>
+              <option value="Silver" {{#ifEquals status "Silver"}}selected{{/ifEquals}}>Silver</option>
+              <option value="Gold" {{#ifEquals status "Gold"}}selected{{/ifEquals}}>Gold</option>
+            </select>
+            <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm" name="date" value="{{date}}" type="date" />
+            <button class="rounded-xl bg-[#171717] dark:bg-[#f7d83d] px-5 py-2.5 text-sm font-semibold text-[#f7d83d] dark:text-[#171717] hover:opacity-90 transition-all" type="submit">Filter</button>
+          </form>
+        </div>
+
+        <!-- Loyalty Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div class="rounded-xl bg-[#fffdf2] dark:bg-[#111] border border-[#ead36a] dark:border-[#2d2d2d] p-3 text-center">
+            <p class="text-2xl font-bold text-[#171717] dark:text-white">{{loyaltyStats.totalCustomers}}</p>
+            <p class="text-xs text-[#75651d] dark:text-[#f5edbd] mt-1">Total Customers</p>
+          </div>
+          <div class="rounded-xl bg-[#fffdf2] dark:bg-[#111] border border-[#ead36a] dark:border-[#2d2d2d] p-3 text-center">
+            <p class="text-2xl font-bold text-[#171717] dark:text-white">{{loyaltyStats.totalPointsEarned}}</p>
+            <p class="text-xs text-[#75651d] dark:text-[#f5edbd] mt-1">Points Earned</p>
+          </div>
+          <div class="rounded-xl bg-[#fffdf2] dark:bg-[#111] border border-[#ead36a] dark:border-[#2d2d2d] p-3 text-center">
+            <p class="text-2xl font-bold text-[#171717] dark:text-white">{{loyaltyStats.pointsRedeemed}}</p>
+            <p class="text-xs text-[#75651d] dark:text-[#f5edbd] mt-1">Points Redeemed</p>
+          </div>
+          <div class="rounded-xl bg-[#fffdf2] dark:bg-[#111] border border-[#ead36a] dark:border-[#2d2d2d] p-3 text-center">
+            <p class="text-2xl font-bold text-[#171717] dark:text-white">{{loyaltyStats.topCustomers}}</p>
+            <p class="text-xs text-[#75651d] dark:text-[#f5edbd] mt-1">Top Customers</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[980px] text-left text-sm">
+            <thead>
+              <tr class="border-b border-[#ead36a] dark:border-[#2d2d2d]">
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Customer</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Total Purchases</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Total Amount Spent</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Points Earned</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Points Redeemed</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Available Points</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Status</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Last Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each loyaltySummary}}
+              <tr class="border-b border-[#f1e8ae] dark:border-[#1f1f1f] hover:bg-[#fffdf2] dark:hover:bg-[#111] transition-colors">
+                <td class="p-3"><p class="font-semibold text-[#171717] dark:text-white">{{customerName}}</p><p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{{customerId}}</p></td>
+                <td class="p-3 text-[#171717] dark:text-white font-medium">{{totalPurchases}}</td>
+                <td class="p-3 text-[#171717] dark:text-white">₱{{totalAmountSpent}}</td>
+                <td class="p-3 text-[#171717] dark:text-white">{{loyaltyPointsEarned}}</td>
+                <td class="p-3 text-[#171717] dark:text-white">{{pointsRedeemed}}</td>
+                <td class="p-3 font-bold text-[#171717] dark:text-white">{{availablePoints}}</td>
+                <td class="p-3"><span class="rounded-full px-3 py-1 text-xs font-semibold {{#ifEquals loyaltyStatus "Gold"}}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400{{else}}{{#ifEquals loyaltyStatus "Silver"}}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300{{else}}bg-[#fff8d8] text-[#75651d] dark:bg-[#2a2500] dark:text-[#f5edbd]{{/ifEquals}}{{/ifEquals}}">{{loyaltyStatus}}</span></td>
+                <td class="p-3 text-gray-500 dark:text-gray-400 text-xs">{{lastUpdated}}</td>
+              </tr>
+              {{else}}
+              <tr><td class="p-4 text-center text-gray-400 dark:text-gray-500" colspan="8">No loyalty records found.</td></tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {{/ifEquals}}
+
+      {{!-- REPORTS --}}
+      {{#ifEquals moduleKey "reports"}}
+      <div class="grid gap-6">
+        <!-- Summary Stats -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm text-center">
+            <p class="text-3xl font-bold text-[#171717] dark:text-white">{{reportStats.totalCustomers}}</p>
+            <p class="text-sm text-[#75651d] dark:text-[#f5edbd] mt-1">Total Customers</p>
+          </div>
+          <div class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm text-center">
+            <p class="text-3xl font-bold text-[#171717] dark:text-white">{{reportStats.totalPurchases}}</p>
+            <p class="text-sm text-[#75651d] dark:text-[#f5edbd] mt-1">Total Purchases</p>
+          </div>
+          <div class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm text-center">
+            <p class="text-3xl font-bold text-[#171717] dark:text-white">₱{{reportStats.totalRevenue}}</p>
+            <p class="text-sm text-[#75651d] dark:text-[#f5edbd] mt-1">Total Revenue</p>
+          </div>
+          <div class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm text-center">
+            <p class="text-3xl font-bold text-[#171717] dark:text-white">{{reportStats.totalRedemptions}}</p>
+            <p class="text-sm text-[#75651d] dark:text-[#f5edbd] mt-1">Promo Redemptions</p>
+          </div>
+        </section>
+
+        <!-- Filter -->
+        <section class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm">
+          <h2 class="text-lg font-bold text-[#171717] dark:text-white mb-4">Purchase Report</h2>
+          <form class="flex flex-wrap gap-2 mb-5" method="GET">
+            <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="search" value="{{search}}" placeholder="Search customer" />
+            <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm" name="date" value="{{date}}" type="date" placeholder="Filter by date" />
+            <button class="rounded-xl bg-[#171717] dark:bg-[#f7d83d] px-5 py-2.5 text-sm font-semibold text-[#f7d83d] dark:text-[#171717] hover:opacity-90 transition-all" type="submit">Filter</button>
+          </form>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="border-b border-[#ead36a] dark:border-[#2d2d2d]">
+                  <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Customer</th>
+                  <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Date & Time</th>
+                  <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Amount</th>
+                  <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Reference</th>
+                  <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Recorded By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each records}}
+                <tr class="border-b border-[#f1e8ae] dark:border-[#1f1f1f] hover:bg-[#fffdf2] dark:hover:bg-[#111] transition-colors">
+                  <td class="p-3 font-semibold text-[#171717] dark:text-white">{{Customer.name}}</td>
+                  <td class="p-3 text-gray-500 dark:text-gray-400 text-xs">{{activityAt}}</td>
+                  <td class="p-3 font-semibold text-[#171717] dark:text-white">₱{{amount}}</td>
+                  <td class="p-3 text-gray-600 dark:text-gray-300 text-xs">{{transactionReference}}</td>
+                  <td class="p-3 text-gray-500 dark:text-gray-400">{{User.name}}</td>
+                </tr>
+                {{else}}
+                <tr><td class="p-4 text-center text-gray-400 dark:text-gray-500" colspan="5">No records found.</td></tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      {{/ifEquals}}
+
+      {{!-- LOGS list (generic fallback for logs module list view, shown after the form) --}}
+      {{#ifEquals moduleKey "logs"}}
+      <section class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-[#171717] dark:text-white mb-4">Purchase History</h2>
+        <form class="flex flex-wrap gap-2 mb-5" method="GET">
+          <input class="min-w-0 flex-1 rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="search" value="{{search}}" placeholder="Search customer name, contact, or ID" />
+          <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm" name="date" value="{{date}}" type="date" />
+          <button class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] px-5 py-2.5 text-sm font-semibold text-[#75651d] dark:text-[#f7d83d] hover:bg-[#f7d83d] hover:text-[#171717] transition-all" type="submit">Filter</button>
+        </form>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-[#ead36a] dark:border-[#2d2d2d]">
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Customer</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Date & Time</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Amount</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Reference</th>
+                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Recorded By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each records}}
+              <tr class="border-b border-[#f1e8ae] dark:border-[#1f1f1f] hover:bg-[#fffdf2] dark:hover:bg-[#111] transition-colors">
+                <td class="p-3 font-semibold text-[#171717] dark:text-white">{{Customer.name}}</td>
+                <td class="p-3 text-gray-500 dark:text-gray-400 text-xs">{{activityAt}}</td>
+                <td class="p-3 font-semibold text-[#171717] dark:text-white">₱{{amount}}</td>
+                <td class="p-3 text-gray-600 dark:text-gray-300 text-xs">{{transactionReference}}</td>
+                <td class="p-3 text-gray-500 dark:text-gray-400">{{User.name}}</td>
+              </tr>
+              {{else}}
+              <tr><td class="p-4 text-center text-gray-400 dark:text-gray-500" colspan="5">No purchase records found.</td></tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {{/ifEquals}}
+
+    </main>
+  </div>
+
+  {{#ifEquals moduleKey "customers"}}
+  <!-- Add Customer Modal -->
+  <div id="customer-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 px-4" role="dialog" aria-modal="true" aria-labelledby="customer-modal-title">
+    <div class="w-full max-w-lg rounded-2xl bg-white dark:bg-[#1a1a1a] p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-5">
+        <h2 id="customer-modal-title" class="text-xl font-bold text-[#171717] dark:text-white">Register Customer</h2>
+        <button id="close-customer-modal" class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2d2d2d] transition-all text-xl leading-none" type="button" aria-label="Close">&times;</button>
+      </div>
+      <form class="grid gap-3" method="POST" action="/staff/customers">
+        <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="name" placeholder="Customer name" required />
+        <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="contactNumber" placeholder="Contact number" required />
+        <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="email" type="email" placeholder="Email (optional)" />
+        <div class="flex gap-3 mt-1">
+          <button id="cancel-customer-modal" class="flex-1 rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] py-2.5 text-sm font-semibold text-[#75651d] dark:text-[#f5edbd]" type="button">Cancel</button>
+          <button class="flex-1 rounded-xl bg-[#171717] dark:bg-[#f7d83d] py-2.5 text-sm font-semibold text-[#f7d83d] dark:text-[#171717]" type="submit">Save Customer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+    const customerModal = document.getElementById("customer-modal");
+    const openCustomerModal = document.getElementById("open-customer-modal");
+    const closeCustomerModal = () => { customerModal.classList.add("hidden"); customerModal.classList.remove("flex"); };
+    openCustomerModal.addEventListener("click", () => { customerModal.classList.remove("hidden"); customerModal.classList.add("flex"); });
+    document.getElementById("close-customer-modal").addEventListener("click", closeCustomerModal);
+    document.getElementById("cancel-customer-modal").addEventListener("click", closeCustomerModal);
+    customerModal.addEventListener("click", (e) => { if (e.target === customerModal) closeCustomerModal(); });
+  </script>
+  {{/ifEquals}}
+  {{#ifEquals moduleKey "logs"}}
+  <script>
+    const purchaseModal = document.getElementById("purchase-modal");
+    const openPurchaseModal = document.getElementById("open-purchase-modal");
+    const closePurchaseModal = () => { purchaseModal.classList.add("hidden"); purchaseModal.classList.remove("flex"); };
+    openPurchaseModal.addEventListener("click", () => { purchaseModal.classList.remove("hidden"); purchaseModal.classList.add("flex"); });
+    document.getElementById("close-purchase-modal").addEventListener("click", closePurchaseModal);
+    document.getElementById("cancel-purchase-modal").addEventListener("click", closePurchaseModal);
+    purchaseModal.addEventListener("click", (e) => { if (e.target === purchaseModal) closePurchaseModal(); });
+  </script>
+  {{/ifEquals}}
+
+{{> footer}}

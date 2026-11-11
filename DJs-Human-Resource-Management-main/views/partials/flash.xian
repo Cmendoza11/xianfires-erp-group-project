@@ -1,0 +1,13 @@
+{{#if success_msg}}
+<div class="flex items-start gap-3 rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-300 no-print">
+  <span class="text-base leading-none mt-0.5">✓</span>
+  <div>{{success_msg}}</div>
+</div>
+{{/if}}
+
+{{#if error_msg}}
+<div class="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300 no-print">
+  <span class="text-base leading-none mt-0.5">!</span>
+  <div>{{error_msg}}</div>
+</div>
+{{/if}}

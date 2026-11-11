@@ -1,0 +1,516 @@
+{{> head}}
+<body class="bg-black text-gray-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Toast Notification Popups -->
+  {{#if successMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-emerald-950 border border-emerald-800 text-emerald-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-check-circle text-emerald-400"></i>
+      <span class="text-xs font-semibold">{{successMessage}}</span>
+    </div>
+  {{/if}}
+  {{#if errorMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-red-950 border border-red-800 text-red-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-exclamation-triangle text-red-400"></i>
+      <span class="text-xs font-semibold">{{errorMessage}}</span>
+    </div>
+  {{/if}}
+
+  <div class="flex flex-1">
+    <!-- Master Sidebar -->
+    {{> sidebar}}
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-8 overflow-y-auto bg-black">
+      
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-zinc-900/60 border border-zinc-800/80 p-6 rounded-2xl backdrop-blur-md">
+        <div>
+          <div class="flex items-center space-x-3">
+            <h2 class="text-xl font-bold text-white tracking-wide">Supplier Invoices & Payables</h2>
+            <span class="bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Module 9
+            </span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Track supplier billings, due dates, and payable liabilities synced with DJYum Financial Management System.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="openCreateInvoiceModal()" class="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center space-x-2">
+            <i class="fas fa-plus"></i>
+            <span>Record Supplier Invoice</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Financial System Synchronization Notice Banner -->
+      <div class="mb-6 bg-gradient-to-r from-blue-950/40 via-zinc-900/80 to-blue-950/40 border border-blue-900/40 rounded-2xl p-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+            <i class="fas fa-landmark text-lg"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-blue-300">DJYum Financial System Master Payment Rule</h4>
+            <p class="text-[11px] text-gray-400 mt-0.5">Supplier invoices recorded here create Accounts Payable vouchers. Actual disbursements and payment verifications are master-controlled by the Financial Management System.</p>
+          </div>
+        </div>
+        <div class="hidden sm:flex items-center space-x-2 shrink-0">
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+            Sync Active
+          </span>
+        </div>
+      </div>
+
+      <!-- Financial KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Invoiced</p>
+            <h3 class="text-2xl font-bold text-white mt-1">₱{{totalInvoiceAmount}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-yellow-400/10 text-yellow-400 flex items-center justify-center">
+            <i class="fas fa-file-invoice text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Outstanding Balance</p>
+            <h3 class="text-2xl font-bold text-amber-400 mt-1">₱{{totalOutstanding}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center">
+            <i class="fas fa-hourglass-half text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Paid (Synced)</p>
+            <h3 class="text-2xl font-bold text-emerald-400 mt-1">₱{{totalPaid}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-400/10 text-emerald-400 flex items-center justify-center">
+            <i class="fas fa-receipt text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Overdue Invoices</p>
+            <h3 class="text-2xl font-bold {{#gt overdueCount 0}}text-red-400{{else}}text-gray-400{{/gt}} mt-1">{{overdueCount}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl {{#gt overdueCount 0}}bg-red-400/10 text-red-400{{else}}bg-zinc-800 text-gray-400{{/gt}} flex items-center justify-center">
+            <i class="fas fa-triangle-exclamation text-base"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 mb-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+        <form action="/supplier-invoices" method="GET" class="flex-1 w-full flex flex-col md:flex-row items-center gap-3">
+          <div class="relative flex-1 w-full">
+            <i class="fas fa-search absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+            <input type="text" name="search" value="{{searchQuery}}" placeholder="Search invoice # or financial voucher..." class="w-full bg-black border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 transition">
+          </div>
+          <div class="flex items-center space-x-2 w-full md:w-auto">
+            <select name="supplierId" class="bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+              <option value="All">All Suppliers</option>
+              {{#each suppliers}}
+                <option value="{{id}}" {{#eq ../selectedSupplier id}}selected{{/eq}}>{{name}}</option>
+              {{/each}}
+            </select>
+            <select name="paymentStatus" class="bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+              <option value="All" {{#eq statusFilter 'All'}}selected{{/eq}}>All Statuses</option>
+              <option value="Pending" {{#eq statusFilter 'Pending'}}selected{{/eq}}>Pending</option>
+              <option value="Partially Paid" {{#eq statusFilter 'Partially Paid'}}selected{{/eq}}>Partially Paid</option>
+              <option value="Paid" {{#eq statusFilter 'Paid'}}selected{{/eq}}>Paid</option>
+              <option value="Overdue" {{#eq statusFilter 'Overdue'}}selected{{/eq}}>Overdue</option>
+            </select>
+            <button type="submit" class="bg-zinc-800 hover:bg-zinc-700 text-yellow-400 px-4 py-2.5 rounded-xl text-xs font-bold transition">
+              Filter
+            </button>
+            <a href="/supplier-invoices" class="text-gray-400 hover:text-white text-xs px-2 py-2.5">
+              Reset
+            </a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Invoices Table -->
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
+        <div class="p-4 border-b border-zinc-800/80 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Invoices & Payable Obligations</h3>
+          </div>
+          <span class="text-[11px] text-gray-500 font-medium">{{invoices.length}} Invoices Recorded</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-zinc-950/80 text-gray-400 uppercase text-[10px] tracking-wider border-b border-zinc-800">
+              <tr>
+                <th class="py-3.5 px-4 font-semibold">Invoice #</th>
+                <th class="py-3.5 px-4 font-semibold">Supplier</th>
+                <th class="py-3.5 px-4 font-semibold">PO Reference</th>
+                <th class="py-3.5 px-4 font-semibold">Invoice Date</th>
+                <th class="py-3.5 px-4 font-semibold">Due Date</th>
+                <th class="py-3.5 px-4 font-semibold text-right">Total Amount</th>
+                <th class="py-3.5 px-4 font-semibold text-right">Paid Amount</th>
+                <th class="py-3.5 px-4 font-semibold text-right">Balance Due</th>
+                <th class="py-3.5 px-4 font-semibold text-center">Payment Status</th>
+                <th class="py-3.5 px-4 font-semibold text-center">Financial Sync</th>
+                <th class="py-3.5 px-4 font-semibold text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-800/60 text-gray-300">
+              {{#if invoices.length}}
+                {{#each invoices}}
+                  <tr class="hover:bg-zinc-800/40 transition">
+                    <td class="py-3.5 px-4 font-mono font-bold text-yellow-400">
+                      {{invoiceNumber}}
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-semibold text-white">{{Supplier.name}}</div>
+                      <div class="text-[10px] text-gray-500 font-mono">{{Supplier.supplierCode}}</div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      {{#if PurchaseOrder}}
+                        <a href="/purchase-orders/view/{{PurchaseOrder.id}}" class="text-blue-400 hover:underline font-mono text-[11px] flex items-center space-x-1">
+                          <span>{{PurchaseOrder.poNumber}}</span>
+                          <i class="fas fa-external-link-alt text-[9px]"></i>
+                        </a>
+                      {{else}}
+                        <span class="text-gray-500">—</span>
+                      {{/if}}
+                      {{#if GoodsReceipt}}
+                        <div class="text-[10px] text-gray-500 font-mono">GR: {{GoodsReceipt.receiptNumber}}</div>
+                      {{/if}}
+                    </td>
+                    <td class="py-3.5 px-4 text-gray-400 font-mono">
+                      {{formatDate invoiceDate}}
+                    </td>
+                    <td class="py-3.5 px-4 font-mono">
+                      <span class="{{#if isOverdue}}text-red-400 font-bold flex items-center space-x-1{{else}}text-gray-300{{/if}}">
+                        {{#if isOverdue}}<i class="fas fa-circle-exclamation text-[10px]"></i>{{/if}}
+                        <span>{{formatDate dueDate}}</span>
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-mono font-bold text-white">
+                      ₱{{formatCurrency invoiceTotal}}
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-mono text-emerald-400">
+                      ₱{{formatCurrency amountPaid}}
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-mono font-bold {{#gt outstandingBalance 0}}text-amber-400{{else}}text-gray-400{{/gt}}">
+                      ₱{{formatCurrency outstandingBalance}}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      {{{statusBadge paymentStatus}}}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      {{#eq financialSyncStatus 'Synced'}}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          <i class="fas fa-check-circle mr-1 text-[8px]"></i> Synced
+                        </span>
+                      {{/eq}}
+                      {{#eq financialSyncStatus 'Pending'}}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                          <i class="fas fa-clock mr-1 text-[8px]"></i> Pending
+                        </span>
+                      {{/eq}}
+                      {{#eq financialSyncStatus 'Failed'}}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-red-500/10 text-red-400 border border-red-500/30">
+                          <i class="fas fa-times-circle mr-1 text-[8px]"></i> Failed
+                        </span>
+                      {{/eq}}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      <button onclick="viewInvoiceDetails({{id}})" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-gray-300 hover:text-white transition" title="View Breakdown & Sync">
+                        <i class="fas fa-eye text-xs"></i>
+                      </button>
+                    </td>
+                  </tr>
+                {{/each}}
+              {{else}}
+                <tr>
+                  <td colspan="11" class="py-12 text-center text-gray-500">
+                    <i class="fas fa-file-invoice text-4xl mb-3 text-zinc-700"></i>
+                    <p class="text-sm font-medium">No supplier invoices found.</p>
+                    <p class="text-xs text-gray-600 mt-1">Record invoices from delivered purchase orders to manage accounts payable liabilities.</p>
+                  </td>
+                </tr>
+              {{/if}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL: Record Supplier Invoice -->
+  <div id="createInvoiceModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl">
+      <div class="p-5 border-b border-zinc-800 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-file-invoice-dollar text-yellow-400"></i>
+          <h3 class="text-sm font-bold text-white">Record Supplier Invoice</h3>
+        </div>
+        <button onclick="closeCreateInvoiceModal()" class="text-gray-400 hover:text-white text-xs">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form action="/supplier-invoices/add" method="POST" class="p-6 space-y-4">
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+            Supplier Invoice / Billing # <span class="text-red-400">*</span>
+          </label>
+          <input type="text" name="invoiceNumber" required placeholder="e.g. INV-904218" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition font-mono">
+          <p class="text-[10px] text-gray-500 mt-1">Official invoice number printed on vendor delivery voucher.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              Supplier <span class="text-red-400">*</span>
+            </label>
+            <select name="supplierId" id="modalSupplierSelect" required onchange="filterPOsBySupplier()" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+              <option value="">Select Supplier</option>
+              {{#each suppliers}}
+                <option value="{{id}}">{{name}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              Purchase Order <span class="text-red-400">*</span>
+            </label>
+            <select name="purchaseOrderId" id="modalPOSelect" required onchange="syncPOAmount()" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+              <option value="">Select Purchase Order</option>
+              {{#each openPOs}}
+                <option value="{{id}}" data-supplier-id="{{supplierId}}" data-total="{{totalAmount}}">{{poNumber}} (₱{{formatCurrency totalAmount}})</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+            Linked Goods Receipt (Optional)
+          </label>
+          <select name="goodsReceiptId" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+            <option value="">None / Pending Delivery Inspection</option>
+            {{#each openReceipts}}
+              <option value="{{id}}">{{receiptNumber}} (PO #{{PurchaseOrder.poNumber}})</option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              Invoice Date <span class="text-red-400">*</span>
+            </label>
+            <input type="date" name="invoiceDate" id="modalInvoiceDate" required class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              Payment Due Date <span class="text-red-400">*</span>
+            </label>
+            <input type="date" name="dueDate" id="modalDueDate" required class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+            Total Billed Amount (₱) <span class="text-red-400">*</span>
+          </label>
+          <input type="number" step="0.01" min="0" name="invoiceTotal" id="modalInvoiceTotal" required placeholder="0.00" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition font-mono font-bold">
+          <p class="text-[10px] text-gray-500 mt-1">Populated automatically from PO, edit if freight or price variances occur.</p>
+        </div>
+
+        <div class="pt-4 border-t border-zinc-800 flex items-center justify-end space-x-3">
+          <button type="button" onclick="closeCreateInvoiceModal()" class="px-4 py-2 rounded-xl text-xs text-gray-400 hover:text-white transition">
+            Cancel
+          </button>
+          <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center space-x-1.5">
+            <i class="fas fa-check"></i>
+            <span>Confirm & Record</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Invoice Details & Financial Sync Breakdown -->
+  <div id="invoiceDetailsModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl">
+      <div class="p-5 border-b border-zinc-800 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-info-circle text-yellow-400"></i>
+          <h3 class="text-sm font-bold text-white">Invoice Details & Financial Audit</h3>
+        </div>
+        <button onclick="closeInvoiceDetailsModal()" class="text-gray-400 hover:text-white text-xs">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs" id="invoiceDetailsBody">
+        <div class="flex items-center justify-center py-8">
+          <i class="fas fa-spinner fa-spin text-yellow-400 text-xl"></i>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-zinc-800 flex items-center justify-end">
+        <button type="button" onclick="closeInvoiceDetailsModal()" class="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold px-4 py-2 rounded-xl text-xs transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    // Toast auto-dismiss
+    setTimeout(() => {
+      const toast = document.getElementById('toastMessage');
+      if (toast) toast.style.display = 'none';
+    }, 4500);
+
+    function openCreateInvoiceModal() {
+      // Set default invoice date to today
+      const today = new Date().toISOString().split('T')[0];
+      const invDate = document.getElementById('modalInvoiceDate');
+      if (invDate) invDate.value = today;
+
+      // Set default due date to 30 days from today (Net 30)
+      const due = new Date();
+      due.setDate(due.getDate() + 30);
+      const dueDate = document.getElementById('modalDueDate');
+      if (dueDate) dueDate.value = due.toISOString().split('T')[0];
+
+      document.getElementById('createInvoiceModal').classList.remove('hidden');
+    }
+
+    function closeCreateInvoiceModal() {
+      document.getElementById('createInvoiceModal').classList.add('hidden');
+    }
+
+    function syncPOAmount() {
+      const poSelect = document.getElementById('modalPOSelect');
+      const selected = poSelect.options[poSelect.selectedIndex];
+      if (selected && selected.dataset.total) {
+        document.getElementById('modalInvoiceTotal').value = parseFloat(selected.dataset.total).toFixed(2);
+      }
+      if (selected && selected.dataset.supplierId) {
+        const suppSelect = document.getElementById('modalSupplierSelect');
+        suppSelect.value = selected.dataset.supplierId;
+      }
+    }
+
+    function filterPOsBySupplier() {
+      const suppSelect = document.getElementById('modalSupplierSelect');
+      const selectedSuppId = suppSelect.value;
+      const poSelect = document.getElementById('modalPOSelect');
+
+      for (let i = 0; i < poSelect.options.length; i++) {
+        const opt = poSelect.options[i];
+        if (!opt.value) continue;
+        if (!selectedSuppId || opt.dataset.supplierId === selectedSuppId) {
+          opt.style.display = '';
+        } else {
+          opt.style.display = 'none';
+        }
+      }
+    }
+
+    async function viewInvoiceDetails(id) {
+      document.getElementById('invoiceDetailsModal').classList.remove('hidden');
+      const body = document.getElementById('invoiceDetailsBody');
+      body.innerHTML = `
+        <div class="flex items-center justify-center py-8">
+          <i class="fas fa-spinner fa-spin text-yellow-400 text-xl"></i>
+        </div>
+      `;
+
+      try {
+        const res = await fetch(`/api/supplier-invoices/${id}`);
+        const data = await res.json();
+        if (data.success && data.invoice) {
+          const inv = data.invoice;
+          body.innerHTML = `
+            <div class="bg-black/40 border border-zinc-800 rounded-xl p-4 space-y-2">
+              <div class="flex justify-between items-center border-b border-zinc-800/80 pb-2">
+                <span class="text-gray-400">Invoice Number:</span>
+                <span class="font-mono font-bold text-yellow-400 text-sm">${inv.invoiceNumber}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-400">Supplier:</span>
+                <span class="font-semibold text-white">${inv.Supplier ? inv.Supplier.name : 'N/A'}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-400">Linked Purchase Order:</span>
+                <span class="font-mono text-blue-400">${inv.PurchaseOrder ? inv.PurchaseOrder.poNumber : 'N/A'}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-400">Goods Receipt:</span>
+                <span class="font-mono text-gray-300">${inv.GoodsReceipt ? inv.GoodsReceipt.receiptNumber : 'None Linked'}</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-black/40 border border-zinc-800 rounded-xl p-3">
+                <span class="text-[10px] text-gray-500 uppercase font-bold block">Invoice Date</span>
+                <span class="font-mono text-white mt-1 block">${inv.invoiceDate ? inv.invoiceDate.split('T')[0] : 'N/A'}</span>
+              </div>
+              <div class="bg-black/40 border border-zinc-800 rounded-xl p-3">
+                <span class="text-[10px] text-gray-500 uppercase font-bold block">Payment Due Date</span>
+                <span class="font-mono text-white mt-1 block">${inv.dueDate ? inv.dueDate.split('T')[0] : 'N/A'}</span>
+              </div>
+            </div>
+
+            <div class="bg-black/40 border border-zinc-800 rounded-xl p-4 space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-400">Total Billed:</span>
+                <span class="font-mono font-bold text-white">₱${parseFloat(inv.invoiceTotal || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-400">Amount Paid:</span>
+                <span class="font-mono font-semibold text-emerald-400">₱${parseFloat(inv.amountPaid || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+              </div>
+              <div class="flex justify-between items-center border-t border-zinc-800 pt-2">
+                <span class="text-gray-400 font-bold">Outstanding Balance:</span>
+                <span class="font-mono font-bold text-amber-400 text-sm">₱${parseFloat(inv.outstandingBalance || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</span>
+              </div>
+            </div>
+
+            <div class="bg-blue-950/20 border border-blue-900/40 rounded-xl p-3.5 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-blue-300 flex items-center space-x-1.5">
+                  <i class="fas fa-landmark text-blue-400"></i>
+                  <span>Financial Management Link</span>
+                </span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                  ${inv.financialSyncStatus || 'Pending'}
+                </span>
+              </div>
+              <p class="text-[10px] text-gray-400">
+                Financial Voucher Ref: <span class="font-mono text-gray-300">${inv.financialReference || 'Not yet dispatched'}</span>
+              </p>
+              <p class="text-[10px] text-gray-500">
+                Payment status is read-only in the Supplier System and is updated exclusively when DJYum Finance issues disbursement confirmations.
+              </p>
+            </div>
+          `;
+        } else {
+          body.innerHTML = `<div class="p-4 text-center text-red-400">Failed to load invoice details: ${data.message}</div>`;
+        }
+      } catch (err) {
+        body.innerHTML = `<div class="p-4 text-center text-red-400">Network error fetching invoice details: ${err.message}</div>`;
+      }
+    }
+
+    function closeInvoiceDetailsModal() {
+      document.getElementById('invoiceDetailsModal').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

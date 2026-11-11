@@ -1,0 +1,108 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+<div class="flex flex-col md:flex-row min-h-screen">
+
+  {{> sidebar}}
+
+  <main class="flex-1 min-w-0">
+
+    <header class="bg-[#111111] border-b border-yellow-500/20 px-6 py-5">
+      <h2 class="text-xl md:text-2xl font-bold">My Attendance</h2>
+      <p class="text-sm text-gray-500 mt-1">Check in, check out and review your attendance history.</p>
+    </header>
+
+    <section class="p-6 space-y-6">
+
+      {{> flash}}
+
+      {{#if employee}}
+      <div class="rounded-2xl border border-white/5 bg-[#171717] p-5 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="text-sm text-gray-400">Signed in as</p>
+          <p class="font-bold">{{employee.firstName}} {{employee.lastName}}</p>
+          <p class="text-xs text-gray-500">{{employee.position}} · {{employee.department}}</p>
+        </div>
+        <div class="flex gap-2">
+          <form method="POST" action="/attendance/check-in">
+            <button type="submit" class="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Check In</button>
+          </form>
+          <form method="POST" action="/attendance/check-out">
+            <button type="submit" class="rounded-xl border border-white/10 px-5 py-2.5 text-sm font-semibold text-gray-200 hover:bg-white/5">Check Out</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Present</p>
+          <h3 class="text-2xl font-black mt-2 text-green-400">{{summary.present}}</h3>
+        </div>
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Late</p>
+          <h3 class="text-2xl font-black mt-2 text-orange-400">{{summary.late}}</h3>
+        </div>
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Absent</p>
+          <h3 class="text-2xl font-black mt-2 text-red-400">{{summary.absent}}</h3>
+        </div>
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Half day</p>
+          <h3 class="text-2xl font-black mt-2 text-blue-400">{{summary.halfDay}}</h3>
+        </div>
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Late minutes</p>
+          <h3 class="text-2xl font-black mt-2">{{summary.totalLateMinutes}}</h3>
+        </div>
+      </div>
+
+      <form method="GET" action="/my-attendance" class="flex flex-wrap items-end gap-3">
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Month</label>
+          <input type="month" name="month" value="{{month}}"
+                 class="rounded-xl border border-white/10 bg-[#171717] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+        </div>
+        <button type="submit" class="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">View</button>
+      </form>
+
+      <div class="rounded-2xl border border-white/5 bg-[#171717] overflow-hidden">
+        <div class="p-5 border-b border-white/5">
+          <h3 class="font-bold">Attendance History</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-white/5 text-gray-400 uppercase text-[11px]">
+              <tr><th class="px-5 py-3">Date</th><th class="px-5 py-3">Check In</th><th class="px-5 py-3">Check Out</th><th class="px-5 py-3">Status</th><th class="px-5 py-3">Late</th><th class="px-5 py-3">Remarks</th></tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {{#each rows}}
+              <tr>
+                <td class="px-5 py-3">{{formatDate date}}</td>
+                <td class="px-5 py-3 text-gray-400">{{formatTime checkIn}}</td>
+                <td class="px-5 py-3 text-gray-400">{{formatTime checkOut}}</td>
+                <td class="px-5 py-3">
+                  <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Present")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Late")}}bg-orange-500/10 text-orange-400{{else}}{{#if (eq status "Absent")}}bg-red-500/10 text-red-400{{else}}bg-blue-500/10 text-blue-400{{/if}}{{/if}}{{/if}}">{{status}}</span>
+                </td>
+                <td class="px-5 py-3 text-gray-400">{{lateMinutes}} min</td>
+                <td class="px-5 py-3 text-gray-500 text-xs">{{dash remarks}}</td>
+              </tr>
+              {{else}}
+              <tr><td colspan="6" class="px-5 py-12 text-center text-gray-500">No attendance records for this month.</td></tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {{else}}
+      <div class="rounded-2xl border border-white/5 bg-[#171717] p-12 text-center">
+        <div class="text-4xl mb-3">◷</div>
+        <h3 class="font-bold text-lg">No employee record linked</h3>
+        <p class="mt-2 text-sm text-gray-400">Ask HR to connect your account to your employee profile to use check-in and attendance history.</p>
+      </div>
+      {{/if}}
+
+    </section>
+  </main>
+</div>
+
+{{> footer}}

@@ -1,0 +1,201 @@
+{{> head}}
+<body class="bg-black text-gray-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Toast Notification Popups -->
+  {{#if successMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-emerald-950 border border-emerald-800 text-emerald-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-check-circle text-emerald-400"></i>
+      <span class="text-xs font-semibold">{{successMessage}}</span>
+    </div>
+  {{/if}}
+  {{#if errorMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-red-950 border border-red-800 text-red-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-exclamation-triangle text-red-400"></i>
+      <span class="text-xs font-semibold">{{errorMessage}}</span>
+    </div>
+  {{/if}}
+
+  <div class="flex flex-1">
+    <!-- Master Sidebar -->
+    {{> sidebar}}
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-8 overflow-y-auto bg-black">
+      
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-zinc-900/60 border border-zinc-800/80 p-6 rounded-2xl backdrop-blur-md">
+        <div>
+          <div class="flex items-center space-x-3">
+            <h2 class="text-xl font-bold text-white tracking-wide">Goods Receiving & Quality Inspection</h2>
+            <span class="bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Module 7
+            </span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Record supplier shipments, perform physical product inspection (accepted vs damaged vs missing), and verify stock-in eligibility.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <a href="/goods-receipts/receive" class="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center space-x-2">
+            <i class="fas fa-dolly"></i>
+            <span>Record New Delivery</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Deliveries</p>
+            <h3 class="text-2xl font-bold text-white mt-1">{{totalReceipts}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-yellow-400/10 text-yellow-400 flex items-center justify-center">
+            <i class="fas fa-truck-ramp-box text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Accepted for Stock-In</p>
+            <h3 class="text-2xl font-bold text-emerald-400 mt-1">{{totalAcceptedQty}} <span class="text-xs text-gray-500">kg/units</span></h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-400/10 text-emerald-400 flex items-center justify-center">
+            <i class="fas fa-check-double text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Damaged / Rejected</p>
+            <h3 class="text-2xl font-bold text-red-400 mt-1">{{totalDamagedQty}} <span class="text-xs text-gray-500">kg/units</span></h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-red-400/10 text-red-400 flex items-center justify-center">
+            <i class="fas fa-triangle-exclamation text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Missing / Short-Shipped</p>
+            <h3 class="text-2xl font-bold text-amber-400 mt-1">{{totalMissingQty}} <span class="text-xs text-gray-500">kg/units</span></h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center">
+            <i class="fas fa-circle-question text-base"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 mb-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+        <form action="/goods-receipts" method="GET" class="flex-1 w-full flex flex-col md:flex-row items-center gap-3">
+          <div class="relative flex-1 w-full">
+            <i class="fas fa-search absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+            <input type="text" name="search" value="{{searchQuery}}" placeholder="Search receipt number, DR / waybill, or remarks..." class="w-full bg-black border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 transition">
+          </div>
+          <div class="flex items-center space-x-2 w-full md:w-auto">
+            <select name="supplierId" class="bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+              <option value="All">All Suppliers</option>
+              {{#each suppliers}}
+                <option value="{{id}}" {{#eq ../selectedSupplier id}}selected{{/eq}}>{{name}}</option>
+              {{/each}}
+            </select>
+            <select name="syncStatus" class="bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+              <option value="All" {{#eq syncFilter 'All'}}selected{{/eq}}>All Sync Statuses</option>
+              <option value="Pending" {{#eq syncFilter 'Pending'}}selected{{/eq}}>Pending Sync</option>
+              <option value="Synced" {{#eq syncFilter 'Synced'}}selected{{/eq}}>Synced to Inventory</option>
+              <option value="Failed" {{#eq syncFilter 'Failed'}}selected{{/eq}}>Sync Failed</option>
+            </select>
+            <button type="submit" class="bg-zinc-800 hover:bg-zinc-700 text-gray-200 font-bold px-4 py-2.5 rounded-xl text-xs transition">
+              Filter
+            </button>
+            {{#if searchQuery}}
+              <a href="/goods-receipts" class="text-xs text-gray-400 hover:text-white px-2 py-2">Reset</a>
+            {{/if}}
+          </div>
+        </form>
+      </div>
+
+      <!-- Receipts Table -->
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+        <div class="p-5 border-b border-zinc-800 flex justify-between items-center">
+          <h3 class="text-xs font-bold text-yellow-400 uppercase tracking-wider">Goods Receipts Registry</h3>
+          <span class="text-xs text-gray-500">{{receipts.length}} delivery record(s)</span>
+        </div>
+
+        {{#if receipts.length}}
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-zinc-800 text-gray-400 uppercase tracking-wider text-[10px] bg-black/40">
+                  <th class="py-3 px-4">Receipt #</th>
+                  <th class="py-3 px-4">Delivery Date</th>
+                  <th class="py-3 px-4">PO Reference</th>
+                  <th class="py-3 px-4">Supplier</th>
+                  <th class="py-3 px-4">DR / Waybill</th>
+                  <th class="py-3 px-4 text-center">Accepted</th>
+                  <th class="py-3 px-4 text-center">Damaged</th>
+                  <th class="py-3 px-4 text-center">Inv Sync</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-800/60">
+                {{#each receipts}}
+                  <tr class="hover:bg-zinc-800/40 transition">
+                    <td class="py-3.5 px-4 font-mono font-bold text-yellow-400">
+                      <a href="/goods-receipts/view/{{id}}" class="hover:underline">{{receiptNumber}}</a>
+                    </td>
+                    <td class="py-3.5 px-4 text-gray-300">{{formatDate deliveryDate}}</td>
+                    <td class="py-3.5 px-4">
+                      <a href="/purchase-orders/view/{{PurchaseOrder.id}}" class="font-mono text-yellow-400 hover:underline">
+                        {{PurchaseOrder.poNumber}}
+                      </a>
+                    </td>
+                    <td class="py-3.5 px-4 font-bold text-white">{{Supplier.name}}</td>
+                    <td class="py-3.5 px-4 font-mono text-gray-300">
+                      {{#if deliveryReference}}{{deliveryReference}}{{else}}<span class="text-gray-500 italic">None</span>{{/if}}
+                    </td>
+                    <td class="py-3.5 px-4 text-center font-mono font-bold text-emerald-400">
+                      {{totalAcceptedQty}}
+                    </td>
+                    <td class="py-3.5 px-4 text-center font-mono font-bold {{#if (gt totalDamagedQty 0)}}text-red-400{{else}}text-gray-500{{/if}}">
+                      {{totalDamagedQty}}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      {{{statusBadge inventorySyncStatus}}}
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                      <a href="/goods-receipts/view/{{id}}" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 hover:text-white rounded-lg transition inline-flex items-center space-x-1">
+                        <i class="fas fa-file-invoice text-xs"></i>
+                        <span>Inspect</span>
+                      </a>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{else}}
+          <div class="p-12 text-center text-gray-500">
+            <i class="fas fa-truck-ramp-box text-3xl mb-3 text-zinc-700"></i>
+            <p class="text-sm">No goods receipts on record.</p>
+            <a href="/goods-receipts/receive" class="mt-4 inline-block bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2 rounded-xl text-xs transition">
+              + Receive Shipment
+            </a>
+          </div>
+        {{/if}}
+      </div>
+    </main>
+  </div>
+
+  <footer class="bg-zinc-950 border-t border-zinc-800/80 px-8 py-4 text-center text-xs text-gray-600">
+    © 2026 DJ's FoodHub. All rights reserved. Supplier Management Module v2.0.
+  </footer>
+
+  <script>
+    setTimeout(() => {
+      const toast = document.getElementById('toastMessage');
+      if (toast) {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 400);
+      }
+    }, 3500);
+  </script>
+
+</body>
+</html>

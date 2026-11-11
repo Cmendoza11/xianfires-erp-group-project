@@ -1,0 +1,122 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+<div class="flex flex-col md:flex-row min-h-screen">
+
+  {{> sidebar}}
+
+  <main class="flex-1 min-w-0">
+
+    <header class="bg-[#111111] border-b border-yellow-500/20 px-6 py-5">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold">Payroll Management</h2>
+          <p class="text-sm text-gray-500 mt-1">Salary records, deductions and payslip generation.</p>
+        </div>
+        <a href="/payroll/create" class="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300">+ Create Payroll</a>
+      </div>
+    </header>
+
+    <section class="p-6 space-y-6">
+
+      {{> flash}}
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs uppercase tracking-wider text-gray-500">Records</p>
+          <h3 class="text-2xl font-black mt-2">{{summary.count}}</h3>
+        </div>
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs uppercase tracking-wider text-gray-500">Total net pay</p>
+          <h3 class="text-2xl font-black mt-2 text-yellow-400">{{formatMoney summary.totalNet}}</h3>
+        </div>
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs uppercase tracking-wider text-gray-500">Draft</p>
+          <h3 class="text-2xl font-black mt-2 text-gray-300">{{summary.draft}}</h3>
+        </div>
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs uppercase tracking-wider text-gray-500">Paid</p>
+          <h3 class="text-2xl font-black mt-2 text-green-400">{{summary.paid}}</h3>
+        </div>
+      </div>
+
+      <form method="GET" action="/payroll" class="rounded-2xl border border-white/5 bg-[#171717] p-4 flex flex-wrap items-end gap-3">
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Period month</label>
+          <input type="month" name="month" value="{{month}}"
+                 class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Status</label>
+          <select name="status" class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+            <option value="">All statuses</option>
+            {{#each statuses}}
+            <option value="{{this}}" {{#if (eq this ../status)}}selected{{/if}}>{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <button type="submit" class="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Filter</button>
+        <a href="/reports/payroll?from={{month}}-01&to={{month}}-31" class="ml-auto rounded-xl border border-white/10 px-4 py-2.5 text-xs text-gray-300 hover:bg-white/5">Payroll report →</a>
+      </form>
+
+      <div class="rounded-2xl border border-white/5 bg-[#171717] overflow-hidden">
+        <div class="p-5 border-b border-white/5">
+          <h3 class="font-bold">Payroll Records</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-white/5 text-gray-400 uppercase text-[11px]">
+              <tr>
+                <th class="px-5 py-3">Employee</th>
+                <th class="px-5 py-3">Period</th>
+                <th class="px-5 py-3">Basic</th>
+                <th class="px-5 py-3">Allowances</th>
+                <th class="px-5 py-3">Deductions</th>
+                <th class="px-5 py-3">Net Pay</th>
+                <th class="px-5 py-3">Status</th>
+                <th class="px-5 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {{#each rows}}
+              <tr class="hover:bg-white/5">
+                <td class="px-5 py-4">
+                  <p class="font-medium">{{employee.firstName}} {{employee.lastName}}</p>
+                  <p class="text-xs text-gray-500">{{employee.employeeCode}} · {{employee.department}}</p>
+                </td>
+                <td class="px-5 py-4 text-xs text-gray-400">{{formatDate periodStart}} → {{formatDate periodEnd}}</td>
+                <td class="px-5 py-4 text-gray-400">{{formatMoney basicSalary}}</td>
+                <td class="px-5 py-4 text-gray-400">{{formatMoney allowances}}</td>
+                <td class="px-5 py-4 text-gray-400">{{formatMoney deductions}}</td>
+                <td class="px-5 py-4 font-semibold text-yellow-400">{{formatMoney netSalary}}</td>
+                <td class="px-5 py-4">
+                  <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Paid")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Processed")}}bg-blue-500/10 text-blue-400{{else}}bg-white/5 text-gray-300{{/if}}{{/if}}">{{status}}</span>
+                </td>
+                <td class="px-5 py-4">
+                  <div class="flex items-center justify-end gap-2">
+                    <a href="/payroll/{{id}}" class="rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black">Payslip</a>
+                    <form action="/payroll/{{id}}/delete" method="POST" onsubmit="return confirm('Delete this payroll record?');">
+                      <button type="submit" class="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 hover:bg-red-500 hover:text-white">Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {{else}}
+              <tr>
+                <td colspan="8" class="px-5 py-12 text-center">
+                  <div class="text-4xl mb-3">₱</div>
+                  <p class="text-gray-400">No payroll records for this period.</p>
+                  <a href="/payroll/create" class="mt-4 inline-block rounded-xl bg-yellow-400 px-5 py-2.5 text-xs font-bold text-black hover:bg-yellow-300">+ Create Payroll</a>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+{{> footer}}

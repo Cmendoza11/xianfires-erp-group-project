@@ -1,0 +1,116 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+<div class="flex flex-col md:flex-row min-h-screen">
+
+  {{> sidebar}}
+
+  <main class="flex-1 min-w-0">
+
+    <header class="bg-[#111111] border-b border-yellow-500/20 px-6 py-5">
+      <h2 class="text-xl md:text-2xl font-bold">User Accounts</h2>
+      <p class="text-sm text-gray-500 mt-1">Create accounts, control roles and reset passwords. Public registrations start as employees.</p>
+    </header>
+
+    <section class="p-6 space-y-6">
+
+      {{> flash}}
+
+      <form method="POST" action="/users" class="rounded-2xl border border-white/5 bg-[#171717] p-5">
+        <h3 class="font-bold mb-4">Create Account</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <input name="name" required placeholder="Full name"
+                 class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+          <input type="email" name="email" required placeholder="Email address"
+                 class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+          <select name="role" class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+            {{#each roles}}
+            <option value="{{this}}">{{this}}</option>
+            {{/each}}
+          </select>
+          <input type="password" name="password" required minlength="8" placeholder="Temporary password (8+ chars)"
+                 class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+          <button type="submit" class="rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Create</button>
+        </div>
+
+        <p class="mt-3 text-xs text-gray-500">
+          The account is linked automatically when an employee record uses the same email.
+          Share the temporary password securely — users can change it from My Profile.
+        </p>
+      </form>
+
+      <div class="rounded-2xl border border-white/5 bg-[#171717] overflow-hidden">
+        <div class="p-5 border-b border-white/5 flex items-center justify-between">
+          <h3 class="font-bold">Accounts</h3>
+          <p class="text-xs text-gray-500">{{users.length}} account(s)</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-white/5 text-gray-400 uppercase text-[11px]">
+              <tr>
+                <th class="px-5 py-3">Name</th>
+                <th class="px-5 py-3">Email</th>
+                <th class="px-5 py-3">Linked Employee</th>
+                <th class="px-5 py-3">Role</th>
+                <th class="px-5 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {{#each users}}
+              <tr class="align-top hover:bg-white/5">
+                <td class="px-5 py-4 font-medium">
+                  {{name}}
+                  {{#if (eq id ../currentUser.id)}}<span class="ml-2 text-[10px] uppercase tracking-wider text-yellow-400">You</span>{{/if}}
+                </td>
+                <td class="px-5 py-4 text-gray-400 break-all">{{email}}</td>
+                <td class="px-5 py-4 text-gray-400">
+                  {{#if employee}}{{employee.firstName}} {{employee.lastName}}{{else}}<span class="text-gray-600">Not linked</span>{{/if}}
+                </td>
+                <td class="px-5 py-4">
+                  <form method="POST" action="/users/{{id}}/role" class="flex items-center gap-2">
+                    <select name="role" class="rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
+                      {{#each ../roles}}
+                      <option value="{{this}}" {{#if (eq this ../role)}}selected{{/if}}>{{this}}</option>
+                      {{/each}}
+                    </select>
+                    <button type="submit" class="rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black">Save</button>
+                  </form>
+                </td>
+                <td class="px-5 py-4 text-right">
+                  <details class="inline-block text-left">
+                    <summary class="cursor-pointer list-none rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-300 hover:bg-white/10">Manage</summary>
+
+                    <div class="mt-2 w-60 space-y-3 rounded-xl border border-white/10 bg-[#0F0F0F] p-3">
+                      <form method="POST" action="/users/{{id}}/password" class="space-y-2">
+                        <label class="block text-[10px] uppercase tracking-wider text-gray-500">Reset password</label>
+                        <input type="password" name="newPassword" required minlength="8" placeholder="New password (8+ chars)"
+                               class="w-full rounded-lg border border-white/10 bg-[#171717] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
+                        <button type="submit" class="w-full rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black">Reset Password</button>
+                      </form>
+
+                      {{#unless (eq id ../currentUser.id)}}
+                      <form action="/users/{{id}}/delete" method="POST" onsubmit="return confirm('Delete this account?');">
+                        <button type="submit" class="w-full rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 hover:bg-red-500 hover:text-white">Delete Account</button>
+                      </form>
+                      {{/unless}}
+                    </div>
+                  </details>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+
+        <p class="px-5 py-4 text-xs text-gray-500 border-t border-white/5">
+          At least one administrator must remain. You cannot remove your own administrator access or delete your own account.
+        </p>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+{{> footer}}

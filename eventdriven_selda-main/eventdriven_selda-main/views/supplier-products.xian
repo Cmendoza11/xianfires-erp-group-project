@@ -1,0 +1,430 @@
+{{> head}}
+<body class="bg-black text-gray-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Toast Notification Popups -->
+  {{#if successMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-emerald-950 border border-emerald-800 text-emerald-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-check-circle text-emerald-400"></i>
+      <span class="text-xs font-semibold">{{successMessage}}</span>
+    </div>
+  {{/if}}
+  {{#if errorMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-red-950 border border-red-800 text-red-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-exclamation-triangle text-red-400"></i>
+      <span class="text-xs font-semibold">{{errorMessage}}</span>
+    </div>
+  {{/if}}
+
+  <div class="flex flex-1">
+    <!-- Master Sidebar -->
+    {{> sidebar}}
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto bg-black">
+      
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-zinc-900/60 border border-zinc-800/80 p-6 rounded-2xl backdrop-blur-md">
+        <div>
+          <div class="flex items-center space-x-3">
+            <h2 class="text-xl font-bold text-white tracking-wide">Supplier Products & Pricing</h2>
+            <span class="bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Module 3
+            </span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Manage vendor product catalogs, compare supplier prices, assign primary suppliers, and set minimum order quantities.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="openAddProductModal()" class="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center space-x-2">
+            <i class="fas fa-plus"></i>
+            <span>Add Product Offer</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs: Catalog vs Price Comparison -->
+      <div class="flex space-x-2 border-b border-zinc-800 pb-3 mb-6">
+        <button onclick="switchTab('catalog')" id="tabBtnCatalog" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-yellow-400 text-black shadow">
+          <i class="fas fa-boxes-stacked mr-1.5"></i> Catalog Offerings ({{products.length}})
+        </button>
+        <button onclick="switchTab('comparison')" id="tabBtnComparison" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-zinc-900 text-gray-400 hover:text-white border border-zinc-800">
+          <i class="fas fa-scale-balanced mr-1.5"></i> Price Comparison Matrix ({{comparisonList.length}})
+        </button>
+      </div>
+
+      <!-- TAB 1: CATALOG OFFERINGS -->
+      <div id="catalogTab">
+        <!-- Search & Filter Controls -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 mb-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <form action="/supplier-products" method="GET" class="flex-1 w-full flex flex-col md:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+              <i class="fas fa-search absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+              <input type="text" name="search" value="{{searchQuery}}" placeholder="Search product or ingredient name..." class="w-full bg-black border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 transition">
+            </div>
+            <div class="flex items-center space-x-2 w-full md:w-auto">
+              <!-- Filter by Supplier -->
+              <select name="supplierId" class="bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+                <option value="All">All Suppliers</option>
+                {{#each suppliers}}
+                  <option value="{{id}}" {{#eq ../selectedSupplier id}}selected{{/eq}}>{{name}}</option>
+                {{/each}}
+              </select>
+              <!-- Filter by Availability -->
+              <select name="availability" class="bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
+                <option value="All" {{#eq availabilityFilter 'All'}}selected{{/eq}}>All Availability</option>
+                <option value="true" {{#eq availabilityFilter 'true'}}selected{{/eq}}>Available Only</option>
+                <option value="false" {{#eq availabilityFilter 'false'}}selected{{/eq}}>Out of Stock</option>
+              </select>
+              <button type="submit" class="bg-zinc-800 hover:bg-zinc-700 text-gray-200 font-bold px-4 py-2.5 rounded-xl text-xs transition">
+                Filter
+              </button>
+              {{#if searchQuery}}
+                <a href="/supplier-products" class="text-xs text-gray-400 hover:text-white px-2 py-2">Reset</a>
+              {{/if}}
+            </div>
+          </form>
+        </div>
+
+        <!-- Products Table -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+          <div class="p-5 border-b border-zinc-800 flex justify-between items-center">
+            <h3 class="text-xs font-bold text-yellow-400 uppercase tracking-wider">Product Offerings Catalog</h3>
+            <span class="text-xs text-gray-500">Total {{products.length}} item(s)</span>
+          </div>
+
+          {{#if products.length}}
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-zinc-800 text-gray-400 uppercase tracking-wider text-[10px] bg-black/40">
+                    <th class="py-3 px-4">Inv ID</th>
+                    <th class="py-3 px-4">Product Name</th>
+                    <th class="py-3 px-4">Supplier</th>
+                    <th class="py-3 px-4">Unit Price</th>
+                    <th class="py-3 px-4">MOQ</th>
+                    <th class="py-3 px-4 text-center">Primary</th>
+                    <th class="py-3 px-4 text-center">Availability</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800/60">
+                  {{#each products}}
+                    <tr class="hover:bg-zinc-800/40 transition">
+                      <td class="py-3.5 px-4 font-mono text-gray-400">#{{productId}}</td>
+                      <td class="py-3.5 px-4 font-bold text-white">{{productName}}</td>
+                      <td class="py-3.5 px-4">
+                        <span class="font-medium text-yellow-400">{{Supplier.name}}</span>
+                        <span class="block text-[10px] text-gray-500 font-mono">{{Supplier.supplierCode}}</span>
+                      </td>
+                      <td class="py-3.5 px-4 font-mono text-white font-bold text-sm">
+                        {{formatCurrency supplierPrice}} <span class="text-[10px] font-normal text-gray-400">/{{unit}}</span>
+                      </td>
+                      <td class="py-3.5 px-4 text-gray-300 font-mono">
+                        {{minOrderQty}} {{unit}}
+                      </td>
+                      <td class="py-3.5 px-4 text-center">
+                        {{#if isPrimarySupplier}}
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-400/20 text-yellow-400 border border-yellow-400/40">
+                            ★ Primary
+                          </span>
+                        {{else}}
+                          <form action="/supplier-products/set-primary/{{id}}" method="POST" class="inline">
+                            <button type="submit" class="text-[10px] text-gray-500 hover:text-yellow-400 transition" title="Click to make primary vendor">
+                              Make Primary
+                            </button>
+                          </form>
+                        {{/if}}
+                      </td>
+                      <td class="py-3.5 px-4 text-center">
+                        {{#if availability}}
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800">
+                            In Stock
+                          </span>
+                        {{else}}
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-950/80 text-red-400 border border-red-800">
+                            Unavailable
+                          </span>
+                        {{/if}}
+                      </td>
+                      <td class="py-3.5 px-4 text-right">
+                        <div class="flex items-center justify-end space-x-2">
+                          <button onclick="openEditProductModal('{{id}}', '{{productName}}', '{{supplierPrice}}', '{{minOrderQty}}', '{{unit}}', '{{availability}}', '{{isPrimarySupplier}}')" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-yellow-400 rounded-lg transition" title="Edit Offering">
+                            <i class="fas fa-edit text-xs"></i>
+                          </button>
+                          <form action="/supplier-products/delete/{{id}}" method="POST" class="inline" onsubmit="return confirm('Remove this product offering?')">
+                            <button type="submit" class="p-1.5 bg-zinc-800 hover:bg-red-950 text-gray-400 hover:text-red-400 rounded-lg transition" title="Remove Offering">
+                              <i class="fas fa-trash text-xs"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          {{else}}
+            <div class="p-12 text-center text-gray-500">
+              <i class="fas fa-boxes-stacked text-3xl mb-3 text-zinc-700"></i>
+              <p class="text-sm">No supplier products found in the catalog.</p>
+              <button onclick="openAddProductModal()" class="mt-4 bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2 rounded-xl text-xs transition">
+                + Add First Product Offer
+              </button>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+      <!-- TAB 2: PRICE COMPARISON MATRIX -->
+      <div id="comparisonTab" class="hidden">
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 shadow-xl mb-8">
+          <div class="border-b border-zinc-800 pb-4 mb-6">
+            <h3 class="text-sm font-bold text-yellow-400 uppercase tracking-wider flex items-center space-x-2">
+              <i class="fas fa-scale-balanced"></i>
+              <span>Multi-Vendor Price Comparison Matrix</span>
+            </h3>
+            <p class="text-xs text-gray-400 mt-1">Compare prices from different suppliers for each ingredient to select the most cost-effective vendor.</p>
+          </div>
+
+          {{#if comparisonList.length}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {{#each comparisonList}}
+                <div class="bg-black/60 border border-zinc-800 rounded-2xl p-5 shadow flex flex-col justify-between hover:border-zinc-700 transition">
+                  <div>
+                    <div class="flex justify-between items-start mb-3 border-b border-zinc-800/80 pb-3">
+                      <div>
+                        <span class="text-[10px] font-mono text-gray-500">Inventory ID #{{productId}}</span>
+                        <h4 class="text-sm font-bold text-white">{{productName}}</h4>
+                      </div>
+                      <span class="bg-zinc-800 text-gray-300 px-2.5 py-1 rounded-full text-[11px] font-mono">
+                        {{offers.length}} supplier(s)
+                      </span>
+                    </div>
+
+                    <!-- Price spread summary -->
+                    <div class="flex items-center justify-between bg-zinc-900/80 px-3 py-2 rounded-xl mb-3 text-xs">
+                      <div>
+                        <span class="text-[10px] text-gray-500 uppercase">Lowest Price:</span>
+                        <p class="text-emerald-400 font-bold font-mono">{{formatCurrency lowestPrice}}</p>
+                      </div>
+                      <div class="text-right">
+                        <span class="text-[10px] text-gray-500 uppercase">Highest Price:</span>
+                        <p class="text-red-400 font-bold font-mono">{{formatCurrency highestPrice}}</p>
+                      </div>
+                    </div>
+
+                    <!-- List of vendor offers -->
+                    <div class="space-y-2">
+                      <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Vendor Quotes:</p>
+                      {{#each offers}}
+                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-black/40 border border-zinc-800/80 text-xs {{#if isPrimary}}border-yellow-400/30 bg-yellow-400/5{{/if}}">
+                          <div>
+                            <span class="font-medium text-white">{{supplierName}}</span>
+                            {{#if isPrimary}}
+                              <span class="ml-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-yellow-400/20 text-yellow-400">★ Primary</span>
+                            {{/if}}
+                            <p class="text-[10px] text-gray-500">MOQ: {{minOrderQty}} {{../unit}}</p>
+                          </div>
+                          <div class="text-right">
+                            <span class="font-mono font-bold text-yellow-400">{{formatCurrency price}}</span>
+                            <span class="text-[10px] text-gray-500">/{{../unit}}</span>
+                            {{#unless isPrimary}}
+                              <form action="/supplier-products/set-primary/{{id}}" method="POST" class="mt-0.5">
+                                <button type="submit" class="text-[9px] text-gray-400 hover:text-yellow-400 underline">Set as Primary</button>
+                              </form>
+                            {{/unless}}
+                          </div>
+                        </div>
+                      {{/each}}
+                    </div>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="p-12 text-center text-gray-500">
+              <p class="text-sm">No comparison data available yet.</p>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-zinc-950 border-t border-zinc-800/80 px-8 py-4 text-center text-xs text-gray-600">
+    © 2026 DJ's FoodHub. All rights reserved. Supplier Management Module v2.0.
+  </footer>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Add Product Offering Modal -->
+  <div id="addProductModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+      <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-3">
+        <h3 class="text-sm font-bold text-yellow-400 uppercase tracking-wider flex items-center space-x-2">
+          <i class="fas fa-plus-circle"></i>
+          <span>Add Supplier Product Offer</span>
+        </h3>
+        <button onclick="closeAddProductModal()" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+      <form action="/supplier-products/add" method="POST" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 mb-1">Select Supplier *</label>
+          <select name="supplierId" required class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+            <option value="">-- Choose Supplier --</option>
+            {{#each suppliers}}
+              <option value="{{id}}">{{name}} ({{supplierCode}})</option>
+            {{/each}}
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Inventory Product ID</label>
+            <input type="number" name="productId" placeholder="e.g. 101" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Product Name *</label>
+            <input type="text" name="productName" placeholder="e.g. Ground Pork" required class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Supplier Price (₱) *</label>
+            <input type="number" step="0.01" name="supplierPrice" placeholder="0.00" required class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Minimum Order Qty</label>
+            <input type="number" step="0.01" name="minOrderQty" value="1.00" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Unit</label>
+            <select name="unit" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              <option value="kg" selected>kg (Kilogram)</option>
+              <option value="pcs">pcs (Pieces)</option>
+              <option value="packs">packs</option>
+              <option value="liters">liters</option>
+              <option value="tins">tins</option>
+              <option value="boxes">boxes</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center space-x-6 pt-2">
+          <label class="flex items-center space-x-2 text-xs text-gray-300 cursor-pointer">
+            <input type="checkbox" name="isPrimarySupplier" class="rounded bg-black border-zinc-800 text-yellow-400 focus:ring-0">
+            <span>Set as Primary Supplier for this product</span>
+          </label>
+        </div>
+        <div class="flex justify-end space-x-3 pt-4 border-t border-zinc-800">
+          <button type="button" onclick="closeAddProductModal()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-gray-300 text-xs font-bold rounded-xl transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold rounded-xl transition shadow-lg">Save Offering</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Product Offering Modal -->
+  <div id="editProductModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+      <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-3">
+        <h3 class="text-sm font-bold text-yellow-400 uppercase tracking-wider flex items-center space-x-2">
+          <i class="fas fa-edit"></i>
+          <span>Edit Product Offering</span>
+        </h3>
+        <button onclick="closeEditProductModal()" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+      <form id="editProductForm" action="/supplier-products/update/" method="POST" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 mb-1">Product Name *</label>
+          <input type="text" id="editProductName" name="productName" required class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Supplier Price (₱) *</label>
+            <input type="number" step="0.01" id="editSupplierPrice" name="supplierPrice" required class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Min Order Qty</label>
+            <input type="number" step="0.01" id="editMinOrderQty" name="minOrderQty" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Unit</label>
+            <input type="text" id="editUnit" name="unit" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 pt-2">
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Availability</label>
+            <select id="editAvailability" name="availability" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              <option value="true">In Stock</option>
+              <option value="false">Out of Stock</option>
+            </select>
+          </div>
+          <div class="flex items-center pt-5">
+            <label class="flex items-center space-x-2 text-xs text-gray-300 cursor-pointer">
+              <input type="checkbox" id="editIsPrimary" name="isPrimarySupplier" class="rounded bg-black border-zinc-800 text-yellow-400 focus:ring-0">
+              <span>Primary Supplier</span>
+            </label>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-3 pt-4 border-t border-zinc-800">
+          <button type="button" onclick="closeEditProductModal()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-gray-300 text-xs font-bold rounded-xl transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold rounded-xl transition shadow-lg">Update Offering</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      if (tab === 'catalog') {
+        document.getElementById('catalogTab').classList.remove('hidden');
+        document.getElementById('comparisonTab').classList.add('hidden');
+        document.getElementById('tabBtnCatalog').className = 'px-4 py-2 rounded-xl text-xs font-bold transition bg-yellow-400 text-black shadow';
+        document.getElementById('tabBtnComparison').className = 'px-4 py-2 rounded-xl text-xs font-bold transition bg-zinc-900 text-gray-400 hover:text-white border border-zinc-800';
+      } else {
+        document.getElementById('catalogTab').classList.add('hidden');
+        document.getElementById('comparisonTab').classList.remove('hidden');
+        document.getElementById('tabBtnComparison').className = 'px-4 py-2 rounded-xl text-xs font-bold transition bg-yellow-400 text-black shadow';
+        document.getElementById('tabBtnCatalog').className = 'px-4 py-2 rounded-xl text-xs font-bold transition bg-zinc-900 text-gray-400 hover:text-white border border-zinc-800';
+      }
+    }
+
+    function openAddProductModal() {
+      document.getElementById('addProductModal').classList.remove('hidden');
+      document.getElementById('addProductModal').classList.add('flex');
+    }
+
+    function closeAddProductModal() {
+      document.getElementById('addProductModal').classList.remove('flex');
+      document.getElementById('addProductModal').classList.add('hidden');
+    }
+
+    function openEditProductModal(id, name, price, moq, unit, availability, isPrimary) {
+      document.getElementById('editProductForm').action = '/supplier-products/update/' + id;
+      document.getElementById('editProductName').value = name;
+      document.getElementById('editSupplierPrice').value = price;
+      document.getElementById('editMinOrderQty').value = moq;
+      document.getElementById('editUnit').value = unit;
+      document.getElementById('editAvailability').value = availability === 'true' || availability === true ? 'true' : 'false';
+      document.getElementById('editIsPrimary').checked = isPrimary === 'true' || isPrimary === true;
+      document.getElementById('editProductModal').classList.remove('hidden');
+      document.getElementById('editProductModal').classList.add('flex');
+    }
+
+    function closeEditProductModal() {
+      document.getElementById('editProductModal').classList.remove('flex');
+      document.getElementById('editProductModal').classList.add('hidden');
+    }
+
+    setTimeout(() => {
+      const toast = document.getElementById('toastMessage');
+      if (toast) {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 400);
+      }
+    }, 3500);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,65 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+
+<div class="min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-md">
+
+    <div class="flex items-center gap-3 mb-8">
+      <div class="w-11 h-11 rounded-xl bg-yellow-400 text-black flex items-center justify-center font-black">DJ</div>
+      <div>
+        <p class="font-bold text-yellow-400">DJs HRMS</p>
+        <p class="text-xs text-gray-500">XianFire ERP System</p>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-white/5 bg-[#141414] p-6 sm:p-8">
+      <h2 class="text-2xl font-bold">Create your account</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-6">
+        New accounts are created with employee access. HR can elevate your role if needed.
+      </p>
+
+      <div class="space-y-4 mb-5">{{> flash}}</div>
+
+      <form method="POST" action="/register" class="space-y-4">
+        <div>
+          <label for="name" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Full name</label>
+          <input id="name" type="text" name="name" required autocomplete="name" placeholder="Juan Dela Cruz"
+                 class="w-full rounded-xl border border-white/10 bg-[#171717] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+        </div>
+
+        <div>
+          <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Work email</label>
+          <input id="email" type="email" name="email" required autocomplete="email" placeholder="you@company.com"
+                 class="w-full rounded-xl border border-white/10 bg-[#171717] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+          <p class="mt-2 text-[11px] text-gray-600">Use the email on your employee record to link your profile automatically.</p>
+        </div>
+
+        <div>
+          <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Password</label>
+          <input id="password" type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters"
+                 class="w-full rounded-xl border border-white/10 bg-[#171717] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+        </div>
+
+        <div>
+          <label for="confirmPassword" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Confirm password</label>
+          <input id="confirmPassword" type="password" name="confirmPassword" required minlength="8" autocomplete="new-password" placeholder="Repeat your password"
+                 class="w-full rounded-xl border border-white/10 bg-[#171717] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+        </div>
+
+        <button type="submit" class="w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-bold text-black transition hover:bg-yellow-300">
+          Create account
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-sm text-gray-500">
+        Already have an account?
+        <a href="/login" class="font-semibold text-yellow-400 hover:text-yellow-300">Sign in</a>
+      </p>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

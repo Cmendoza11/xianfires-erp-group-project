@@ -1,0 +1,165 @@
+{{> head}}
+<body>
+{{> adminHeader}}
+<div class="flex">
+  {{> adminNav}}
+  <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
+    <div class="max-w-[75rem] mx-auto space-y-4">
+      <div class="flex flex-wrap items-end justify-between gap-4 pb-2">
+        <div class="flex-1 basis-80 min-w-0">
+          <h1 class="text-[1.375rem] font-semibold tracking-tight">{{#if company}}{{ company }}{{else}}Dashboard{{/if}}</h1>
+          <p class="text-[13px] text-muted mt-0.5">{{ fiscalYear }} · {{ period.from }} to {{ period.to }} · {{ currency }}{{#if lockDate}} · <span class="whitespace-nowrap">Books closed through {{ lockDate }}</span>{{/if}}</p>
+        </div>
+        {{#if can.write}}
+        <div class="flex flex-wrap gap-1">
+          <a href="{{ urls.accountingJournalNew }}" class="btn btn-ghost">Journal entry</a>
+          <a href="{{ urls.billNew }}" class="btn btn-ghost">New bill</a>
+          <a href="{{ urls.invoiceNew }}" class="btn btn-primary">New invoice</a>
+        </div>
+        {{/if}}
+      </div>
+
+      <section class="card metric-band" aria-label="Key figures">
+        <div class="metric">
+          <div class="metric-label">Cash and bank</div>
+          <div class="metric-value">{{ formatSignedMoney cash.total }}</div>
+          <div class="metric-sub">{{ cash.accounts.length }} account(s)</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Revenue</div>
+          <div class="metric-value">{{ formatSignedMoney revenue }}</div>
+          <div class="metric-sub">{{ fiscalYear }} to date</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Expenses</div>
+          <div class="metric-value">{{ formatSignedMoney expenses }}</div>
+          <div class="metric-sub">{{ fiscalYear }} to date</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">{{#if isLoss}}Net loss{{else}}Net income{{/if}}</div>
+          <div class="metric-value {{#if isLoss}}text-destructive{{/if}}">{{ formatSignedMoney netIncome }}</div>
+          <div class="metric-sub">{{#if netMargin}}{{ netMargin }} net margin · {{/if}}<a href="{{ urls.reportIncomeStatement }}" class="hover:underline">Income statement</a></div>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+        <section class="card xl:col-span-8 flex flex-col">
+          <div class="card-header flex flex-wrap items-center justify-between gap-3">
+            <h2 class="card-title">Revenue and expenses</h2>
+            <div class="flex items-center gap-4">
+              <div class="chart-legend">
+                <span><i class="swatch slot-1"></i>Revenue</span>
+                <span><i class="swatch slot-2"></i>Expenses</span>
+              </div>
+              <div class="segmented" role="group" aria-label="Choose chart or table view">
+                <button type="button" class="active" data-view="chart" aria-pressed="true">Chart</button>
+                <button type="button" data-view="table" aria-pressed="false">Table</button>
+              </div>
+            </div>
+          </div>
+          <div class="card-content flex-1 flex flex-col">
+            <div class="chart" data-trend-chart data-view-panel="chart" role="img" aria-label="Line chart of revenue and expenses by month. Switch to the table view for the exact figures."></div>
+            <div class="overflow-x-auto" data-view-panel="table" hidden>
+              <table class="data-table">
+                <thead><tr><th>Month</th><th class="num">Revenue</th><th class="num">Expenses</th><th class="num">Net</th></tr></thead>
+                <tbody>
+                  {{#each monthly}}
+                  <tr>
+                    <td class="whitespace-nowrap">{{ label }}</td>
+                    <td class="num">{{ formatSignedMoney revenue }}</td>
+                    <td class="num">{{ formatSignedMoney expense }}</td>
+                    <td class="num {{#if isLoss}}text-destructive{{/if}}">{{ formatSignedMoney net }}</td>
+                  </tr>
+                  {{else}}
+                  <tr><td colspan="4" class="text-center text-muted">No revenue or expenses posted in this fiscal year yet</td></tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="card xl:col-span-4 px-5 py-1" aria-label="Open balances and cash">
+          <div class="stat-block">
+            <div class="stat-row"><span>Receivables</span><b>{{ formatMoney receivables.outstanding }}</b></div>
+            <div class="metric-sub">{{ receivables.openCount }} open invoice(s){{#if (gt receivables.overdue 0)}} · <span class="text-destructive">{{ formatMoney receivables.overdue }} overdue</span>{{/if}}</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-row"><span>Payables</span><b>{{ formatMoney payables.outstanding }}</b></div>
+            <div class="metric-sub">{{ payables.openCount }} open bill(s){{#if (gt payables.overdue 0)}} · <span class="text-destructive">{{ formatMoney payables.overdue }} overdue</span>{{/if}}</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-row"><span>Cash by account</span></div>
+            <div class="split-bar" aria-hidden="true">
+              {{#each cash.accounts}}{{#if share}}<span class="slot-{{ slot }}" style="width: {{ share }}%" title="{{ name }}: {{ formatSignedMoney balance }}"></span>{{/if}}{{/each}}
+            </div>
+            <ul class="cash-legend">
+              {{#each cash.accounts}}
+              <li><span class="swatch slot-{{ slot }}"></span><a href="{{ ledgerUrl }}" class="hover:underline">{{ name }}</a><span class="amount">{{ formatSignedMoney balance }}</span></li>
+              {{else}}
+              <li class="text-muted">No cash or bank accounts yet</li>
+              {{/each}}
+            </ul>
+          </div>
+        </section>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4">
+        <section class="card md:col-span-2 xl:col-span-6">
+          <div class="card-header flex justify-between items-center">
+            <h2 class="card-title">Recent journal entries</h2>
+            <a href="{{ urls.accountingJournalGrid }}" class="text-[13px] text-muted hover:text-ink">View all</a>
+          </div>
+          <div class="card-content">
+            {{#each recentEntries}}
+            <a href="{{ viewUrl }}" class="list-row">
+              <span class="min-w-0">
+                <span class="list-row-title block">{{ description }}</span>
+                <span class="list-row-sub">{{ entryNumber }} · {{ entryDate }} · {{ entryTypeLabel }}</span>
+              </span>
+              <span class="list-row-amount">{{ formatMoney totalDebit }}</span>
+            </a>
+            {{else}}
+            <p class="list-empty">No journal entries yet</p>
+            {{/each}}
+          </div>
+        </section>
+        <section class="card xl:col-span-3">
+          <div class="card-header"><h2 class="card-title">Overdue invoices</h2></div>
+          <div class="card-content">
+            {{#each overdueInvoices}}
+            <a href="{{ viewUrl }}" class="list-row">
+              <span class="min-w-0">
+                <span class="list-row-title block">{{ contact.name }}</span>
+                <span class="list-row-sub">{{ number }} · <span class="text-destructive">{{ daysOverdue }} days</span></span>
+              </span>
+              <span class="list-row-amount">{{ formatMoney balance }}</span>
+            </a>
+            {{else}}
+            <p class="list-empty">No overdue invoices</p>
+            {{/each}}
+          </div>
+        </section>
+        <section class="card xl:col-span-3">
+          <div class="card-header"><h2 class="card-title">Overdue bills</h2></div>
+          <div class="card-content">
+            {{#each overdueBills}}
+            <a href="{{ viewUrl }}" class="list-row">
+              <span class="min-w-0">
+                <span class="list-row-title block">{{ contact.name }}</span>
+                <span class="list-row-sub">{{ number }} · <span class="text-destructive">{{ daysOverdue }} days</span></span>
+              </span>
+              <span class="list-row-amount">{{ formatMoney balance }}</span>
+            </a>
+            {{else}}
+            <p class="list-empty">No overdue bills</p>
+            {{/each}}
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+<script type="application/json" id="dashboard-page-data">{{ json pageData }}</script>
+<script src="/js/dashboard.js" defer></script>
+{{> footer }}

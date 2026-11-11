@@ -1,0 +1,82 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+
+<div class="min-h-screen grid lg:grid-cols-2">
+
+  <div class="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-300 text-black">
+    <div class="flex items-center gap-3">
+      <img src="/images/djs-logo.svg" alt="DJ's FoodHub logo" class="h-14 w-14 rounded-xl ring-1 ring-black/40">
+      <div>
+        <p class="font-black text-xl leading-tight">DJs HRMS</p>
+        <p class="text-xs font-semibold uppercase tracking-widest opacity-70">FoodHub · XianFire ERP</p>
+      </div>
+    </div>
+
+    <div>
+      <h1 class="text-4xl font-black leading-tight">Human resources,<br>organized.</h1>
+      <p class="mt-4 max-w-sm text-sm font-medium opacity-80">
+        Employees, departments, attendance, leaves, payroll and reports — one secure workspace for your team.
+      </p>
+
+      <ul class="mt-8 space-y-3 text-sm font-semibold">
+        <li class="flex items-center gap-2">✓ Role-based access for HR and employees</li>
+        <li class="flex items-center gap-2">✓ Real-time attendance and leave tracking</li>
+        <li class="flex items-center gap-2">✓ Printable payroll payslips and reports</li>
+      </ul>
+    </div>
+
+    <p class="text-xs opacity-70">© 2026 DJs Human Resource Management System</p>
+  </div>
+
+  <div class="flex items-center justify-center p-6 sm:p-10">
+    <div class="w-full max-w-md">
+
+      <div class="lg:hidden flex items-center gap-3 mb-8">
+        <img src="/images/djs-logo.svg" alt="DJ's FoodHub logo" class="h-11 w-11 rounded-xl ring-1 ring-yellow-500/30">
+        <div>
+          <p class="font-bold text-yellow-400">DJs HRMS</p>
+          <p class="text-xs text-gray-500">FoodHub · XianFire ERP</p>
+        </div>
+      </div>
+
+      <h2 class="text-2xl font-bold">Welcome back</h2>
+      <p class="text-sm text-gray-500 mt-1 mb-6">Sign in to your HRMS account.</p>
+
+      <div class="space-y-4 mb-5">{{> flash}}</div>
+
+      <form method="POST" action="/login" class="space-y-4">
+        <div>
+          <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Email address</label>
+          <input id="email" type="email" name="email" required autofocus autocomplete="email"
+                 placeholder="you@company.com"
+                 class="w-full rounded-xl border border-white/10 bg-[#171717] px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+        </div>
+
+        <div>
+          <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Password</label>
+          <input id="password" type="password" name="password" required autocomplete="current-password"
+                 placeholder="••••••••"
+                 class="w-full rounded-xl border border-white/10 bg-[#171717] px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+        </div>
+
+        <button type="submit" class="w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-bold text-black transition hover:bg-yellow-300">
+          Sign in
+        </button>
+      </form>
+
+      <div class="mt-6 flex items-center justify-between text-sm">
+        <a href="/forgot-password" class="text-gray-500 hover:text-yellow-400">Forgot password?</a>
+        <a href="/register" class="font-semibold text-yellow-400 hover:text-yellow-300">Create an account</a>
+      </div>
+
+      <p class="mt-8 text-center text-[11px] text-gray-600">
+        Protected by session-based authentication and bcrypt password hashing.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

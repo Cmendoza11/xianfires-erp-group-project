@@ -1,0 +1,40 @@
+{{> head}}
+<body class="auth-page">
+  <div class="auth-shell">
+    <div class="auth-main">
+      <div class="w-full max-w-[22rem]">
+        <div class="flex items-center gap-2.5 mb-10">
+          {{> logo class="w-8 h-8" }}
+          <span class="text-sm font-semibold">XianFire Accounting</span>
+        </div>
+        <h1 class="auth-title">Sign in</h1>
+        <p class="text-[13px] text-muted mt-1 mb-6">Enter your email and password to continue.</p>
+        <div id="login-error" class="text-destructive pb-3 text-[13px] hidden" role="alert"></div>
+        <form id="adminLoginForm" class="space-y-4" method="POST" action="{{ urls.adminLoginJson }}" novalidate
+          data-json-form data-custom-error data-redirect="{{ urls.dashboard }}">
+          <div>
+            <label class="field-label" for="email">Email<span class="required">*</span></label>
+            <input id="email" name="email" type="email" class="input" placeholder="you@example.com" autocomplete="username" data-required="Email is required">
+          </div>
+          <div>
+            <label class="field-label" for="password">Password<span class="required">*</span></label>
+            <div class="relative">
+              <input id="password" name="password" type="password" class="input pr-9" autocomplete="current-password" data-required="Password is required">
+              <button type="button" class="absolute right-1.5 top-1.5 p-1 text-muted hover:text-ink" data-toggle-password aria-label="Show password">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-submit-button pt-2">
+            <button type="submit" class="btn btn-primary btn-lg w-full">Sign in</button>
+          </div>
+        </form>
+        {{#if signupEnabled}}
+        <p class="text-[13px] text-muted mt-5">No account yet? <a href="{{ urls.adminSignup }}" class="text-primary font-medium hover:underline">Create an account</a></p>
+        {{/if}}
+      </div>
+    </div>
+    {{> authAside}}
+  </div>
+  <script src="/js/login.js" defer></script>
+{{> footer }}

@@ -1,0 +1,398 @@
+{{> head}}
+<body class="bg-black text-gray-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Toast Notifications -->
+  {{#if successMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-emerald-950 border border-emerald-800 text-emerald-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-check-circle text-emerald-400"></i>
+      <span class="text-xs font-semibold">{{successMessage}}</span>
+    </div>
+  {{/if}}
+  {{#if errorMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-red-950 border border-red-800 text-red-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-exclamation-triangle text-red-400"></i>
+      <span class="text-xs font-semibold">{{errorMessage}}</span>
+    </div>
+  {{/if}}
+
+  <div class="flex flex-1">
+    <!-- Master Navigation Sidebar -->
+    {{> sidebar}}
+
+    <!-- Main Dashboard Area -->
+    <main class="flex-1 p-8 overflow-y-auto bg-black">
+
+      <!-- Executive Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-zinc-900/60 border border-zinc-800/80 p-6 rounded-2xl backdrop-blur-md">
+        <div>
+          <div class="flex items-center space-x-3">
+            <h2 class="text-xl font-bold text-white tracking-wide">Executive Purchasing & Supplier Dashboard</h2>
+            <span class="bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Module 1
+            </span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Real-time overview of supplier relations, order fulfillment, deliveries, and financial payables.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <a href="/purchase-orders/create" class="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center space-x-2">
+            <i class="fas fa-plus"></i>
+            <span>Create Purchase Order</span>
+          </a>
+          <a href="/goods-receipts/receive" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition border border-zinc-700 flex items-center space-x-2">
+            <i class="fas fa-dolly"></i>
+            <span>Receive Delivery</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Inventory Low-Stock Alert Warning Banner (If Any) -->
+      {{#if inventoryAlerts.length}}
+        <div class="mb-8 bg-amber-950/30 border border-amber-900/50 rounded-2xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-2 text-amber-400">
+              <i class="fas fa-triangle-exclamation"></i>
+              <h4 class="text-xs font-bold uppercase tracking-wider">Low-Stock Alerts from Inventory System</h4>
+            </div>
+            <a href="/purchase-requests" class="text-[11px] text-amber-300 hover:underline">
+              Create Restock Purchase Request &rarr;
+            </a>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+            {{#each inventoryAlerts}}
+              <div class="bg-black/60 border border-zinc-800 rounded-xl p-3">
+                <div class="flex justify-between items-start">
+                  <span class="text-xs font-semibold text-white truncate">{{productName}}</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase {{#eq severity 'Critical'}}bg-red-500/10 text-red-400 border border-red-500/30{{else}}bg-amber-500/10 text-amber-400 border border-amber-500/30{{/eq}}">
+                    {{severity}}
+                  </span>
+                </div>
+                <div class="mt-2 text-[11px] text-gray-400 flex justify-between">
+                  <span>Current: <strong class="text-amber-400">{{currentStock}} {{unit}}</strong></span>
+                  <span>Min: <strong>{{minStock}} {{unit}}</strong></span>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        </div>
+      {{/if}}
+
+      <!-- 13 Standard Module Metrics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-8">
+        
+        <!-- Total Suppliers -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Suppliers</p>
+            <i class="fas fa-truck text-yellow-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-1">{{metrics.totalSuppliers}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">
+            <span class="text-emerald-400">{{metrics.activeSuppliers}} Active</span> &bull; 
+            <span class="text-zinc-500">{{metrics.inactiveSuppliers}} Inactive</span>
+          </p>
+        </div>
+
+        <!-- Supplier Products -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Offered Products</p>
+            <i class="fas fa-boxes-stacked text-yellow-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-1">{{metrics.totalSupplierProducts}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">Catalog offering entries</p>
+        </div>
+
+        <!-- Pending Purchase Requests -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Pending PRs</p>
+            <i class="fas fa-clipboard-question text-amber-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-amber-400 mt-1">{{metrics.pendingRequests}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">Awaiting Dept Approval</p>
+        </div>
+
+        <!-- Pending Purchase Orders -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Pending POs</p>
+            <i class="fas fa-hourglass-half text-amber-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-amber-400 mt-1">{{metrics.pendingPOs}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">Awaiting Admin Approval</p>
+        </div>
+
+        <!-- Approved POs -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Approved POs</p>
+            <i class="fas fa-check-double text-blue-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-blue-400 mt-1">{{metrics.approvedPOs}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">Ready for Dispatch</p>
+        </div>
+
+        <!-- Incoming Deliveries -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Incoming Deliveries</p>
+            <i class="fas fa-truck-ramp-box text-cyan-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-cyan-400 mt-1">{{metrics.incomingDeliveries}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">Dispatched to Vendors</p>
+        </div>
+
+        <!-- Partially Received Orders -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Partially Received</p>
+            <i class="fas fa-layer-group text-purple-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-purple-400 mt-1">{{metrics.partiallyReceivedPOs}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">Balance pending delivery</p>
+        </div>
+
+        <!-- Completed POs -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Completed POs</p>
+            <i class="fas fa-circle-check text-emerald-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-emerald-400 mt-1">{{metrics.completedPOs}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">100% Received & Verified</p>
+        </div>
+
+        <!-- Pending Invoices -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Pending Invoices</p>
+            <i class="fas fa-receipt text-yellow-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-yellow-400 mt-1">{{metrics.pendingInvoices}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">Accounts Payable</p>
+        </div>
+
+        <!-- Outstanding Payables -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl col-span-1 sm:col-span-2">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Outstanding Payables</p>
+            <i class="fas fa-hand-holding-dollar text-red-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-amber-400 mt-1 font-mono">₱{{metrics.outstandingPayables}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">Liability synced with Financial</p>
+        </div>
+
+        <!-- Total Purchases Committed -->
+        <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-2xl col-span-2 sm:col-span-1 lg:col-span-1">
+          <div class="flex items-center justify-between">
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Purchases</p>
+            <i class="fas fa-coins text-yellow-400 text-xs"></i>
+          </div>
+          <h3 class="text-xl font-bold text-emerald-400 mt-1 font-mono">₱{{metrics.totalPurchases}}</h3>
+          <p class="text-[10px] text-gray-500 mt-1">All approved orders</p>
+        </div>
+
+      </div>
+
+      <!-- Middle Grid: Monthly Spend Chart & Upcoming Deliveries -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Monthly Purchasing Chart (2 Cols) -->
+        <div class="lg:col-span-2 bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">Monthly Purchasing Trends</h3>
+              <p class="text-xs text-gray-400 mt-0.5">Purchasing spend commitments across the past 6 months.</p>
+            </div>
+            <span class="text-[10px] font-mono text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-lg border border-yellow-400/30">
+              Live DB Aggregation
+            </span>
+          </div>
+
+          <!-- Dynamic Bar Chart Visualization -->
+          <div class="h-48 flex items-end justify-between gap-4 pt-4 pb-2 border-b border-zinc-800">
+            {{#each monthlyChartData}}
+              <div class="flex-1 flex flex-col items-center h-full justify-end group">
+                <div class="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition mb-1">
+                  ₱{{amount}}
+                </div>
+                <div class="w-full bg-zinc-800 rounded-t-lg relative overflow-hidden transition-all duration-500 hover:bg-yellow-400/80" style="height: {{percentage}}%;">
+                  <div class="absolute inset-0 bg-gradient-to-t from-yellow-500/40 to-yellow-400 rounded-t-lg"></div>
+                </div>
+                <span class="text-[10px] text-gray-400 font-medium mt-2">{{label}}</span>
+              </div>
+            {{/each}}
+          </div>
+          <div class="flex items-center justify-between mt-3 text-[11px] text-gray-500">
+            <span>Aggregated from official Purchase Order records.</span>
+            <span class="font-mono text-white">Total Spend: ₱{{metrics.totalPurchases}}</span>
+          </div>
+        </div>
+
+        <!-- Upcoming Deliveries Widget (1 Col) -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">Upcoming Deliveries</h3>
+              <i class="fas fa-calendar-days text-yellow-400 text-xs"></i>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Scheduled vendor arrivals requiring receiving inspection.</p>
+
+            <div class="space-y-3">
+              {{#if upcomingDeliveriesList.length}}
+                {{#each upcomingDeliveriesList}}
+                  <div class="bg-black/60 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <span class="font-mono font-bold text-xs text-yellow-400">{{poNumber}}</span>
+                        <span class="text-[10px] text-gray-400 truncate max-w-[120px]">{{Supplier.name}}</span>
+                      </div>
+                      <div class="text-[10px] text-gray-500 mt-1">
+                        Expected: <strong class="text-white">{{formatDate expectedDeliveryDate}}</strong>
+                      </div>
+                    </div>
+                    <a href="/goods-receipts/receive?poId={{id}}" class="px-2.5 py-1 bg-yellow-400 hover:bg-yellow-500 text-black text-[10px] font-bold rounded-lg transition" title="Receive this delivery">
+                      Receive
+                    </a>
+                  </div>
+                {{/each}}
+              {{else}}
+                <div class="text-center py-8 text-gray-500 text-xs">
+                  <i class="fas fa-box-open text-2xl text-zinc-700 mb-2"></i>
+                  <p>No pending upcoming deliveries.</p>
+                </div>
+              {{/if}}
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-zinc-800/80 mt-4">
+            <a href="/goods-receipts" class="text-xs text-yellow-400 hover:underline flex items-center justify-between">
+              <span>View all goods receipts</span>
+              <i class="fas fa-arrow-right text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Grid: Recent Purchase Orders & Activity Log -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Recent Purchase Orders Table (2 Cols) -->
+        <div class="lg:col-span-2 bg-zinc-900/90 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+          <div class="p-5 border-b border-zinc-800 flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">Recent Purchase Orders</h3>
+              <p class="text-xs text-gray-400 mt-0.5">Latest purchasing transactions logged in the system.</p>
+            </div>
+            <a href="/purchase-orders" class="text-xs text-yellow-400 hover:underline">View All Orders &rarr;</a>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-zinc-950 text-gray-400 uppercase text-[10px] tracking-wider border-b border-zinc-800">
+                <tr>
+                  <th class="py-3 px-4">PO #</th>
+                  <th class="py-3 px-4">Supplier</th>
+                  <th class="py-3 px-4">Department</th>
+                  <th class="py-3 px-4 text-right">Amount</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-800/60 text-gray-300">
+                {{#if recentOrders.length}}
+                  {{#each recentOrders}}
+                    <tr class="hover:bg-zinc-800/40 transition">
+                      <td class="py-3 px-4 font-mono font-bold text-yellow-400">
+                        {{poNumber}}
+                      </td>
+                      <td class="py-3 px-4 font-semibold text-white">
+                        {{Supplier.name}}
+                      </td>
+                      <td class="py-3 px-4 text-gray-400">
+                        {{Department.name}}
+                      </td>
+                      <td class="py-3 px-4 text-right font-mono font-bold text-white">
+                        ₱{{formatCurrency totalAmount}}
+                      </td>
+                      <td class="py-3 px-4 text-center">
+                        {{{statusBadge status}}}
+                      </td>
+                      <td class="py-3 px-4 text-center">
+                        <a href="/purchase-orders/view/{{id}}" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-gray-300 hover:text-white transition" title="View PO Voucher">
+                          <i class="fas fa-eye text-xs"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  {{/each}}
+                {{else}}
+                  <tr>
+                    <td colspan="6" class="py-8 text-center text-gray-500">
+                      No purchase orders recorded yet.
+                    </td>
+                  </tr>
+                {{/if}}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recent Activity Audit Feed (1 Col) -->
+        <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">System Activity Audit</h3>
+              <i class="fas fa-shield-halved text-yellow-400 text-xs"></i>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Chronological log of operational changes across all modules.</p>
+
+            <div class="space-y-3 overflow-y-auto max-h-72 pr-1">
+              {{#if recentActivities.length}}
+                {{#each recentActivities}}
+                  <div class="bg-black/50 border border-zinc-800/80 rounded-xl p-2.5 flex items-start space-x-2.5">
+                    <div class="w-6 h-6 rounded-lg bg-yellow-400/10 text-yellow-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <i class="fas fa-bolt text-[10px]"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-white truncate">{{module}} &bull; {{action}}</span>
+                        <span class="text-[9px] text-gray-500 shrink-0">{{formatDateTime createdAt}}</span>
+                      </div>
+                      <p class="text-[10px] text-gray-400 truncate mt-0.5">
+                        Entity #{{entityId}} &bull; {{#if details.poNumber}}PO: {{details.poNumber}}{{else if details.receiptNumber}}GR: {{details.receiptNumber}}{{else if details.invoiceNumber}}Inv: {{details.invoiceNumber}}{{else if details.name}}{{details.name}}{{else}}Action recorded{{/if}}
+                      </p>
+                    </div>
+                  </div>
+                {{/each}}
+              {{else}}
+                <div class="text-center py-8 text-gray-500 text-xs">
+                  No activity logged yet.
+                </div>
+              {{/if}}
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-zinc-800/80 mt-4">
+            <span class="text-[10px] text-gray-500">
+              Activity log is immutable and maintained by Sequelize hooks.
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    // Auto dismiss toasts
+    setTimeout(() => {
+      const toast = document.getElementById('toastMessage');
+      if (toast) toast.style.display = 'none';
+    }, 4500);
+  </script>
+</body>
+</html>

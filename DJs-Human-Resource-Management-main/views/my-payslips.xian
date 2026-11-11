@@ -1,0 +1,85 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+<div class="flex flex-col md:flex-row min-h-screen">
+
+  {{> sidebar}}
+
+  <main class="flex-1 min-w-0">
+
+    <header class="bg-[#111111] border-b border-yellow-500/20 px-6 py-5">
+      <h2 class="text-xl md:text-2xl font-bold">My Payslips</h2>
+      <p class="text-sm text-gray-500 mt-1">View and print your salary records.</p>
+    </header>
+
+    <section class="p-6 space-y-6">
+
+      {{> flash}}
+
+      {{#if employee}}
+      <div class="grid grid-cols-2 gap-4 max-w-lg">
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs uppercase tracking-wider text-gray-500">Payslips</p>
+          <h3 class="text-2xl font-black mt-2">{{rows.length}}</h3>
+        </div>
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-xs uppercase tracking-wider text-gray-500">Total net pay</p>
+          <h3 class="text-2xl font-black mt-2 text-yellow-400">{{formatMoney totalNet}}</h3>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-white/5 bg-[#171717] overflow-hidden">
+        <div class="p-5 border-b border-white/5">
+          <h3 class="font-bold">Payslip History</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-white/5 text-gray-400 uppercase text-[11px]">
+              <tr>
+                <th class="px-5 py-3">Period</th>
+                <th class="px-5 py-3">Basic</th>
+                <th class="px-5 py-3">Deductions</th>
+                <th class="px-5 py-3">Net Pay</th>
+                <th class="px-5 py-3">Status</th>
+                <th class="px-5 py-3 text-right"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {{#each rows}}
+              <tr class="hover:bg-white/5">
+                <td class="px-5 py-4 text-gray-300">{{formatDate periodStart}} → {{formatDate periodEnd}}</td>
+                <td class="px-5 py-4 text-gray-400">{{formatMoney basicSalary}}</td>
+                <td class="px-5 py-4 text-gray-400">{{formatMoney deductions}}</td>
+                <td class="px-5 py-4 font-semibold text-yellow-400">{{formatMoney netSalary}}</td>
+                <td class="px-5 py-4">
+                  <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Paid")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Processed")}}bg-blue-500/10 text-blue-400{{else}}bg-white/5 text-gray-300{{/if}}{{/if}}">{{status}}</span>
+                </td>
+                <td class="px-5 py-4 text-right">
+                  <a href="/my-payslips/{{id}}" class="rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black">View</a>
+                </td>
+              </tr>
+              {{else}}
+              <tr>
+                <td colspan="6" class="px-5 py-12 text-center">
+                  <div class="text-4xl mb-3">₱</div>
+                  <p class="text-gray-400">No payslips have been issued yet.</p>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {{else}}
+      <div class="rounded-2xl border border-white/5 bg-[#171717] p-12 text-center">
+        <div class="text-4xl mb-3">₱</div>
+        <h3 class="font-bold text-lg">No employee record linked</h3>
+        <p class="mt-2 text-sm text-gray-400">Ask HR to link your account to your employee profile to view your payslips.</p>
+      </div>
+      {{/if}}
+
+    </section>
+  </main>
+</div>
+
+{{> footer}}

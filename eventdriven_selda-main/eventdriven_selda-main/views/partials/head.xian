@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <title>{{ title }}</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome 6 Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            djyellow: {
+              DEFAULT: '#FACC15', // Signature Yellow
+              hover: '#EAB308',
+              gold: '#CA8A04',
+              light: '#FEF08A'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Instant Theme Execution Script (Prevents White/Dark Flash on Load) -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('dj_theme');
+      if (savedTheme === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+    })();
+  </script>
+
+  <!-- Global Brand & Theme Styling for DJ's FoodHub (Black & Yellow) -->
+  <style>
+    /* Smooth Transitions across theme toggle */
+    *, *::before, *::after {
+      transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 150ms;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 9999px;
+    }
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: #3f3f46;
+    }
+    .light ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .light ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Autocomplete Styling */
+    .dark input:-webkit-autofill,
+    .dark input:-webkit-autofill:hover, 
+    .dark input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 30px #09090b inset !important;
+      -webkit-text-fill-color: #ffffff !important;
+    }
+    .light input:-webkit-autofill,
+    .light input:-webkit-autofill:hover, 
+    .light input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+      -webkit-text-fill-color: #0f172a !important;
+    }
+
+    /* ========================================================
+       LIGHT MODE THEME ENGINE FOR DJ'S FOODHUB
+       ======================================================== */
+    html.light body {
+      background-color: #f8fafc !important; /* Soft Slate Clean Canvas */
+      color: #0f172a !important;            /* High Contrast Slate-900 */
+    }
+
+    html.light aside {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    html.light aside div,
+    html.light aside nav {
+      border-color: #e2e8f0 !important;
+    }
+
+    html.light aside nav a:not(.bg-yellow-400) {
+      color: #475569 !important;
+    }
+    html.light aside nav a:not(.bg-yellow-400):hover {
+      background-color: #fef9c3 !important; /* soft yellow-100 hover */
+      color: #854d0e !important;            /* amber-800 */
+    }
+
+    html.light main {
+      background-color: #f8fafc !important;
+    }
+
+    html.light .bg-black {
+      background-color: #f8fafc !important;
+    }
+
+    html.light .bg-black\/40,
+    html.light .bg-black\/50,
+    html.light .bg-black\/60 {
+      background-color: #f1f5f9 !important;
+      border-color: #e2e8f0 !important;
+    }
+
+    html.light .bg-zinc-950,
+    html.light .bg-zinc-950\/80 {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+
+    html.light .bg-zinc-900,
+    html.light .bg-zinc-900\/60,
+    html.light .bg-zinc-900\/80,
+    html.light .bg-zinc-900\/90 {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
+    }
+
+    html.light .bg-zinc-800,
+    html.light .bg-zinc-800\/40,
+    html.light .bg-zinc-800\/60,
+    html.light .bg-zinc-800\/80 {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #1e293b !important;
+    }
+
+    html.light .border-zinc-800,
+    html.light .border-zinc-800\/60,
+    html.light .border-zinc-800\/80,
+    html.light .border-zinc-700 {
+      border-color: #e2e8f0 !important;
+    }
+
+    html.light .text-white {
+      color: #0f172a !important;
+    }
+
+    html.light .text-gray-100 {
+      color: #1e293b !important;
+    }
+
+    html.light .text-gray-300 {
+      color: #334155 !important;
+    }
+
+    html.light .text-gray-400,
+    html.light .text-gray-500 {
+      color: #64748b !important;
+    }
+
+    html.light input,
+    html.light select,
+    html.light textarea {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      border-color: #cbd5e1 !important;
+    }
+
+    html.light input:focus,
+    html.light select:focus,
+    html.light textarea:focus {
+      border-color: #eab308 !important;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.3) !important;
+    }
+
+    html.light input::placeholder,
+    html.light textarea::placeholder {
+      color: #94a3b8 !important;
+    }
+
+    html.light table thead {
+      background-color: #f8fafc !important;
+      color: #475569 !important;
+      border-color: #e2e8f0 !important;
+    }
+
+    html.light table tbody tr:hover {
+      background-color: #fefce8 !important; /* warm yellow hint */
+    }
+
+    html.light table tbody tr {
+      border-color: #f1f5f9 !important;
+    }
+
+    html.light .fixed.inset-0.bg-black\/80 {
+      background-color: rgba(15, 23, 42, 0.65) !important;
+    }
+
+    /* DJ's FoodHub Signature Black & Yellow Contrast rules */
+    .bg-yellow-400,
+    .hover\:bg-yellow-500:hover {
+      background-color: #facc15 !important;
+      color: #000000 !important;
+    }
+    .hover\:bg-yellow-500:hover {
+      background-color: #eab308 !important;
+    }
+    html.dark .text-yellow-400 {
+      color: #facc15 !important;
+    }
+    html.light .text-yellow-400 {
+      color: #ca8a04 !important; /* Gold in light mode for readability */
+    }
+  </style>
+</head>

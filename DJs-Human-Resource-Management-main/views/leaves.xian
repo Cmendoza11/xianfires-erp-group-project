@@ -1,0 +1,176 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+<div class="flex flex-col md:flex-row min-h-screen">
+
+  {{> sidebar}}
+
+  <main class="flex-1 min-w-0">
+
+    <header class="bg-[#111111] border-b border-yellow-500/20 px-6 py-5">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold">{{#if selfView}}My Leaves{{else}}Leave Management{{/if}}</h2>
+          <p class="text-sm text-gray-500 mt-1">{{#if selfView}}File requests and track approval status.{{else}}Review, approve and track employee leave requests.{{/if}}</p>
+        </div>
+        <a href="/leaves/create" class="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300">+ File Leave</a>
+      </div>
+    </header>
+
+    <section class="p-6 space-y-6">
+
+      {{> flash}}
+
+      {{#if balances}}
+      <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {{#each balances}}
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-[11px] uppercase tracking-wider text-gray-500">{{type}}</p>
+          <h3 class="text-2xl font-black mt-2 {{#if remaining}}text-yellow-400{{else}}text-gray-600{{/if}}">{{remaining}}</h3>
+          <p class="text-[11px] text-gray-500 mt-1">{{used}} used of {{allocation}}</p>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+
+      {{#unless selfView}}
+      <div class="grid grid-cols-3 gap-4 max-w-xl">
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-[11px] uppercase tracking-wider text-gray-500">Pending</p>
+          <h3 class="text-xl font-black mt-1 text-yellow-400">{{summary.pending}}</h3>
+        </div>
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-[11px] uppercase tracking-wider text-gray-500">Approved</p>
+          <h3 class="text-xl font-black mt-1 text-green-400">{{summary.approved}}</h3>
+        </div>
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-4">
+          <p class="text-[11px] uppercase tracking-wider text-gray-500">Rejected</p>
+          <h3 class="text-xl font-black mt-1 text-red-400">{{summary.rejected}}</h3>
+        </div>
+      </div>
+      {{/unless}}
+
+      <form method="GET" action="/leaves" class="rounded-2xl border border-white/5 bg-[#171717] p-4 flex flex-wrap items-end gap-3">
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Status</label>
+          <select name="status" class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+            <option value="">All statuses</option>
+            {{#each (array "Pending" "Approved" "Rejected")}}
+            <option value="{{this}}" {{#if (eq this ../filters.status)}}selected{{/if}}>{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Leave type</label>
+          <select name="type" class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+            <option value="">All types</option>
+            {{#each types}}
+            <option value="{{this}}" {{#if (eq this ../filters.type)}}selected{{/if}}>{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+        {{#unless selfView}}
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Employee</label>
+          <select name="employeeId" class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+            <option value="">All employees</option>
+            {{#each employees}}
+            <option value="{{id}}" {{#if (eq id ../employee.id)}}selected{{/if}}>{{firstName}} {{lastName}}</option>
+            {{/each}}
+          </select>
+        </div>
+        {{/unless}}
+        <button type="submit" class="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Filter</button>
+      </form>
+
+      <div class="rounded-2xl border border-white/5 bg-[#171717] overflow-hidden">
+        <div class="p-5 border-b border-white/5 flex items-center justify-between">
+          <h3 class="font-bold">Leave Requests</h3>
+          <p class="text-xs text-gray-500">{{leaves.length}} record(s)</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-white/5 text-gray-400 uppercase text-[11px]">
+              <tr>
+                {{#unless selfView}}<th class="px-5 py-3">Employee</th>{{/unless}}
+                <th class="px-5 py-3">Type</th>
+                <th class="px-5 py-3">From</th>
+                <th class="px-5 py-3">To</th>
+                <th class="px-5 py-3">Days</th>
+                <th class="px-5 py-3">Reason</th>
+                <th class="px-5 py-3">Status</th>
+                <th class="px-5 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {{#each leaves}}
+              <tr class="align-top hover:bg-white/5">
+                {{#unless ../selfView}}
+                <td class="px-5 py-4">
+                  <p class="font-medium">{{employee.firstName}} {{employee.lastName}}</p>
+                  <p class="text-xs text-gray-500">{{employee.employeeCode}}</p>
+                </td>
+                {{/unless}}
+                <td class="px-5 py-4">{{type}}</td>
+                <td class="px-5 py-4 text-gray-400">{{formatDate startDate}}</td>
+                <td class="px-5 py-4 text-gray-400">{{formatDate endDate}}</td>
+                <td class="px-5 py-4 text-gray-400">{{days}}</td>
+                <td class="px-5 py-4 text-gray-400 max-w-[16rem]">{{reason}}</td>
+                <td class="px-5 py-4">
+                  <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Approved")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Rejected")}}bg-red-500/10 text-red-400{{else}}bg-yellow-500/10 text-yellow-400{{/if}}{{/if}}">{{status}}</span>
+                  {{#if remarks}}<p class="mt-2 text-[11px] text-gray-500">{{remarks}}</p>{{/if}}
+                </td>
+                <td class="px-5 py-4">
+                  <div class="flex flex-col items-end gap-2">
+                    {{#unless ../isLimited}}
+                      {{#if (eq status "Pending")}}
+                      <details class="w-52">
+                        <summary class="cursor-pointer rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black text-center">Review</summary>
+                        <form method="POST" action="/leaves/{{id}}/approve" class="mt-2 space-y-2 rounded-xl border border-white/10 bg-[#0F0F0F] p-3">
+                          <input name="remarks" placeholder="Remarks (optional)"
+                                 class="w-full rounded-lg border border-white/10 bg-[#171717] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
+                          <div class="flex gap-2">
+                            <button type="submit" class="flex-1 rounded-lg bg-green-500/20 px-2 py-2 text-xs font-semibold text-green-400 hover:bg-green-500 hover:text-black">Approve</button>
+                            <button type="submit" formaction="/leaves/{{id}}/reject" class="flex-1 rounded-lg bg-red-500/20 px-2 py-2 text-xs font-semibold text-red-400 hover:bg-red-500 hover:text-white">Reject</button>
+                          </div>
+                        </form>
+                      </details>
+                      {{/if}}
+                    {{/unless}}
+
+                    {{#if ../isAdmin}}
+                    <form action="/leaves/{{id}}/delete" method="POST" onsubmit="return confirm('Remove this leave request?');">
+                      <button type="submit" class="text-[11px] text-red-400 hover:underline">Delete</button>
+                    </form>
+                    {{/if}}
+
+                    {{#if ../selfView}}
+                      {{#if (eq status "Pending")}}
+                      <form action="/leaves/{{id}}/delete" method="POST" onsubmit="return confirm('Cancel this leave request?');">
+                        <button type="submit" class="text-[11px] text-red-400 hover:underline">Cancel</button>
+                      </form>
+                      {{/if}}
+                    {{/if}}
+                  </div>
+                </td>
+              </tr>
+              {{else}}
+              <tr>
+                <td colspan="{{#if selfView}}7{{else}}8{{/if}}" class="px-5 py-12 text-center">
+                  <div class="text-4xl mb-3">▧</div>
+                  <p class="text-gray-400">No leave requests found.</p>
+                  <a href="/leaves/create" class="mt-4 inline-block rounded-xl bg-yellow-400 px-5 py-2.5 text-xs font-bold text-black hover:bg-yellow-300">+ File Leave</a>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+{{> footer}}

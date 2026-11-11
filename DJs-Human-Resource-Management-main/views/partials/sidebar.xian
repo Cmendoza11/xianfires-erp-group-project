@@ -1,0 +1,109 @@
+{{> icons}}
+
+<aside class="w-full md:w-64 md:min-h-screen md:sticky md:top-0 shrink-0 bg-black border-b md:border-b-0 md:border-r border-yellow-500/20 flex flex-col no-print">
+
+  <div class="px-5 py-4 md:py-6 border-b border-yellow-500/20 flex items-center gap-3">
+    <img src="/images/djs-logo.svg" alt="DJ's FoodHub logo" class="h-11 w-11 rounded-xl ring-1 ring-yellow-500/30 shrink-0">
+    <div class="min-w-0">
+      <h1 class="text-yellow-400 font-bold leading-tight truncate">DJs HRMS</h1>
+      <p class="text-[11px] text-gray-500">FoodHub · HR System</p>
+    </div>
+  </div>
+
+  <nav class="flex md:flex-col gap-1 md:gap-1.5 px-3 py-3 md:py-6 overflow-x-auto md:overflow-visible flex-1">
+
+    <p class="hidden md:block px-3 pb-2 text-[10px] uppercase tracking-widest text-gray-600">Main menu</p>
+
+    <a href="/dashboard" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (eq currentPath "/dashboard")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+      <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-dashboard"></use></svg><span>Dashboard</span>
+    </a>
+
+    {{#if isAdmin}}
+      <a href="/employees" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/employees")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-users"></use></svg><span>Employees</span>
+      </a>
+      <a href="/departments" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/departments")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-building"></use></svg><span>Departments</span>
+      </a>
+      <a href="/attendance" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/attendance")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-clock"></use></svg><span>Attendance</span>
+      </a>
+      <a href="/leaves" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/leaves")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-calendar"></use></svg><span>Leave Management</span>
+      </a>
+      <a href="/payroll" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/payroll")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-wallet"></use></svg><span>Payroll</span>
+      </a>
+      <a href="/reports" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/reports")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-chart"></use></svg><span>Reports</span>
+      </a>
+      <a href="/users" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/users")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-settings"></use></svg><span>User Accounts</span>
+      </a>
+    {{/if}}
+
+    {{#if isStaff}}
+      <a href="/employees" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/employees")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-users"></use></svg><span>Employees</span>
+      </a>
+      <a href="/departments" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/departments")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-building"></use></svg><span>Departments</span>
+      </a>
+      <a href="/attendance" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/attendance")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-clock"></use></svg><span>Attendance</span>
+      </a>
+      <a href="/leaves" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/leaves")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-calendar"></use></svg><span>Leave Management</span>
+      </a>
+      <a href="/reports" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/reports")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-chart"></use></svg><span>Reports</span>
+      </a>
+    {{/if}}
+
+    {{#if isLimited}}
+      <a href="/profile" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/profile")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-user"></use></svg><span>My Profile</span>
+      </a>
+      <a href="/my-attendance" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/my-attendance")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-clock"></use></svg><span>My Attendance</span>
+      </a>
+      <a href="/leaves" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/leaves")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-calendar"></use></svg><span>My Leaves</span>
+      </a>
+      <a href="/my-payslips" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/my-payslips")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+        <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-wallet"></use></svg><span>My Payslips</span>
+      </a>
+    {{/if}}
+
+    <a href="/logout" class="md:hidden flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10">
+      <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-logout"></use></svg><span>Logout</span>
+    </a>
+    {{> erpModules}}
+  </nav>
+
+  {{#if currentUser}}
+  <div class="hidden md:block p-4 border-t border-yellow-500/20">
+    <a href="/profile" class="group -mx-2 flex items-center gap-2.5 rounded-xl px-2 py-2 transition hover:bg-white/5">
+      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-yellow-400 text-sm font-bold uppercase text-black">
+        {{currentUser.name.[0]}}
+      </span>
+      <span class="min-w-0">
+        <span class="block truncate text-sm font-semibold group-hover:text-yellow-400">{{currentUser.name}}</span>
+        <span class="block text-[11px] uppercase tracking-widest text-yellow-400/80">{{currentUser.role}}</span>
+      </span>
+    </a>
+
+    <button type="button" data-theme-toggle aria-pressed="false"
+            class="mt-3 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-400 transition hover:bg-white/5 hover:text-yellow-400">
+      <svg class="h-4 w-4" data-theme-icon="sun" aria-hidden="true"><use href="#i-sun"></use></svg>
+      <svg class="hidden h-4 w-4" data-theme-icon="moon" aria-hidden="true"><use href="#i-moon"></use></svg>
+      <span data-theme-label>Light mode</span>
+    </button>
+
+    <a href="/logout" class="mt-1 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition">
+      <svg class="h-4 w-4" aria-hidden="true"><use href="#i-logout"></use></svg> Logout
+    </a>
+  </div>
+  {{/if}}
+
+</aside>

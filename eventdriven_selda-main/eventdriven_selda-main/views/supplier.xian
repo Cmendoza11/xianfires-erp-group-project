@@ -1,0 +1,507 @@
+{{> head}}
+<body class="bg-black text-gray-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Toast Notification Popups -->
+  {{#if successMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-emerald-950 border border-emerald-800 text-emerald-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-check-circle text-emerald-400"></i>
+      <span class="text-xs font-semibold">{{successMessage}}</span>
+    </div>
+  {{/if}}
+  {{#if errorMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-red-950 border border-red-800 text-red-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-exclamation-triangle text-red-400"></i>
+      <span class="text-xs font-semibold">{{errorMessage}}</span>
+    </div>
+  {{/if}}
+
+  <div class="flex flex-1">
+    <!-- Master Sidebar -->
+    {{> sidebar}}
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto bg-black">
+      
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-zinc-900/60 border border-zinc-800/80 p-6 rounded-2xl backdrop-blur-md">
+        <div>
+          <div class="flex items-center space-x-3">
+            <h2 class="text-xl font-bold text-white tracking-wide">Supplier Management</h2>
+            <span class="bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Module 2
+            </span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Register suppliers, manage contacts, set payment terms, and review supplier catalogs.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button onclick="openAddSupplierModal()" class="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg flex items-center space-x-2">
+            <i class="fas fa-plus"></i>
+            <span>Register Supplier</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Suppliers</p>
+            <h3 class="text-2xl font-bold text-white mt-1">{{totalSuppliers}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-yellow-400/10 text-yellow-400 flex items-center justify-center">
+            <i class="fas fa-truck text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Active Suppliers</p>
+            <h3 class="text-2xl font-bold text-emerald-400 mt-1">{{activeSuppliers}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-400/10 text-emerald-400 flex items-center justify-center">
+            <i class="fas fa-check-circle text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Inactive Suppliers</p>
+            <h3 class="text-2xl font-bold text-red-400 mt-1">{{inactiveSuppliers}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-red-400/10 text-red-400 flex items-center justify-center">
+            <i class="fas fa-ban text-base"></i>
+          </div>
+        </div>
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Products Offered</p>
+            <h3 class="text-2xl font-bold text-blue-400 mt-1">{{totalProductsOffered}}</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-blue-400/10 text-blue-400 flex items-center justify-center">
+            <i class="fas fa-boxes-stacked text-base"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter & Search Toolbar -->
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 mb-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+        <form action="/suppliers" method="GET" class="flex-1 w-full flex flex-col md:flex-row items-center gap-3">
+          <div class="relative flex-1 w-full">
+            <i class="fas fa-search absolute left-4 top-3.5 text-gray-500 text-xs"></i>
+            <input type="text" name="search" value="{{searchQuery}}" placeholder="Search by name, code, contact person, or email..." class="w-full bg-black border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400 transition">
+          </div>
+          <div class="flex items-center space-x-2 w-full md:w-auto">
+            <select name="status" class="bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition w-full md:w-auto">
+              <option value="All" {{#eq statusFilter 'All'}}selected{{/eq}}>All Statuses</option>
+              <option value="Active" {{#eq statusFilter 'Active'}}selected{{/eq}}>Active Only</option>
+              <option value="Inactive" {{#eq statusFilter 'Inactive'}}selected{{/eq}}>Inactive Only</option>
+            </select>
+            <button type="submit" class="bg-zinc-800 hover:bg-zinc-700 text-gray-200 font-bold px-4 py-2.5 rounded-xl text-xs transition">
+              Filter
+            </button>
+            {{#if searchQuery}}
+              <a href="/suppliers" class="text-xs text-gray-400 hover:text-white px-2 py-2">Reset</a>
+            {{/if}}
+          </div>
+        </form>
+      </div>
+
+      <!-- Suppliers Table Section -->
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl shadow-xl overflow-hidden mb-8">
+        <div class="p-5 border-b border-zinc-800 flex justify-between items-center">
+          <h3 class="text-xs font-bold text-yellow-400 uppercase tracking-wider">Registered Vendors Directory</h3>
+          <span class="text-xs text-gray-500">Showing {{suppliers.length}} supplier(s)</span>
+        </div>
+
+        {{#if suppliers.length}}
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-zinc-800 text-gray-400 uppercase tracking-wider text-[10px] bg-black/40">
+                  <th class="py-3 px-4">Code</th>
+                  <th class="py-3 px-4">Supplier Name</th>
+                  <th class="py-3 px-4">Contact Person</th>
+                  <th class="py-3 px-4">Phone & Email</th>
+                  <th class="py-3 px-4">Terms</th>
+                  <th class="py-3 px-4 text-center">Products</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-800/60">
+                {{#each suppliers}}
+                  <tr class="hover:bg-zinc-800/40 transition">
+                    <td class="py-3.5 px-4 font-mono font-bold text-yellow-400">{{supplierCode}}</td>
+                    <td class="py-3.5 px-4">
+                      <p class="font-bold text-white text-xs">{{name}}</p>
+                      <p class="text-[11px] text-gray-400 truncate max-w-xs">{{address}}</p>
+                    </td>
+                    <td class="py-3.5 px-4 text-gray-300 font-medium">{{contactPerson}}</td>
+                    <td class="py-3.5 px-4 text-gray-400">
+                      <p class="text-white font-mono text-[11px]">{{phone}}</p>
+                      <p class="text-[11px] text-gray-400">{{email}}</p>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span class="bg-black text-gray-300 border border-zinc-800 px-2 py-0.5 rounded-md text-[10px] font-mono">
+                        {{paymentTerms}}
+                      </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      <a href="/supplier-products?supplierId={{id}}" class="inline-flex items-center space-x-1 bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-yellow-400 hover:text-black transition">
+                        <span>{{productCount}} items</span>
+                      </a>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      {{{statusBadge status}}}
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                      <div class="flex items-center justify-end space-x-2">
+                        <!-- Inspect Details Button -->
+                        <button onclick="viewSupplierDetails('{{id}}')" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 hover:text-white rounded-lg transition" title="View Profile & Products">
+                          <i class="fas fa-eye text-xs"></i>
+                        </button>
+
+                        <!-- Edit Button -->
+                        <button onclick="openEditSupplierModal('{{id}}', '{{name}}', '{{contactPerson}}', '{{phone}}', '{{email}}', '{{address}}', '{{paymentTerms}}', '{{description}}', '{{status}}')" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-yellow-400 rounded-lg transition" title="Edit Supplier">
+                          <i class="fas fa-edit text-xs"></i>
+                        </button>
+
+                        <!-- Status Toggle Button -->
+                        <form action="/suppliers/toggle-status/{{id}}" method="POST" class="inline">
+                          <button type="submit" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 {{#eq status 'Active'}}text-red-400 hover:text-red-300{{else}}text-emerald-400 hover:text-emerald-300{{/eq}} rounded-lg transition" title="{{#eq status 'Active'}}Deactivate Supplier{{else}}Activate Supplier{{/eq}}">
+                            <i class="fas {{#eq status 'Active'}}fa-ban{{else}}fa-check{{/eq}} text-xs"></i>
+                          </button>
+                        </form>
+
+                        <!-- Delete Button -->
+                        <form action="/suppliers/delete/{{id}}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete or deactivate this supplier?')">
+                          <button type="submit" class="p-1.5 bg-zinc-800 hover:bg-red-950 text-gray-400 hover:text-red-400 rounded-lg transition" title="Delete Supplier">
+                            <i class="fas fa-trash text-xs"></i>
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{else}}
+          <div class="p-12 text-center text-gray-500">
+            <i class="fas fa-truck text-3xl mb-3 text-zinc-700"></i>
+            <p class="text-sm">No suppliers found matching your query.</p>
+            <button onclick="openAddSupplierModal()" class="mt-4 bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-4 py-2 rounded-xl text-xs transition">
+              + Register First Supplier
+            </button>
+          </div>
+        {{/if}}
+      </div>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-zinc-950 border-t border-zinc-800/80 px-8 py-4 text-center text-xs text-gray-600">
+    © 2026 DJ's FoodHub. All rights reserved. Supplier Management Module v2.0.
+  </footer>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- 1. Add Supplier Modal -->
+  <div id="addSupplierModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-xl shadow-2xl">
+      <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-3">
+        <h3 class="text-sm font-bold text-yellow-400 uppercase tracking-wider flex items-center space-x-2">
+          <i class="fas fa-plus-circle"></i>
+          <span>Register New Supplier</span>
+        </h3>
+        <button onclick="closeAddSupplierModal()" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+      <form action="/suppliers/add" method="POST" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Supplier Business Name *</label>
+            <input type="text" name="name" placeholder="e.g. Fresh Harvest Farms" required class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Contact Person</label>
+            <input type="text" name="contactPerson" placeholder="e.g. Juan Dela Cruz" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Phone Number</label>
+            <input type="text" name="phone" placeholder="e.g. +63 917 123 4567" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Email Address</label>
+            <input type="email" name="email" placeholder="e.g. orders@supplier.com" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Payment Terms</label>
+            <select name="paymentTerms" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              <option value="COD">Cash on Delivery (COD)</option>
+              <option value="Net 7">Net 7 Days</option>
+              <option value="Net 15">Net 15 Days</option>
+              <option value="Net 30" selected>Net 30 Days</option>
+              <option value="Net 60">Net 60 Days</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Business Address</label>
+            <input type="text" name="address" placeholder="City / Province" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 mb-1">Supplier Description & Specialties</label>
+          <textarea name="description" rows="2" placeholder="Primary ingredients, delivery schedule, certifications..." class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400"></textarea>
+        </div>
+        <div class="flex justify-end space-x-3 pt-3 border-t border-zinc-800">
+          <button type="button" onclick="closeAddSupplierModal()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-gray-300 text-xs font-bold rounded-xl transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold rounded-xl transition shadow-lg">Save Supplier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Edit Supplier Modal -->
+  <div id="editSupplierModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-xl shadow-2xl">
+      <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-3">
+        <h3 class="text-sm font-bold text-yellow-400 uppercase tracking-wider flex items-center space-x-2">
+          <i class="fas fa-edit"></i>
+          <span>Edit Supplier Information</span>
+        </h3>
+        <button onclick="closeEditSupplierModal()" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+      <form id="editSupplierForm" action="/suppliers/update/" method="POST" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Supplier Name *</label>
+            <input type="text" id="editName" name="name" required class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Contact Person</label>
+            <input type="text" id="editContact" name="contactPerson" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Phone Number</label>
+            <input type="text" id="editPhone" name="phone" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Email Address</label>
+            <input type="email" id="editEmail" name="email" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Payment Terms</label>
+            <select id="editPaymentTerms" name="paymentTerms" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              <option value="COD">Cash on Delivery (COD)</option>
+              <option value="Net 7">Net 7 Days</option>
+              <option value="Net 15">Net 15 Days</option>
+              <option value="Net 30">Net 30 Days</option>
+              <option value="Net 60">Net 60 Days</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-400 mb-1">Status</label>
+            <select id="editStatus" name="status" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 mb-1">Business Address</label>
+          <input type="text" id="editAddress" name="address" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-400 mb-1">Description / Notes</label>
+          <textarea id="editDescription" name="description" rows="2" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400"></textarea>
+        </div>
+        <div class="flex justify-end space-x-3 pt-3 border-t border-zinc-800">
+          <button type="button" onclick="closeEditSupplierModal()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-gray-300 text-xs font-bold rounded-xl transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold rounded-xl transition shadow-lg">Update Supplier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. View Supplier Details Modal -->
+  <div id="viewSupplierModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start mb-4 border-b border-zinc-800 pb-3">
+        <div>
+          <span id="viewSupplierCode" class="font-mono text-xs text-yellow-400 font-bold bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded">SUP-0000</span>
+          <h3 id="viewSupplierName" class="text-base font-bold text-white mt-1">Supplier Profile</h3>
+        </div>
+        <button onclick="closeViewSupplierModal()" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <!-- Contact details card -->
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 bg-black/50 p-4 rounded-xl border border-zinc-800 mb-6 text-xs">
+        <div>
+          <p class="text-gray-500 text-[10px] uppercase font-semibold">Contact Person</p>
+          <p id="viewContact" class="text-white font-medium mt-0.5">-</p>
+        </div>
+        <div>
+          <p class="text-gray-500 text-[10px] uppercase font-semibold">Phone</p>
+          <p id="viewPhone" class="text-white font-mono mt-0.5">-</p>
+        </div>
+        <div>
+          <p class="text-gray-500 text-[10px] uppercase font-semibold">Email</p>
+          <p id="viewEmail" class="text-white mt-0.5">-</p>
+        </div>
+        <div>
+          <p class="text-gray-500 text-[10px] uppercase font-semibold">Payment Terms</p>
+          <p id="viewTerms" class="text-yellow-400 font-semibold mt-0.5">-</p>
+        </div>
+        <div>
+          <p class="text-gray-500 text-[10px] uppercase font-semibold">Status</p>
+          <p id="viewStatus" class="mt-0.5">-</p>
+        </div>
+        <div>
+          <p class="text-gray-500 text-[10px] uppercase font-semibold">Address</p>
+          <p id="viewAddress" class="text-gray-300 mt-0.5 truncate">-</p>
+        </div>
+      </div>
+
+      <!-- Products Offered Section -->
+      <div class="mb-6">
+        <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+          <span>Offered Products / Catalog</span>
+          <span id="viewProductCount" class="text-[10px] text-yellow-400 font-mono">0 products</span>
+        </h4>
+        <div id="viewProductsContainer" class="space-y-1.5 max-h-48 overflow-y-auto">
+          <!-- Dynamic products injected here -->
+        </div>
+      </div>
+
+      <!-- Recent Orders Section -->
+      <div>
+        <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Recent Purchase Orders</h4>
+        <div id="viewOrdersContainer" class="space-y-1.5 max-h-48 overflow-y-auto">
+          <!-- Dynamic orders injected here -->
+        </div>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-zinc-800 flex justify-end">
+        <button onclick="closeViewSupplierModal()" class="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-xl transition">
+          Close Profile
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript for Modals & Details View -->
+  <script>
+    function openAddSupplierModal() {
+      document.getElementById('addSupplierModal').classList.remove('hidden');
+      document.getElementById('addSupplierModal').classList.add('flex');
+    }
+
+    function closeAddSupplierModal() {
+      document.getElementById('addSupplierModal').classList.remove('flex');
+      document.getElementById('addSupplierModal').classList.add('hidden');
+    }
+
+    function openEditSupplierModal(id, name, contact, phone, email, address, terms, desc, status) {
+      document.getElementById('editSupplierForm').action = '/suppliers/update/' + id;
+      document.getElementById('editName').value = name || '';
+      document.getElementById('editContact').value = contact || '';
+      document.getElementById('editPhone').value = phone || '';
+      document.getElementById('editEmail').value = email || '';
+      document.getElementById('editAddress').value = address || '';
+      document.getElementById('editPaymentTerms').value = terms || 'Net 30';
+      document.getElementById('editDescription').value = desc || '';
+      document.getElementById('editStatus').value = status || 'Active';
+      document.getElementById('editSupplierModal').classList.remove('hidden');
+      document.getElementById('editSupplierModal').classList.add('flex');
+    }
+
+    function closeEditSupplierModal() {
+      document.getElementById('editSupplierModal').classList.remove('flex');
+      document.getElementById('editSupplierModal').classList.add('hidden');
+    }
+
+    async function viewSupplierDetails(id) {
+      try {
+        const response = await fetch('/api/suppliers/' + id);
+        const data = await response.json();
+        if (!data.success) {
+          alert('Could not load supplier details');
+          return;
+        }
+
+        const s = data.supplier;
+        document.getElementById('viewSupplierCode').innerText = s.supplierCode || 'SUP-' + s.id;
+        document.getElementById('viewSupplierName').innerText = s.name;
+        document.getElementById('viewContact').innerText = s.contactPerson || 'N/A';
+        document.getElementById('viewPhone').innerText = s.phone || 'N/A';
+        document.getElementById('viewEmail').innerText = s.email || 'N/A';
+        document.getElementById('viewTerms').innerText = s.paymentTerms || 'Net 30';
+        document.getElementById('viewStatus').innerHTML = s.status === 'Active' 
+          ? '<span class="text-emerald-400 font-bold">Active</span>' 
+          : '<span class="text-red-400 font-bold">Inactive</span>';
+        document.getElementById('viewAddress').innerText = s.address || 'N/A';
+
+        // Populate Products
+        const prodContainer = document.getElementById('viewProductsContainer');
+        const products = s.Products || [];
+        document.getElementById('viewProductCount').innerText = products.length + ' item(s)';
+        if (products.length === 0) {
+          prodContainer.innerHTML = '<p class="text-xs text-zinc-500 italic p-3 bg-black/40 rounded-xl">No products linked to this vendor yet.</p>';
+        } else {
+          prodContainer.innerHTML = products.map(p => `
+            <div class="flex justify-between items-center bg-black/40 border border-zinc-800/80 px-3 py-2 rounded-xl text-xs">
+              <div>
+                <span class="font-medium text-white">${p.productName}</span>
+                ${p.isPrimarySupplier ? '<span class="ml-2 bg-yellow-400/10 text-yellow-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-yellow-400/20">Primary</span>' : ''}
+              </div>
+              <div class="text-right">
+                <span class="text-yellow-400 font-mono font-bold">₱${parseFloat(p.supplierPrice).toFixed(2)}</span>
+                <span class="text-gray-400 text-[10px]">/${p.unit}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        // Populate Orders
+        const ordersContainer = document.getElementById('viewOrdersContainer');
+        const orders = s.PurchaseOrders || [];
+        if (orders.length === 0) {
+          ordersContainer.innerHTML = '<p class="text-xs text-zinc-500 italic p-3 bg-black/40 rounded-xl">No purchase orders placed with this supplier yet.</p>';
+        } else {
+          ordersContainer.innerHTML = orders.map(o => `
+            <div class="flex justify-between items-center bg-black/40 border border-zinc-800/80 px-3 py-2 rounded-xl text-xs">
+              <div>
+                <span class="font-mono text-yellow-400 font-bold">${o.poNumber || '#PO-' + o.id}</span>
+                <span class="text-gray-400 ml-2 text-[11px]">${o.orderDate || ''}</span>
+              </div>
+              <div class="flex items-center space-x-3">
+                <span class="font-mono text-white font-bold">₱${parseFloat(o.totalAmount || 0).toFixed(2)}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full border border-zinc-700 bg-zinc-800 text-gray-300">${o.status}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        document.getElementById('viewSupplierModal').classList.remove('hidden');
+        document.getElementById('viewSupplierModal').classList.add('flex');
+      } catch (err) {
+        console.error(err);
+        alert('Failed to fetch supplier details.');
+      }
+    }
+
+    function closeViewSupplierModal() {
+      document.getElementById('viewSupplierModal').classList.remove('flex');
+      document.getElementById('viewSupplierModal').classList.add('hidden');
+    }
+
+    // Auto-hide toast notification
+    setTimeout(() => {
+      const toast = document.getElementById('toastMessage');
+      if (toast) {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 400);
+      }
+    }, 3500);
+  </script>
+
+</body>
+</html>

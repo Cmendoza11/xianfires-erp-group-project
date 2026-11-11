@@ -1,0 +1,84 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+<div class="flex flex-col md:flex-row min-h-screen">
+
+  {{> sidebar}}
+
+  <main class="flex-1 min-w-0">
+
+    <header class="bg-[#111111] border-b border-yellow-500/20 px-6 py-5">
+      <h2 class="text-xl md:text-2xl font-bold">File Leave</h2>
+      <p class="text-sm text-gray-500 mt-1">
+        {{#if selfView}}Submit a leave request for HR approval.{{else}}Submit a leave request on behalf of an employee.{{/if}}
+      </p>
+    </header>
+
+    <section class="p-6 max-w-3xl space-y-6">
+
+      {{> flash}}
+
+      {{#if selfView}}
+        {{#unless employee}}
+        <div class="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-5 text-sm text-yellow-200">
+          Your account is not linked to an employee record yet, so you cannot file leave. Please contact HR.
+        </div>
+        {{/unless}}
+      {{/if}}
+
+      <form method="POST" action="/leaves/create" class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6 space-y-4">
+
+        {{#unless selfView}}
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Employee *</label>
+          <select name="employeeId" required class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60">
+            <option value="">Select employee</option>
+            {{#each employees}}
+            <option value="{{id}}">{{firstName}} {{lastName}} — {{position}}</option>
+            {{/each}}
+          </select>
+        </div>
+        {{/unless}}
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Leave Type *</label>
+            <select name="type" required class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60">
+              {{#each types}}
+              <option value="{{this}}">{{this}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Start Date *</label>
+            <input type="date" name="startDate" required
+                   class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">End Date *</label>
+            <input type="date" name="endDate" required
+                   class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Reason *</label>
+          <textarea name="reason" rows="4" required minlength="5" placeholder="Briefly explain the reason for this leave request."
+                    class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60"></textarea>
+        </div>
+
+        <p class="text-xs text-gray-500">
+          Requests are submitted as Pending and reviewed by HR. Overlapping pending or approved leaves are blocked.
+        </p>
+
+        <div class="flex flex-wrap gap-3">
+          <button type="submit" class="rounded-xl bg-yellow-400 px-6 py-3 text-sm font-bold text-black hover:bg-yellow-300">Submit Request</button>
+          <a href="/leaves" class="rounded-xl border border-white/10 px-6 py-3 text-sm font-semibold text-gray-300 hover:bg-white/5">Cancel</a>
+        </div>
+      </form>
+
+    </section>
+  </main>
+</div>
+
+{{> footer}}

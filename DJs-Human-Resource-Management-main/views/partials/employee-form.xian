@@ -1,0 +1,95 @@
+<form method="POST" action="{{formAction}}" class="space-y-6">
+
+  <div class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6">
+    <h3 class="font-bold mb-5">Identity</h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Employee ID *</label>
+        <input name="employeeCode" required value="{{#if employee}}{{employee.employeeCode}}{{else}}{{nextCode}}{{/if}}"
+               class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Employment Status *</label>
+        <select name="status" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60">
+          {{#each statuses}}
+          <option value="{{this}}" {{#if (eq this ../employee.status)}}selected{{/if}}>{{this}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">First Name *</label>
+        <input name="firstName" required value="{{employee.firstName}}"
+               class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Last Name *</label>
+        <input name="lastName" required value="{{employee.lastName}}"
+               class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Email *</label>
+        <input type="email" name="email" required value="{{employee.email}}"
+               class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Phone Number</label>
+        <input name="phone" value="{{employee.phone}}" placeholder="09xx xxx xxxx"
+               class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6">
+    <h3 class="font-bold mb-5">Employment</h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Department *</label>
+        <select name="department" required class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60">
+          <option value="">Select department</option>
+          {{#each departments}}
+          <option value="{{this}}" {{#if (eq this ../employee.department)}}selected{{/if}}>{{this}}</option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Position *</label>
+        <input name="position" required value="{{employee.position}}"
+               class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Monthly Salary (₱) *</label>
+        <input type="number" name="salary" required min="0" step="0.01" value="{{employee.salary}}"
+               class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Date Hired *</label>
+        <input type="date" name="dateHired" required value="{{employee.dateHired}}"
+               class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+    </div>
+
+    <p class="mt-4 text-xs text-gray-500">
+      Salary is visible to HR administrators only. Employees can view their own payslips.
+    </p>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <button type="submit" class="rounded-xl bg-yellow-400 px-6 py-3 text-sm font-bold text-black hover:bg-yellow-300">
+      {{submitLabel}}
+    </button>
+    <a href="/employees" class="rounded-xl border border-white/10 px-6 py-3 text-sm font-semibold text-gray-300 hover:bg-white/5">
+      Cancel
+    </a>
+  </div>
+
+</form>

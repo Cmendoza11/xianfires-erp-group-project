@@ -1,0 +1,4 @@
+<p class="nav-section">DJ's ERP modules</p>
+{{#each erpModules}}{{#unless current}}
+<a href="{{url}}" class="nav-link"><span class="nav-icon">{{icon}}</span> {{label}}</a>
+{{/unless}}{{/each}}

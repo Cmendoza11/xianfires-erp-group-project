@@ -1,0 +1,134 @@
+<aside class="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col justify-between h-screen sticky top-0 overflow-y-auto">
+  <div>
+    <!-- Brand Logo Section with Official DJ's FoodHub Logo -->
+    <div class="p-4 flex items-center space-x-3 border-b border-zinc-800 bg-black/20">
+      <img src="/images/logo.png" alt="DJ's FoodHub Logo" class="w-11 h-11 object-contain rounded-xl p-1 bg-black/60 border border-yellow-400/40 shadow-lg shrink-0">
+      <div class="min-w-0">
+        <h1 class="font-extrabold text-yellow-400 text-sm tracking-wide leading-tight truncate">DJ'S FOODHUB</h1>
+        <p class="text-[9px] font-semibold text-gray-400 uppercase tracking-widest mt-0.5">Supplier System</p>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="p-4 space-y-4 text-xs">
+      <!-- Section: DASHBOARD -->
+      <div>
+        <a href="/dashboard" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl font-medium transition {{#eq activePage 'dashboard'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+          <i class="fas fa-th-large w-4 text-center {{#eq activePage 'dashboard'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+          <span>Dashboard</span>
+        </a>
+      </div>
+
+      <!-- Section: SUPPLIERS & PRODUCTS -->
+      <div>
+        <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 px-3">Suppliers & Products</p>
+        <div class="space-y-1">
+          <a href="/suppliers" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'suppliers'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-truck w-4 text-center {{#eq activePage 'suppliers'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Suppliers</span>
+          </a>
+          <a href="/supplier-products" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'supplier-products'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-boxes-stacked w-4 text-center {{#eq activePage 'supplier-products'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Supplier Products</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Section: DEPARTMENTS -->
+      <div>
+        <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 px-3">Departments</p>
+        <div class="space-y-1">
+          <a href="/departments" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'departments'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-building w-4 text-center {{#eq activePage 'departments'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Departments</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Section: PURCHASING -->
+      <div>
+        <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 px-3">Purchasing</p>
+        <div class="space-y-1">
+          <a href="/purchase-requests" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'requests'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-clipboard-list w-4 text-center {{#eq activePage 'requests'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Purchase Requests</span>
+          </a>
+          <a href="/purchase-orders" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'orders'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-file-invoice w-4 text-center {{#eq activePage 'orders'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Purchase Orders</span>
+          </a>
+          <a href="/goods-receipts" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'receipts'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-dolly w-4 text-center {{#eq activePage 'receipts'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Goods Receiving</span>
+          </a>
+          <a href="/supplier-returns" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'returns'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-rotate-left w-4 text-center {{#eq activePage 'returns'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Supplier Returns</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Section: FINANCIAL TRACKING -->
+      <div>
+        <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 px-3">Financial Tracking</p>
+        <div class="space-y-1">
+          <a href="/supplier-invoices" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'invoices'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-file-invoice-dollar w-4 text-center {{#eq activePage 'invoices'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Supplier Invoices</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Section: RECORDS & REPORTS -->
+      <div>
+        <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 px-3">Records & Reports</p>
+        <div class="space-y-1">
+          <a href="/purchase-history" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'history'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-clock-rotate-left w-4 text-center {{#eq activePage 'history'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Purchase History</span>
+          </a>
+          <a href="/supplier-performance" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'performance'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-chart-line w-4 text-center {{#eq activePage 'performance'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Supplier Performance</span>
+          </a>
+          <a href="/reports" class="flex items-center space-x-3 px-3.5 py-2 rounded-xl font-medium transition {{#eq activePage 'reports'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-yellow-400{{/eq}}">
+            <i class="fas fa-chart-pie w-4 text-center {{#eq activePage 'reports'}}text-black{{else}}text-gray-400{{/eq}}"></i>
+            <span>Reports</span>
+          </a>
+        </div>
+      </div>
+      {{> erpModules}}
+  </nav>
+  </div>
+
+  <div>
+    <!-- Interactive Theme Switcher (Dark Mode / Light Mode) -->
+    <div class="px-4 py-3 border-t border-zinc-800">
+      <button id="themeToggleBtn" onclick="toggleTheme()" type="button" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-gray-300 transition group" title="Toggle Dark/Light Mode">
+        <span class="flex items-center space-x-2">
+          <i id="themeToggleIcon" class="fas fa-moon text-yellow-400 group-hover:rotate-12 transition-transform"></i>
+          <span id="themeToggleText">Dark Mode</span>
+        </span>
+        <span id="themeToggleBadge" class="text-[9px] font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full border border-yellow-400/30 uppercase tracking-wider">
+          Dark
+        </span>
+      </button>
+    </div>
+
+    <!-- User Info & Logout Button -->
+    <div class="p-4 border-t border-zinc-800 flex items-center justify-between bg-zinc-950">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-full bg-yellow-400 text-black flex items-center justify-center font-bold text-sm shrink-0">
+          {{user.name.[0]}}
+        </div>
+        <div class="truncate max-w-[120px]">
+          <p class="text-xs font-medium text-white truncate">{{user.name}}</p>
+          <span class="text-[9px] text-yellow-400 font-semibold tracking-wide uppercase">{{user.role}}</span>
+        </div>
+      </div>
+      <a href="/logout" class="text-gray-400 hover:text-red-400 transition text-sm p-1" title="Logout">
+        <i class="fas fa-sign-out-alt"></i>
+      </a>
+    </div>
+  </div>
+</aside>

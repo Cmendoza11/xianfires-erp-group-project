@@ -1,0 +1,56 @@
+<footer class="mt-8 py-4 text-center text-gray-500 text-xs border-t border-zinc-800/60">
+  <div class="flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto px-6 gap-2">
+    <div class="flex items-center space-x-2">
+      <img src="/images/logo.png" alt="DJ's FoodHub" class="w-5 h-5 object-contain">
+      <span class="font-bold text-yellow-400">DJ's FoodHub</span>
+      <span>&bull; Supplier Management System</span>
+    </div>
+    <div class="text-[11px] text-gray-400">
+      &copy; 2026 XianFire Framework &bull; Mindoro State University
+    </div>
+  </div>
+</footer>
+
+<!-- Global Dark / Light Mode Theme Engine Script -->
+<script>
+  function updateThemeUI(theme) {
+    const icon = document.getElementById('themeToggleIcon');
+    const text = document.getElementById('themeToggleText');
+    const badge = document.getElementById('themeToggleBadge');
+
+    if (theme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      if (icon) icon.className = 'fas fa-sun text-yellow-500';
+      if (text) text.innerText = 'Light Mode';
+      if (badge) {
+        badge.innerText = 'Light';
+        badge.className = 'text-[9px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 uppercase tracking-wider';
+      }
+    } else {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      if (icon) icon.className = 'fas fa-moon text-yellow-400';
+      if (text) text.innerText = 'Dark Mode';
+      if (badge) {
+        badge.innerText = 'Dark';
+        badge.className = 'text-[9px] font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full border border-yellow-400/30 uppercase tracking-wider';
+      }
+    }
+  }
+
+  function toggleTheme() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const newTheme = isDark ? 'light' : 'dark';
+    localStorage.setItem('dj_theme', newTheme);
+    updateThemeUI(newTheme);
+  }
+
+  // Initialize theme on DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', () => {
+    const currentTheme = localStorage.getItem('dj_theme') || 'dark';
+    updateThemeUI(currentTheme);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+{{> head}}
+<style>
+  @media print {
+    aside, header, footer, .no-print {
+      display: none !important;
+    }
+    body {
+      background: white !important;
+      color: black !important;
+    }
+    .print-card {
+      border: none !important;
+      background: white !important;
+      color: black !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .print-text-dark {
+      color: black !important;
+    }
+    .print-text-gray {
+      color: #4b5563 !important;
+    }
+    .print-border {
+      border-color: #d1d5db !important;
+    }
+    .print-bg-light {
+      background-color: #f3f4f6 !important;
+    }
+  }
+</style>
+
+<body class="bg-black text-gray-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Toast Notification Popups -->
+  {{#if successMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-emerald-950 border border-emerald-800 text-emerald-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 no-print">
+      <i class="fas fa-check-circle text-emerald-400"></i>
+      <span class="text-xs font-semibold">{{successMessage}}</span>
+    </div>
+  {{/if}}
+
+  <div class="flex flex-1">
+    <!-- Master Sidebar -->
+    {{> sidebar}}
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-8 overflow-y-auto bg-black">
+      
+      <!-- Top Action Toolbar (Hidden in Print) -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-zinc-900/60 border border-zinc-800/80 p-5 rounded-2xl backdrop-blur-md no-print">
+        <div class="flex items-center space-x-3">
+          <a href="/goods-receipts" class="p-2 bg-zinc-800 hover:bg-zinc-700 text-gray-300 rounded-xl transition">
+            <i class="fas fa-arrow-left"></i>
+          </a>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h2 class="text-lg font-bold text-white tracking-wide">Goods Receipt {{receipt.receiptNumber}}</h2>
+              {{{statusBadge receipt.inventorySyncStatus}}}
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">Physical Receiving & Quality Inspection Voucher</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <!-- Print Button -->
+          <button onclick="window.print()" class="bg-zinc-800 hover:bg-zinc-700 text-gray-200 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-2">
+            <i class="fas fa-print"></i>
+            <span>Print Receipt</span>
+          </button>
+
+          <!-- Create Return from Damaged Items button -->
+          <a href="/supplier-returns?openCreate=true&poId={{receipt.purchaseOrderId}}&grId={{receipt.id}}&supplierId={{receipt.supplierId}}" class="bg-red-600 hover:bg-red-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1.5">
+            <i class="fas fa-rotate-left"></i>
+            <span>Return Damaged Items</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Printable Goods Receipt Voucher Document -->
+      <div class="print-card max-w-4xl mx-auto bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-2xl">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b border-zinc-800 print-border pb-6 mb-6">
+          <div class="flex items-center space-x-4">
+            <img src="/images/logo.png" alt="DJ's FoodHub Logo" class="w-14 h-14 object-contain rounded-2xl p-1 bg-black/60 border border-yellow-400/60 shadow-md">
+            <div>
+              <h1 class="text-xl font-bold text-yellow-400 print-text-dark">DJ's FoodHub Receiving Voucher</h1>
+              <p class="text-xs text-gray-400 print-text-gray">Goods Acceptance & Storeroom Inspection Record</p>
+              <p class="text-[11px] text-gray-500 print-text-gray">Warehouse Gate 1 | Inventory Inbound</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Inspection Certificate</span>
+            <h2 class="text-2xl font-mono font-bold text-white print-text-dark">{{receipt.receiptNumber}}</h2>
+            <p class="text-xs text-gray-400 print-text-gray mt-1">Date: <span class="font-bold text-white print-text-dark">{{formatDate receipt.deliveryDate}}</span></p>
+            <p class="text-[11px] text-yellow-400 print-text-dark font-mono">PO Ref: {{receipt.PurchaseOrder.poNumber}}</p>
+          </div>
+        </div>
+
+        <!-- Supplier & Receiving Data Grid -->
+        <div class="grid grid-cols-2 gap-6 bg-black/50 print-bg-light p-5 rounded-2xl border border-zinc-800 print-border mb-6 text-xs">
+          <div>
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">SUPPLIER INFORMATION:</span>
+            <h3 class="text-sm font-bold text-yellow-400 print-text-dark">{{receipt.Supplier.name}}</h3>
+            <p class="text-gray-300 print-text-gray font-mono text-[11px] mt-0.5">Code: {{receipt.Supplier.supplierCode}}</p>
+            <p class="text-gray-300 print-text-gray mt-0.5">Contact: {{receipt.Supplier.contactPerson}}</p>
+            <p class="text-gray-300 print-text-gray">Phone: {{receipt.Supplier.phone}}</p>
+          </div>
+
+          <div class="border-l border-zinc-800 print-border pl-6">
+            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">SHIPMENT & INSPECTOR:</span>
+            <p class="text-gray-300 print-text-gray">Waybill / DR Number: <span class="font-bold text-white print-text-dark font-mono">{{#if receipt.deliveryReference}}{{receipt.deliveryReference}}{{else}}N/A{{/if}}</span></p>
+            <p class="text-gray-300 print-text-gray mt-0.5">Inspected & Received By: <span class="font-bold text-white print-text-dark">{{receipt.Receiver.name}}</span></p>
+            <p class="text-gray-300 print-text-gray mt-0.5">Inventory Sync Status: <span class="font-mono text-emerald-400 print-text-dark font-bold">{{receipt.inventorySyncStatus}}</span></p>
+            {{#if receipt.remarks}}
+              <p class="text-gray-400 print-text-gray text-[11px] mt-2 italic bg-black/30 p-2 rounded-lg">Remarks: {{receipt.remarks}}</p>
+            {{/if}}
+          </div>
+        </div>
+
+        <!-- Inspected Line Items Table -->
+        <div class="overflow-x-auto mb-6">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b-2 border-zinc-800 print-border text-gray-400 uppercase text-[10px] bg-black/40 print-bg-light">
+                <th class="py-3 px-3">#</th>
+                <th class="py-3 px-3">Product Name</th>
+                <th class="py-3 px-3 text-center">Ordered</th>
+                <th class="py-3 px-3 text-center">Delivered</th>
+                <th class="py-3 px-3 text-center text-emerald-400 print-text-dark font-bold">Accepted</th>
+                <th class="py-3 px-3 text-center text-red-400 print-text-dark font-bold">Damaged</th>
+                <th class="py-3 px-3 text-center text-amber-400 print-text-dark font-bold">Missing</th>
+                <th class="py-3 px-3">Inspection Remarks</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-800/60 print-border">
+              {{#each receipt.Items}}
+                <tr>
+                  <td class="py-3 px-3 font-mono text-gray-500">{{math @index "+" 1}}</td>
+                  <td class="py-3 px-3 font-bold text-white print-text-dark">{{productName}}</td>
+                  <td class="py-3 px-3 text-center font-mono text-gray-300 print-text-dark">{{orderedQuantity}} {{unit}}</td>
+                  <td class="py-3 px-3 text-center font-mono text-gray-300 print-text-dark">{{deliveredQuantity}} {{unit}}</td>
+                  <td class="py-3 px-3 text-center font-mono font-bold text-emerald-400 print-text-dark bg-emerald-950/20">{{acceptedQuantity}} {{unit}}</td>
+                  <td class="py-3 px-3 text-center font-mono font-bold text-red-400 print-text-dark bg-red-950/20">{{damagedQuantity}} {{unit}}</td>
+                  <td class="py-3 px-3 text-center font-mono font-bold text-amber-400 print-text-dark">{{missingQuantity}} {{unit}}</td>
+                  <td class="py-3 px-3 text-gray-400 print-text-gray italic text-[11px]">{{#if remarks}}{{remarks}}{{else}}-{{/if}}</td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Rule & Signature Notice -->
+        <div class="bg-yellow-400/10 border border-yellow-400/20 rounded-xl p-3 mb-6 text-xs text-yellow-300 print-text-dark">
+          <p><i class="fas fa-info-circle mr-1"></i> <span class="font-bold">INVENTORY COMPLIANCE NOTE:</span> Only accepted quantities above are authorized for entry into restaurant stock. Damaged items have been rejected and remain recorded for vendor credit/return.</p>
+        </div>
+
+        <!-- Signature Authorization Blocks -->
+        <div class="grid grid-cols-2 gap-12 pt-8 border-t border-zinc-800 print-border text-xs">
+          <div class="text-center">
+            <div class="border-b border-zinc-700 print-border pb-1 mb-1 font-bold text-white print-text-dark">
+              {{receipt.Receiver.name}}
+            </div>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Receiving Clerk / Inspector</p>
+          </div>
+
+          <div class="text-center">
+            <div class="border-b border-zinc-700 print-border pb-1 mb-1 font-bold text-white print-text-dark">
+              Warehouse & Inventory Manager
+            </div>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Stock-In Verifier / Date</p>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <footer class="bg-zinc-950 border-t border-zinc-800/80 px-8 py-4 text-center text-xs text-gray-600 no-print">
+    © 2026 DJ's FoodHub. All rights reserved. Supplier Management Module v2.0.
+  </footer>
+
+  <script>
+    setTimeout(() => {
+      const toast = document.getElementById('toastMessage');
+      if (toast) {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 400);
+      }
+    }, 3500);
+  </script>
+
+</body>
+</html>

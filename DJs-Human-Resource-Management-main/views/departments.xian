@@ -1,0 +1,89 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+<div class="flex flex-col md:flex-row min-h-screen">
+
+  {{> sidebar}}
+
+  <main class="flex-1 min-w-0">
+
+    <header class="bg-[#111111] border-b border-yellow-500/20 px-6 py-5">
+      <h2 class="text-xl md:text-2xl font-bold">Department Management</h2>
+      <p class="text-sm text-gray-500 mt-1">Create departments, assign heads and track employee distribution.</p>
+    </header>
+
+    <section class="p-6 space-y-6">
+
+      {{> flash}}
+
+      {{#if isAdmin}}
+      <form method="POST" action="/departments" class="rounded-2xl border border-white/5 bg-[#171717] p-5">
+        <h3 class="font-bold mb-4">Create Department</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input name="name" required placeholder="Department name"
+                 class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+          <input name="code" placeholder="Code (e.g. HR)"
+                 class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+          <select name="headId" class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+            <option value="">Department head (optional)</option>
+            {{#each employees}}
+            <option value="{{id}}">{{firstName}} {{lastName}} — {{position}}</option>
+            {{/each}}
+          </select>
+          <div class="flex gap-2">
+            <input name="description" placeholder="Description"
+                   class="flex-1 rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+            <button type="submit" class="rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Add</button>
+          </div>
+        </div>
+      </form>
+      {{/if}}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {{#each departments}}
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="font-bold text-lg">{{name}}</h3>
+              <p class="text-xs text-gray-500 mt-0.5">{{dash code}}</p>
+            </div>
+            <span class="rounded-full bg-yellow-500/10 px-3 py-1 text-xs font-semibold text-yellow-400">
+              {{employeeCount}} employee(s)
+            </span>
+          </div>
+
+          <p class="mt-3 text-sm text-gray-400">{{dash description}}</p>
+
+          <div class="mt-4 border-t border-white/5 pt-4 text-sm">
+            <p class="text-xs uppercase tracking-wider text-gray-500 mb-1">Department Head</p>
+            {{#if head}}
+              <p class="font-medium">{{head.firstName}} {{head.lastName}}</p>
+            {{else}}
+              <p class="text-gray-500">Unassigned</p>
+            {{/if}}
+          </div>
+
+          <div class="mt-4 flex items-center gap-2">
+            <a href="/employees?department={{urlEncode name}}" class="rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-300 hover:bg-white/10">View employees</a>
+            {{#if ../isAdmin}}
+            <a href="/departments/{{id}}/edit" class="rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black">Edit</a>
+            <form action="/departments/{{id}}/delete" method="POST" onsubmit="return confirm('Delete this department?');">
+              <button type="submit" class="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 hover:bg-red-500 hover:text-white">Delete</button>
+            </form>
+            {{/if}}
+          </div>
+        </div>
+        {{else}}
+        <div class="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/5 bg-[#171717] p-12 text-center">
+          <div class="text-4xl mb-3">▤</div>
+          <p class="text-gray-400">No departments yet.</p>
+          {{#if isAdmin}}<p class="text-xs text-gray-600 mt-2">Create your first department above.</p>{{/if}}
+        </div>
+        {{/each}}
+      </div>
+
+    </section>
+  </main>
+</div>
+
+{{> footer}}

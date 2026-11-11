@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              yellow: '#f7d83d',
+              dark: '#171717',
+              cream: '#fffdf2',
+              border: '#ead36a',
+              muted: '#75651d',
+              light: '#f5edbd',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Smooth transitions for dark mode */
+    *, *::before, *::after { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #ead36a; border-radius: 3px; }
+    .dark ::-webkit-scrollbar-thumb { background: #75651d; }
+  </style>
+  <script>
+    // Apply saved theme before render to avoid flash
+    (function() {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+  <title>{{ title }}</title>
+</head>

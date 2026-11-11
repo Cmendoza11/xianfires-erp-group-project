@@ -1,0 +1,262 @@
+{{> head}}
+<body class="bg-black text-gray-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Toast Notification Popups -->
+  {{#if errorMessage}}
+    <div id="toastMessage" class="fixed top-5 right-5 z-50 bg-red-950 border border-red-800 text-red-300 px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300">
+      <i class="fas fa-exclamation-triangle text-red-400"></i>
+      <span class="text-xs font-semibold">{{errorMessage}}</span>
+    </div>
+  {{/if}}
+
+  <div class="flex flex-1">
+    <!-- Master Sidebar -->
+    {{> sidebar}}
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-8 overflow-y-auto bg-black">
+      
+      <!-- Page Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-zinc-900/60 border border-zinc-800/80 p-6 rounded-2xl backdrop-blur-md">
+        <div>
+          <div class="flex items-center space-x-3">
+            <h2 class="text-xl font-bold text-white tracking-wide">Record Delivery & Quality Inspection</h2>
+            <span class="bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Goods Receiving
+            </span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Perform incoming shipment inspection, partition quantities into Accepted vs Damaged, and verify stock eligibility.</p>
+        </div>
+        <a href="/goods-receipts" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-bold px-4 py-2.5 rounded-xl transition">
+          <i class="fas fa-arrow-left mr-1.5"></i> Back to Receipts
+        </a>
+      </div>
+
+      <!-- PO Selection / Info Bar -->
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 shadow-xl mb-6">
+        <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Select Purchase Order to Receive *</label>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <select id="poSelect" onchange="onPOSelectChange(this)" class="w-full md:w-2/3 bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400">
+            <option value="">-- Choose Purchase Order --</option>
+            {{#each openPOs}}
+              <option value="{{id}}" {{#eq ../selectedPO.id id}}selected{{/eq}}>
+                {{poNumber}} — {{Supplier.name}} (Status: {{status}}, Total: {{formatCurrency totalAmount}})
+              </option>
+            {{/each}}
+          </select>
+          <span class="text-xs text-gray-400">Showing Open & Partially Received Orders</span>
+        </div>
+      </div>
+
+      {{#if selectedPO}}
+        <!-- Inspection Form -->
+        <form action="/goods-receipts/receive" method="POST" class="space-y-6">
+          <input type="hidden" name="purchaseOrderId" value="{{selectedPO.id}}">
+
+          <!-- Delivery Details Card -->
+          <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+            <h3 class="text-xs font-bold text-yellow-400 uppercase tracking-wider mb-4 border-b border-zinc-800 pb-2">
+              1. Delivery Waybill & Shipping Reference
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-400 mb-1">Delivering Supplier</label>
+                <input type="text" readonly value="{{selectedPO.Supplier.name}}" class="w-full bg-black/60 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-gray-300 font-bold">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-gray-400 mb-1">Actual Delivery Date *</label>
+                <input type="date" name="deliveryDate" id="deliveryDateInput" required class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-gray-400 mb-1">Delivery Reference / DR Number</label>
+                <input type="text" name="deliveryReference" placeholder="e.g. DR-88912 or Waybill #" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              </div>
+
+              <div class="md:col-span-3">
+                <label class="block text-xs font-semibold text-gray-400 mb-1">Receiving Notes / Inspector Remarks</label>
+                <input type="text" name="remarks" placeholder="General package condition, temperature check, seal integrity..." class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-400">
+              </div>
+            </div>
+          </div>
+
+          <!-- Quality Inspection Matrix Card -->
+          <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+            <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
+              <div>
+                <h3 class="text-xs font-bold text-yellow-400 uppercase tracking-wider">
+                  2. Quality Inspection & Acceptance Matrix
+                </h3>
+                <p class="text-[11px] text-gray-400 mt-0.5">
+                  <span class="text-yellow-400 font-bold">IMPORTANT:</span> Only <span class="text-emerald-400 font-bold">Accepted Quantity</span> qualifies for Inventory stock-in! Damaged or missing products will not be added to stock.
+                </p>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs" id="inspectionTable">
+                <thead>
+                  <tr class="border-b border-zinc-800 text-gray-400 uppercase text-[10px] bg-black/40">
+                    <th class="py-3 px-3">Item Name</th>
+                    <th class="py-3 px-3 text-center">Ordered</th>
+                    <th class="py-3 px-3 text-center">Prev Recv</th>
+                    <th class="py-3 px-3 text-center">Remaining</th>
+                    <th class="py-3 px-3 w-28 text-center bg-blue-950/20">Delivered *</th>
+                    <th class="py-3 px-3 w-28 text-center bg-red-950/20">Damaged</th>
+                    <th class="py-3 px-3 text-center text-emerald-400 font-bold bg-emerald-950/20">Accepted</th>
+                    <th class="py-3 px-3 text-center text-amber-400">Missing</th>
+                    <th class="py-3 px-3">Inspection Remarks</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800/40">
+                  {{#each selectedPO.Items}}
+                    <tr class="inspection-row">
+                      <td class="py-3 px-3 font-bold text-white">
+                        {{productName}}
+                        <input type="hidden" name="po_item_id" value="{{id}}">
+                        <input type="hidden" name="product_id" value="{{productId}}">
+                        <input type="hidden" name="product_name" value="{{productName}}">
+                        <input type="hidden" name="item_unit" value="{{unit}}">
+                        <input type="hidden" name="ordered_qty" class="ordered-qty-val" value="{{quantity}}">
+                        <input type="hidden" name="prev_qty" class="prev-qty-val" value="{{previouslyReceivedQty}}">
+                      </td>
+                      <td class="py-3 px-3 text-center font-mono text-gray-300">
+                        {{quantity}} {{unit}}
+                      </td>
+                      <td class="py-3 px-3 text-center font-mono text-gray-400">
+                        {{previouslyReceivedQty}} {{unit}}
+                      </td>
+                      <td class="py-3 px-3 text-center font-mono font-bold text-yellow-400 remaining-qty-cell">
+                        {{remainingQty}} {{unit}}
+                      </td>
+                      <td class="py-3 px-2 bg-blue-950/20">
+                        <input type="number" step="0.01" name="delivered_qty" value="{{remainingQty}}" oninput="recalcInspection(this)" required class="w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-1 text-xs text-white font-mono text-center focus:outline-none focus:border-yellow-400 delivered-input">
+                      </td>
+                      <td class="py-3 px-2 bg-red-950/20">
+                        <input type="number" step="0.01" name="damaged_qty" value="0.00" oninput="recalcInspection(this)" required class="w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-1 text-xs text-red-400 font-mono text-center focus:outline-none focus:border-red-400 damaged-input">
+                      </td>
+                      <td class="py-3 px-3 text-center font-mono font-bold text-emerald-400 accepted-cell bg-emerald-950/20">
+                        {{remainingQty}} {{unit}}
+                      </td>
+                      <td class="py-3 px-3 text-center font-mono font-bold text-amber-400 missing-cell">
+                        0.00 {{unit}}
+                      </td>
+                      <td class="py-3 px-2">
+                        <input type="text" name="item_remarks" placeholder="Condition / Defect note" class="w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-yellow-400">
+                      </td>
+                    </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Total Inspection Summary -->
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/60 p-4 rounded-xl border border-zinc-800 text-xs">
+              <div>
+                <span class="text-gray-500 uppercase text-[10px] block">Total Shipment Delivered:</span>
+                <span id="sumDelivered" class="font-mono text-base font-bold text-blue-400">0.00</span>
+              </div>
+              <div>
+                <span class="text-gray-500 uppercase text-[10px] block">Total Accepted (To Inventory Stock):</span>
+                <span id="sumAccepted" class="font-mono text-base font-bold text-emerald-400">0.00</span>
+              </div>
+              <div>
+                <span class="text-gray-500 uppercase text-[10px] block">Total Damaged (Eligible for Return):</span>
+                <span id="sumDamaged" class="font-mono text-base font-bold text-red-400">0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-2">
+            <a href="/goods-receipts" class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-gray-300 text-xs font-bold rounded-xl transition">
+              Cancel
+            </a>
+            <button type="submit" class="px-6 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-black text-xs font-bold rounded-xl transition shadow-lg flex items-center space-x-2">
+              <i class="fas fa-check-double"></i>
+              <span>Save Goods Receipt & Verify Delivery</span>
+            </button>
+          </div>
+        </form>
+      {{else}}
+        <div class="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-12 text-center text-gray-500">
+          <i class="fas fa-truck-loading text-3xl mb-3 text-zinc-700"></i>
+          <p class="text-sm">Please select a Purchase Order from the dropdown above to load order line items for inspection.</p>
+        </div>
+      {{/if}}
+
+    </main>
+  </div>
+
+  <footer class="bg-zinc-950 border-t border-zinc-800/80 px-8 py-4 text-center text-xs text-gray-600">
+    © 2026 DJ's FoodHub. All rights reserved. Supplier Management Module v2.0.
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const dateInput = document.getElementById('deliveryDateInput');
+      if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+      }
+      recalculateTotals();
+    });
+
+    function onPOSelectChange(select) {
+      if (select.value) {
+        window.location.href = '/goods-receipts/receive?poId=' + select.value;
+      }
+    }
+
+    function recalcInspection(input) {
+      const row = input.closest('tr');
+      const deliveredInput = row.querySelector('.delivered-input');
+      const damagedInput = row.querySelector('.damaged-input');
+      const orderedVal = parseFloat(row.querySelector('.ordered-qty-val').value) || 0;
+      const prevVal = parseFloat(row.querySelector('.prev-qty-val').value) || 0;
+      const remainingBefore = Math.max(0, orderedVal - prevVal);
+
+      let delivered = parseFloat(deliveredInput.value) || 0;
+      let damaged = parseFloat(damagedInput.value) || 0;
+
+      if (damaged > delivered) {
+        damaged = delivered;
+        damagedInput.value = delivered.toFixed(2);
+      }
+
+      const accepted = Math.max(0, delivered - damaged);
+      const missing = Math.max(0, remainingBefore - delivered);
+
+      row.querySelector('.accepted-cell').innerText = accepted.toFixed(2);
+      row.querySelector('.missing-cell').innerText = missing.toFixed(2);
+
+      recalculateTotals();
+    }
+
+    function recalculateTotals() {
+      let sumDelivered = 0;
+      let sumAccepted = 0;
+      let sumDamaged = 0;
+
+      document.querySelectorAll('.inspection-row').forEach(row => {
+        const delivered = parseFloat(row.querySelector('.delivered-input')?.value) || 0;
+        const damaged = parseFloat(row.querySelector('.damaged-input')?.value) || 0;
+        const accepted = Math.max(0, delivered - damaged);
+
+        sumDelivered += delivered;
+        sumDamaged += damaged;
+        sumAccepted += accepted;
+      });
+
+      const elDelivered = document.getElementById('sumDelivered');
+      const elAccepted = document.getElementById('sumAccepted');
+      const elDamaged = document.getElementById('sumDamaged');
+
+      if (elDelivered) elDelivered.innerText = sumDelivered.toFixed(2);
+      if (elAccepted) elAccepted.innerText = sumAccepted.toFixed(2);
+      if (elDamaged) elDamaged.innerText = sumDamaged.toFixed(2);
+    }
+  </script>
+
+</body>
+</html>

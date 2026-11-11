@@ -1,0 +1,128 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+<div class="flex flex-col md:flex-row min-h-screen">
+
+  {{> sidebar}}
+
+  <main class="flex-1 min-w-0">
+
+    <header class="bg-[#111111] border-b border-yellow-500/20 px-6 py-5">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold">Employee Management</h2>
+          <p class="text-sm text-gray-500 mt-1">Manage your workforce and employee records.</p>
+        </div>
+        <a href="/employees/create" class="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300">
+          + Add Employee
+        </a>
+      </div>
+    </header>
+
+    <section class="p-6 space-y-6">
+
+      {{> flash}}
+
+      <form method="GET" action="/employees" class="rounded-2xl border border-white/5 bg-[#171717] p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+        <input type="text" name="q" value="{{filters.q}}" placeholder="Search name, ID, email, position…"
+               class="md:col-span-2 w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+
+        <select name="department" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+          <option value="">All departments</option>
+          {{#each departments}}
+          <option value="{{this}}" {{#if (eq this ../filters.department)}}selected{{/if}}>{{this}}</option>
+          {{/each}}
+        </select>
+
+        <div class="flex gap-2">
+          <select name="status" class="flex-1 rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+            <option value="">All statuses</option>
+            {{#each statuses}}
+            <option value="{{this}}" {{#if (eq this ../filters.status)}}selected{{/if}}>{{this}}</option>
+            {{/each}}
+          </select>
+          <button type="submit" class="rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Filter</button>
+        </div>
+      </form>
+
+      <div class="bg-[#171717] border border-white/5 rounded-2xl overflow-hidden">
+        <div class="p-5 border-b border-white/5 flex flex-wrap items-center justify-between gap-2">
+          <h3 class="font-bold">Employee Directory</h3>
+          <p class="text-xs text-gray-500">{{pagination.count}} record(s) found</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-white/5 text-gray-400 uppercase text-[11px]">
+              <tr>
+                <th class="px-5 py-3">Employee ID</th>
+                <th class="px-5 py-3">Employee Name</th>
+                <th class="px-5 py-3">Department</th>
+                <th class="px-5 py-3">Position</th>
+                <th class="px-5 py-3">Email</th>
+                <th class="px-5 py-3">Status</th>
+                <th class="px-5 py-3 text-center">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody class="divide-y divide-white/5">
+              {{#each employees}}
+              <tr class="hover:bg-white/5 transition">
+                <td class="px-5 py-4 font-semibold text-yellow-400">{{employeeCode}}</td>
+                <td class="px-5 py-4 font-medium">
+                  <a href="/employees/{{id}}" class="hover:text-yellow-400">{{firstName}} {{lastName}}</a>
+                </td>
+                <td class="px-5 py-4 text-gray-400">{{department}}</td>
+                <td class="px-5 py-4 text-gray-400">{{position}}</td>
+                <td class="px-5 py-4 text-gray-400">{{email}}</td>
+                <td class="px-5 py-4">
+                  <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Active")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "On Leave")}}bg-orange-500/10 text-orange-400{{else}}bg-red-500/10 text-red-400{{/if}}{{/if}}">{{status}}</span>
+                </td>
+                <td class="px-5 py-4">
+                  <div class="flex items-center justify-center gap-2">
+                    <a href="/employees/{{id}}" class="rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-300 hover:bg-white/10">View</a>
+                    <a href="/employees/{{id}}/edit" class="rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black">Edit</a>
+                    {{#if ../isAdmin}}
+                    <form action="/employees/{{id}}/delete" method="POST" onsubmit="return confirm('Delete this employee and their HR records? This cannot be undone.');">
+                      <button type="submit" class="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 hover:bg-red-500 hover:text-white">Delete</button>
+                    </form>
+                    {{/if}}
+                  </div>
+                </td>
+              </tr>
+              {{else}}
+              <tr>
+                <td colspan="7" class="px-6 py-16 text-center">
+                  <div class="text-4xl mb-3">♙</div>
+                  <p class="text-gray-400">No employee records found.</p>
+                  <p class="text-gray-600 text-xs mt-2">
+                    {{#if filters.q}}Try a different search or clear the filters.{{else}}Start by adding your first employee.{{/if}}
+                  </p>
+                  <a href="/employees/create" class="mt-5 inline-block rounded-xl bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300">+ Add Employee</a>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-white/5 px-5 py-4 text-sm">
+          <p class="text-gray-500">Page {{pagination.page}} of {{pagination.totalPages}} · {{pagination.count}} employee(s)</p>
+          <div class="flex gap-2">
+            {{#if pagination.hasPrev}}
+            <a href="/employees?page={{pagination.prevPage}}&q={{urlEncode filters.q}}&department={{urlEncode filters.department}}&status={{urlEncode filters.status}}"
+               class="rounded-lg border border-white/10 px-4 py-2 text-gray-300 hover:bg-white/5">← Previous</a>
+            {{/if}}
+            {{#if pagination.hasNext}}
+            <a href="/employees?page={{pagination.nextPage}}&q={{urlEncode filters.q}}&department={{urlEncode filters.department}}&status={{urlEncode filters.status}}"
+               class="rounded-lg border border-white/10 px-4 py-2 text-gray-300 hover:bg-white/5">Next →</a>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+{{> footer}}
