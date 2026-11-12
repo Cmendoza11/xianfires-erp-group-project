@@ -1,4 +1,12 @@
 <aside class="auth-aside">
-  <h2>Every entry balanced.</h2>
-  <p>General ledger, sales, purchases, banking and reports in one place.</p>
+  <img src="/images/djs-logo.svg" alt="DJ's FoodHub logo" class="auth-aside-logo">
+  <img src="/images/djs-logo.svg" alt="" aria-hidden="true" class="auth-aside-watermark">
+  <div>
+    <div class="eyebrow">DJ's FoodHub · Accounting</div>
+    <h2>Every peso,<br><span>perfectly balanced.</span></h2>
+    <p>General ledger, sales, purchases, banking and reports, connected to the rest of DJ's ERP.</p>
+    <div class="module-chips" aria-label="Connected modules">
+      <span>POS &amp; Inventory</span><span>Human Resources</span><span>Procurement</span><span>Customer Logs</span>
+    </div>
+  </div>
 </aside>

@@ -32,7 +32,7 @@
               {{#each entries.items}}
               <tr>
                 <td><a href="{{ viewUrl }}" class="hover:underline font-medium font-mono">{{ entryNumber }}</a></td>
-                <td>{{ entryDate }}</td>
+                <td class="whitespace-nowrap">{{ entryDate }}</td>
                 <td>{{#if reference}}{{ reference }}{{else}}-{{/if}}</td>
                 <td>
                   {{ description }}

@@ -5,38 +5,40 @@
   {{> adminNav}}
   <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
     <div class="max-w-[75rem] mx-auto space-y-4">
-      <div class="flex flex-wrap items-end justify-between gap-4 pb-2">
-        <div class="flex-1 basis-80 min-w-0">
-          <h1 class="text-[1.375rem] font-semibold tracking-tight">{{#if company}}{{ company }}{{else}}Dashboard{{/if}}</h1>
-          <p class="text-[13px] text-muted mt-0.5">{{ fiscalYear }} · {{ period.from }} to {{ period.to }} · {{ currency }}{{#if lockDate}} · <span class="whitespace-nowrap">Books closed through {{ lockDate }}</span>{{/if}}</p>
+      <section class="hero" aria-label="Welcome">
+        <img src="/images/djs-logo.svg" alt="" aria-hidden="true" class="hero-watermark">
+        <div class="min-w-0">
+          <p class="hero-eyebrow">{{#if adminUser}}Welcome back, {{ adminUser.fullName }}{{else}}Welcome back{{/if}}</p>
+          <h1 class="hero-title">{{#if company}}{{ company }}{{else}}DJ's ERP · Accounting{{/if}}</h1>
+          <p class="hero-sub">{{ fiscalYear }} · {{ period.from }} to {{ period.to }} · {{ currency }}{{#if lockDate}} · <span class="whitespace-nowrap">Books closed through {{ lockDate }}</span>{{/if}}</p>
         </div>
         {{#if can.write}}
-        <div class="flex flex-wrap gap-1">
-          <a href="{{ urls.accountingJournalNew }}" class="btn btn-ghost">Journal entry</a>
-          <a href="{{ urls.billNew }}" class="btn btn-ghost">New bill</a>
-          <a href="{{ urls.invoiceNew }}" class="btn btn-primary">New invoice</a>
+        <div class="hero-actions">
+          <a href="{{ urls.accountingJournalNew }}" class="btn btn-hero-soft">Journal entry</a>
+          <a href="{{ urls.billNew }}" class="btn btn-hero-soft">New bill</a>
+          <a href="{{ urls.invoiceNew }}" class="btn btn-hero">New invoice</a>
         </div>
         {{/if}}
-      </div>
+      </section>
 
       <section class="card metric-band" aria-label="Key figures">
         <div class="metric">
-          <div class="metric-label">Cash and bank</div>
-          <div class="metric-value">{{ formatSignedMoney cash.total }}</div>
+          <div class="metric-head"><div class="metric-label">Cash and bank</div><span class="metric-icon" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span></div>
+          <div class="metric-value {{#if (gt 0 cash.total)}}text-destructive{{else}}is-gold{{/if}}">{{ formatSignedMoney cash.total }}</div>
           <div class="metric-sub">{{ cash.accounts.length }} account(s)</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Revenue</div>
+          <div class="metric-head"><div class="metric-label">Revenue</div><span class="metric-icon" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg></span></div>
           <div class="metric-value">{{ formatSignedMoney revenue }}</div>
           <div class="metric-sub">{{ fiscalYear }} to date</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Expenses</div>
+          <div class="metric-head"><div class="metric-label">Expenses</div><span class="metric-icon" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m22 17-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></svg></span></div>
           <div class="metric-value">{{ formatSignedMoney expenses }}</div>
           <div class="metric-sub">{{ fiscalYear }} to date</div>
         </div>
         <div class="metric">
-          <div class="metric-label">{{#if isLoss}}Net loss{{else}}Net income{{/if}}</div>
+          <div class="metric-head"><div class="metric-label">{{#if isLoss}}Net loss{{else}}Net income{{/if}}</div><span class="metric-icon" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"/><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M7 21h10"/></svg></span></div>
           <div class="metric-value {{#if isLoss}}text-destructive{{/if}}">{{ formatSignedMoney netIncome }}</div>
           <div class="metric-sub">{{#if netMargin}}{{ netMargin }} net margin · {{/if}}<a href="{{ urls.reportIncomeStatement }}" class="hover:underline">Income statement</a></div>
         </div>

@@ -3,9 +3,9 @@
   <div class="auth-shell">
     <div class="auth-main">
       <div class="w-full max-w-[22rem]">
-        <div class="flex items-center gap-2.5 mb-10">
-          {{> logo class="w-8 h-8" }}
-          <span class="text-sm font-semibold">XianFire Accounting</span>
+        <div class="auth-brand">
+          <img src="/images/djs-logo.svg" alt="DJ's FoodHub logo">
+          <span><b>DJ's ERP</b><small>Accounting</small></span>
         </div>
         <h1 class="auth-title mb-6">Create an account</h1>
         <div id="signup-error" class="text-destructive pb-3 text-[13px] hidden" role="alert"></div>

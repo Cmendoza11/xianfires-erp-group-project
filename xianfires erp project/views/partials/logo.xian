@@ -1,5 +1,1 @@
-<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="{{ class }}" aria-hidden="true">
-  <rect width="32" height="32" rx="16" fill="#1e4d49"/>
-  <path d="M10.5 9h9.5a2.5 2.5 0 0 1 2.5 2.5V23H13a2.5 2.5 0 0 1-2.5-2.5z" fill="#fff"/>
-  <path d="M13.5 13.5h6M13.5 17h6M13.5 20.5h3" stroke="#1e4d49" stroke-width="1.8" stroke-linecap="round"/>
-</svg>
+<img src="/images/djs-logo.svg" alt="" aria-hidden="true" class="rounded-lg {{ class }}">

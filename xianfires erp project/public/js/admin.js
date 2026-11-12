@@ -244,9 +244,9 @@
   const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
   const savedTheme = () => {
     try {
-      return localStorage.getItem(THEME_KEY) || "system";
+      return localStorage.getItem(THEME_KEY) || "dark";
     } catch {
-      return "system";
+      return "dark";
     }
   };
   const applyTheme = (choice) => {
