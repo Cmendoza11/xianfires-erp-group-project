@@ -1,0 +1,106 @@
+{{> head}}
+<body>
+{{> adminHeader}}
+<div class="flex">
+  {{> adminNav}}
+  <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
+    <div class="max-w-[75rem] mx-auto space-y-4">
+      <div class="flex flex-wrap items-end justify-between gap-4 pb-2">
+        <div class="flex-1 basis-80 min-w-0">
+          <h1 class="text-[1.375rem] font-semibold tracking-tight">Payroll</h1>
+          <p class="text-[13px] text-muted mt-0.5">HR computes the payroll from attendance and marks it Paid; each paid payslip is posted here automatically: Dr 6000 Salaries, Cr 2400 SSS/PhilHealth/Pag-IBIG, Cr 1110 cash advances, Cr 1010 Cash in Bank.</p>
+        </div>
+        <a href="{{ hrPayrollUrl }}" class="btn btn-ghost">Open HR payroll</a>
+      </div>
+
+      {{#if overview.hrError}}
+      <div class="notice notice-warning">HR cannot be reached, so its payroll cannot be listed right now: {{ overview.hrError }}</div>
+      {{/if}}
+      {{#if overview.totals.waitingToPost}}
+      <div class="notice notice-warning">{{ overview.totals.waitingToPost }} paid payslip(s) are not posted yet. HR retries every minute; see the payslip in HR for the reason.</div>
+      {{/if}}
+
+      <section class="card metric-band" aria-label="Payroll figures">
+        <div class="metric">
+          <div class="metric-label">Approved in HR, not paid yet</div>
+          <div class="metric-value is-gold">{{ formatMoney overview.totals.approved }}</div>
+          <div class="metric-sub">{{ overview.totals.approvedCount }} payslip(s)</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Gross pay (paid)</div>
+          <div class="metric-value">{{ formatMoney overview.totals.paidGross }}</div>
+          <div class="metric-sub">{{ overview.totals.paidCount }} payslip(s) · Dr 6000</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">SSS, PhilHealth, Pag-IBIG</div>
+          <div class="metric-value">{{ formatMoney overview.totals.paidGovernment }}</div>
+          <div class="metric-sub">to remit · Cr 2400</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Net pay released</div>
+          <div class="metric-value">{{ formatMoney overview.totals.paidNet }}</div>
+          <div class="metric-sub">Cr 1010 Cash in Bank</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Approved in HR, not paid yet</h2>
+          <p class="card-description">Payslips HR has marked <b>Processed</b>. They are posted here when HR marks them Paid.</p>
+        </div>
+        <div class="card-content overflow-x-auto">
+          <table class="data-table">
+            <thead><tr><th>Employee</th><th>Period</th><th class="num">Gross</th><th class="num">Deductions</th><th class="num">Net pay</th></tr></thead>
+            <tbody>
+              {{#each overview.approved}}
+              <tr>
+                <td><div class="font-medium">{{ employee.name }}</div><div class="text-xs text-muted">{{ employee.code }}{{#if employee.department}} · {{ employee.department }}{{/if}} · #{{ id }}</div></td>
+                <td class="whitespace-nowrap">{{ periodStart }} to {{ periodEnd }}</td>
+                <td class="num">{{ formatMoney gross }}</td>
+                <td class="num">{{ formatMoney deductions }}</td>
+                <td class="num font-semibold">{{ formatMoney netSalary }}</td>
+              </tr>
+              {{else}}
+              <tr><td colspan="5" class="text-center text-muted">No approved payroll waiting</td></tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header"><h2 class="card-title">Paid</h2></div>
+        <div class="card-content overflow-x-auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th><th>Period</th><th class="num">Days</th><th class="num">Gross</th>
+                <th class="num">SSS / PhilHealth / Pag-IBIG</th><th class="num">Cash advance</th><th class="num">Net pay</th><th>Paid on</th><th>Journal entry</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each overview.paid}}
+              <tr>
+                <td><div class="font-medium">{{ employee.name }}</div><div class="text-xs text-muted">{{ employee.code }} · #{{ id }}</div></td>
+                <td class="whitespace-nowrap">{{ periodStart }} to {{ periodEnd }}</td>
+                <td class="num">{{#if daysWorked}}{{ daysWorked }}{{else}}—{{/if}}</td>
+                <td class="num">{{ formatMoney gross }}</td>
+                <td class="num">{{ formatMoney government }}</td>
+                <td class="num">{{ formatMoney cashAdvance }}</td>
+                <td class="num font-semibold">{{ formatMoney netSalary }}</td>
+                <td class="whitespace-nowrap">{{ paidAt }}</td>
+                <td class="whitespace-nowrap">
+                  {{#if entry}}<a href="{{ concat ../urls.accountingJournalGrid "/view/" entry.uuid }}" class="hover:underline font-mono">{{ entry.number }}</a>{{else}}<span class="badge badge-warning">Not posted yet</span>{{/if}}
+                </td>
+              </tr>
+              {{else}}
+              <tr><td colspan="9" class="text-center text-muted">No paid payroll yet</td></tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+{{> footer }}

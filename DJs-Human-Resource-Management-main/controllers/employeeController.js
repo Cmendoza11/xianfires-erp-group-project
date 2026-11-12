@@ -16,6 +16,7 @@ import {
   findEmployeeForUser
 } from "../utils/helpers.js";
 import { EMPLOYMENT_STATUSES, isValidDate } from "../utils/hr.js";
+import { dailyRateOf, hourlyRateOf } from "../services/payrollCalc.js";
 
 const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
@@ -30,7 +31,14 @@ const readEmployeeForm = (body) => {
     position: String(body.position || "").trim(),
     salary: parseMoney(body.salary),
     dateHired: String(body.dateHired || "").trim(),
-    status: EMPLOYMENT_STATUSES.includes(body.status) ? body.status : "Active"
+    status: EMPLOYMENT_STATUSES.includes(body.status) ? body.status : "Active",
+    // Rate per day for payroll from attendance; blank = monthly salary / 26.
+    dailyRate: String(body.dailyRate ?? "").trim() === "" ? null : parseMoney(body.dailyRate),
+    birthDate: String(body.birthDate || "").trim() || null,
+    address: String(body.address || "").trim() || null,
+    emergencyContactName: String(body.emergencyContactName || "").trim().slice(0, 120) || null,
+    emergencyContactRelation: String(body.emergencyContactRelation || "").trim().slice(0, 60) || null,
+    emergencyContactPhone: String(body.emergencyContactPhone || "").trim().slice(0, 40) || null
   };
 
   const errors = [];
@@ -42,6 +50,8 @@ const readEmployeeForm = (body) => {
   if (!data.position) errors.push("Position is required.");
   if (!isValidDate(data.dateHired)) errors.push("A valid date hired is required.");
   if (data.salary < 0) errors.push("Salary cannot be negative.");
+  if (data.dailyRate !== null && data.dailyRate < 0) errors.push("Rate per day cannot be negative.");
+  if (data.birthDate && !isValidDate(data.birthDate)) errors.push("Birth date is not a valid date.");
 
   return { data, errors };
 };
@@ -181,6 +191,7 @@ export const employeeShow = asyncHandler(async (req, res) => {
   res.render("employee-show", {
     title: `${employee.firstName} ${employee.lastName} | DJs HRMS`,
     employee: employee.toJSON(),
+    rates: { daily: dailyRateOf(employee), hourly: hourlyRateOf(employee) },
     selfView: Boolean(selfEmployee),
     canSeePayroll: res.locals.isAdmin,
     recentAttendance: attendance.map((a) => a.toJSON()),

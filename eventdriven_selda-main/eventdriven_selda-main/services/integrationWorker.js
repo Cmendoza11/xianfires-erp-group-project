@@ -2,22 +2,39 @@
   Background retries for Procurement's links to the other DJ's ERP modules. Every minute it
   re-sends what is still Pending (the other module was offline) and reads payment status from
   Accounting for invoices that are not fully paid yet. Failed items (refused with a reason) are
-  left for a person to fix; they are not retried automatically.
+  left for a person to fix; they are not retried automatically. It also keeps the links to the
+  other modules' data fresh: departments from the HR API and product ids from the POS API.
 */
 import { Op } from "sequelize";
 import { GoodsReceipt, SupplierInvoice, SupplierReturn } from "../models/index.js";
 import { inventoryService } from "./inventoryService.js";
 import { financialService } from "./financialService.js";
+import { syncDepartmentsFromHr } from "./hrDirectory.js";
 
 const SWEEP_INTERVAL_MS = 60_000;
 const BATCH = 25;
 let running = false;
 let lastPaymentRefresh = 0;
+let lastCatalogLink = 0;
+const CATALOG_LINK_EVERY_MS = 10 * 60_000;
+
+// Product ids saved while the POS was offline: link them as soon as the POS answers, then every 10 minutes.
+async function linkCatalog() {
+  if (Date.now() - lastCatalogLink < CATALOG_LINK_EVERY_MS) return;
+  try {
+    await inventoryService.linkCatalogByName();
+    lastCatalogLink = Date.now();
+  } catch (error) {
+    console.warn(`[integration-worker] POS not reachable for product links yet: ${error.message}`);
+  }
+}
 
 export async function sweep() {
   if (running) return;
   running = true;
   try {
+    await syncDepartmentsFromHr();
+    await linkCatalog();
     for (const r of await GoodsReceipt.findAll({ where: { inventorySyncStatus: "Pending" }, limit: BATCH, order: [["id", "ASC"]] })) {
       await inventoryService.syncStockIn(r.id);
     }

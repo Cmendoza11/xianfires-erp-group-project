@@ -4,8 +4,11 @@ import { asyncHandler, parseId, parseMoney, findEmployeeForUser } from "../utils
 import { isValidDate } from "../utils/hr.js";
 import { startOfMonthISO, endOfMonthISO, localDateISO } from "../utils/format.js";
 import { isLockedByAccounting, postPayroll, queuePayroll } from "../services/accountingSync.js";
+import { computePayroll, dailyRateOf, hourlyRateOf } from "../services/payrollCalc.js";
 
 const PAYROLL_STATUSES = ["Draft", "Processed", "Paid"];
+const BREAKDOWN = ["sssDeduction", "philhealthDeduction", "pagibigDeduction", "cashAdvance"];
+const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
 export const payrollList = asyncHandler(async (req, res) => {
   const status = PAYROLL_STATUSES.includes(req.query.status) ? req.query.status : "";
@@ -52,23 +55,33 @@ export const payrollCreatePage = asyncHandler(async (req, res) => {
 
   res.render("payroll-create", {
     title: "Create Payroll | DJs HRMS",
-    employees: employees.map((e) => e.toJSON()),
+    employees: employees.map((e) => ({ ...e.toJSON(), dailyRateUsed: dailyRateOf(e), hourlyRateUsed: hourlyRateOf(e) })),
     defaultStart: startOfMonthISO(),
     defaultEnd: endOfMonthISO(),
     statuses: PAYROLL_STATUSES
   });
 });
 
+// GET /payroll/compute?employeeId=&periodStart=&periodEnd= : the amounts from attendance (DTR), for the form.
+export const payrollCompute = asyncHandler(async (req, res) => {
+  const employee = await Employee.findByPk(parseId(req.query.employeeId) || 0);
+  const periodStart = String(req.query.periodStart || "").trim();
+  const periodEnd = String(req.query.periodEnd || "").trim();
+  if (!employee) return res.status(400).json({ error: "Select a valid employee." });
+  if (!isValidDate(periodStart) || !isValidDate(periodEnd) || periodEnd < periodStart) {
+    return res.status(400).json({ error: "Provide a valid payroll period." });
+  }
+  res.json({ data: await computePayroll(employee, periodStart, periodEnd) });
+});
+
 export const payrollCreate = asyncHandler(async (req, res) => {
-  const employeeId = parseId(req.body.employeeId);
+  const body = req.body;
+  const has = (field) => String(body[field] ?? "").trim() !== "";
+  const employeeId = parseId(body.employeeId);
   const employee = employeeId ? await Employee.findByPk(employeeId) : null;
-  const periodStart = String(req.body.periodStart || "").trim();
-  const periodEnd = String(req.body.periodEnd || "").trim();
-  const basicSalary = req.body.basicSalary === "" ? Number(employee?.salary || 0) : parseMoney(req.body.basicSalary);
-  const allowances = parseMoney(req.body.allowances);
-  const overtime = parseMoney(req.body.overtime);
-  const deductions = parseMoney(req.body.deductions);
-  const status = PAYROLL_STATUSES.includes(req.body.status) ? req.body.status : "Draft";
+  const periodStart = String(body.periodStart || "").trim();
+  const periodEnd = String(body.periodEnd || "").trim();
+  const status = PAYROLL_STATUSES.includes(body.status) ? body.status : "Draft";
 
   const errors = [];
   if (!employee) errors.push("Select a valid employee.");
@@ -76,7 +89,33 @@ export const payrollCreate = asyncHandler(async (req, res) => {
   if (isValidDate(periodStart) && isValidDate(periodEnd) && periodEnd < periodStart) {
     errors.push("The period end cannot be before the period start.");
   }
-  if (!basicSalary || basicSalary < 0) errors.push("Basic salary must be a positive amount.");
+
+  // A blank basic pay means "compute everything from the attendance (DTR)"; typed amounts always win.
+  const auto = !has("basicSalary");
+  const computed = auto && !errors.length ? await computePayroll(employee, periodStart, periodEnd) : null;
+  const pick = (field) => (has(field) ? parseMoney(body[field]) : Number(computed?.[field] ?? 0));
+
+  const basicSalary = pick("basicSalary");
+  const allowances = parseMoney(body.allowances);
+  const overtime = pick("overtime");
+  const withBreakdown = auto || BREAKDOWN.some(has);
+  const sssDeduction = withBreakdown ? pick("sssDeduction") : 0;
+  const philhealthDeduction = withBreakdown ? pick("philhealthDeduction") : 0;
+  const pagibigDeduction = withBreakdown ? pick("pagibigDeduction") : 0;
+  const cashAdvance = withBreakdown ? parseMoney(body.cashAdvance) : 0;
+  // Older forms send only the total of the deductions.
+  const deductions = round2(withBreakdown ? sssDeduction + philhealthDeduction + pagibigDeduction + cashAdvance : parseMoney(body.deductions));
+  const daysWorked = has("daysWorked") ? Number(body.daysWorked) || 0 : Number(computed?.daysWorked ?? 0);
+  const overtimeHours = has("overtimeHours") ? Number(body.overtimeHours) || 0 : Number(computed?.overtimeHours ?? 0);
+
+  if (!errors.length && (!basicSalary || basicSalary < 0)) {
+    errors.push(auto
+      ? "No attendance (DTR) was found for this employee in this period. Record attendance first, or type the basic pay."
+      : "Basic salary must be a positive amount.");
+  }
+  if ([allowances, overtime, deductions, sssDeduction, philhealthDeduction, pagibigDeduction, cashAdvance].some((n) => n < 0)) {
+    errors.push("Amounts cannot be negative.");
+  }
 
   if (errors.length) {
     req.flash("error_msg", errors.join(" "));
@@ -89,7 +128,11 @@ export const payrollCreate = asyncHandler(async (req, res) => {
     return res.redirect("/payroll");
   }
 
-  const netSalary = basicSalary + allowances + overtime - deductions;
+  const netSalary = round2(basicSalary + allowances + overtime - deductions);
+  if (netSalary < 0) {
+    req.flash("error_msg", "Deductions are larger than the pay for this period.");
+    return res.redirect("/payroll/create");
+  }
 
   const payroll = await Payroll.create({
     employeeId,
@@ -100,6 +143,12 @@ export const payrollCreate = asyncHandler(async (req, res) => {
     overtime,
     deductions,
     netSalary,
+    daysWorked,
+    overtimeHours,
+    sssDeduction,
+    philhealthDeduction,
+    pagibigDeduction,
+    cashAdvance,
     status,
     processedBy: req.user.id,
     paidAt: status === "Paid" ? new Date() : null
@@ -128,12 +177,15 @@ export const payrollShow = asyncHandler(async (req, res) => {
     }
   }
 
+  const data = payroll.toJSON();
   res.render("payslip", {
     title: "Payslip | DJs HRMS",
-    payroll: payroll.toJSON(),
+    payroll: data,
     employee: payroll.employee ? payroll.employee.toJSON() : null,
     canManage: res.locals.isAdmin,
-    statuses: PAYROLL_STATUSES
+    statuses: PAYROLL_STATUSES,
+    hasBreakdown: BREAKDOWN.some((f) => Number(data[f]) > 0),
+    hasDtr: Number(data.daysWorked) > 0 || Number(data.overtimeHours) > 0
   });
 });
 

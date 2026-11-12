@@ -1,8 +1,8 @@
 // Sets a new password for a POS & Inventory account. The login page has no e-mail reset, so an
 // administrator runs this on the server:
 //   npm run user:password -- --email pos@djs.test --password NewSecret123
-//   npm run user:password -- --email pos@djs.test --password NewSecret123 --db xianfires_erp_qa
-// --db picks the database (default: DB_NAME from the environment, else xianfires_erp).
+//   npm run user:password -- --email pos@djs.test --password NewSecret123 --db djs_pos_demo
+// --db picks the database (default: DB_NAME from the environment, else djs_pos).
 import { parseArgs } from "node:util";
 import bcrypt from "bcrypt";
 

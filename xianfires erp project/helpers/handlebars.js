@@ -26,7 +26,7 @@ export function formatDateTime(value) {
 const NAV_SECTIONS = {
   accounts: "accounting", journal: "accounting", journalNew: "accounting",
   customers: "sales", invoices: "sales",
-  suppliers: "purchases", bills: "purchases",
+  suppliers: "purchases", bills: "purchases", payroll: "purchases",
   bankrec: "banking",
   ledger: "reports", trialBalance: "reports", incomeStatement: "reports", balanceSheet: "reports", cashFlow: "reports",
   arAging: "reports", apAging: "reports", vatSummary: "reports", salesBook: "reports", purchaseBook: "reports",

@@ -66,6 +66,7 @@ async function applyBill(invoice, bill) {
     financialSyncStatus: "Synced",
     financialSyncError: null,
     financialReference: bill.number,
+    ...(bill.vatAmount !== undefined ? { vatAmount: bill.vatAmount } : {}),
     amountPaid: bill.amountPaid,
     outstandingBalance: bill.balance,
     paymentStatus: paymentStatusFrom(bill)
@@ -94,7 +95,9 @@ export const financialService = {
         due_date: localDate(invoice.dueDate),
         reference: invoice.invoiceNumber,
         memo: po ? `Purchase order ${po}` : null,
-        vat: false,
+        // A VAT-inclusive supplier invoice: Accounting takes the 12% VAT out of the total as Input VAT.
+        vat: Boolean(invoice.vatInclusive),
+        vat_inclusive: Boolean(invoice.vatInclusive),
         external_id: billId(invoice),
         lines: [{
           account: ACCOUNT.inventory,

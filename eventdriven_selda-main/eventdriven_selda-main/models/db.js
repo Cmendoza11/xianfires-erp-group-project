@@ -7,7 +7,7 @@
 import { Sequelize } from 'sequelize';
 
 // Central DJ's ERP database (shared with the other modules; Procurement tables use the scm_ prefix).
-const dbName = process.env.DB_NAME || 'xianfires_erp';
+const dbName = process.env.DB_NAME || 'djs_procurement';
 const dbUser = process.env.DB_USER || 'root';
 const dbPass = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : '';
 const dbHost = process.env.DB_HOST || 'localhost';

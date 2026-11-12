@@ -29,6 +29,9 @@ export const Order = sequelize.define(
     // Optional customer from Customer Logs (crm_customers.customerId), chosen at checkout.
     customerId: { type: DataTypes.STRING(36), allowNull: true },
     customerName: { type: DataTypes.STRING(160), allowNull: true },
+    // Optional Customer Logs promo code applied at checkout (discount is included in discountAmount).
+    promoCode: { type: DataTypes.STRING(30), allowNull: true },
+    promoDiscountAmount: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
   },
   {
     tableName: "pos_orders",

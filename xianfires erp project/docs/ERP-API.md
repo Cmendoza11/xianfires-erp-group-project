@@ -170,6 +170,9 @@ POST /invoices/SALE-5001/payments
 - `contact`: customer (invoices) or supplier (bills), by uuid or your external id.
 - Invoice lines use **revenue** accounts. Bill lines use **expense** or non-cash **asset** accounts.
 - `vat: true` adds VAT at the rate set in Accounting Settings. `due_date` defaults to the payment terms.
+- `vat_inclusive: true` (with `vat: true`) means the line amounts already include VAT, as on a supplier's
+  VAT-inclusive invoice: the VAT is taken out of the total (total x rate / (100 + rate)), so the document
+  total equals the amounts sent; the lines are stored net of VAT.
 - `cash_account` must be an account marked *Cash or bank account* (e.g. 1000, 1010).
 - The response includes `balance` and `status` (`open` → `paid` when fully paid).
 

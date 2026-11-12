@@ -42,7 +42,8 @@ Request flow: `routes/index.js` → `controllers/` (HTTP and audit) → `service
 | Financial reports | `services/reportService.js`, `controllers/reportController.js`, `views/report*.xian` |
 | AR/AP aging, sales and purchase books | `getAging` and `getDocumentBook` in `services/invoiceService.js` |
 | Bank reconciliation | `services/bankRecService.js`, `controllers/bankRecController.js`, `public/js/reconciliation.js` |
-| Period closing | `services/periodService.js`, `controllers/periodController.js`, `public/js/period-closing.js` |
+| Period closing, monthly lock (setting `books_locked_through` = list of locked month ends) | `services/periodService.js`, `controllers/periodController.js`, `public/js/period-closing.js` |
+| HR payroll as Accounting sees it (read-only Payroll page via HR API; HR posts `HR-PAY-<id>`) | `services/payrollService.js`, `controllers/payrollController.js`, `views/payroll.xian` |
 | Chart of accounts | `services/accountService.js`, `controllers/accountController.js`, `public/js/account-form.js` |
 | Customers, suppliers | `services/contactService.js`, `controllers/contactController.js` |
 | Settings, number prefixes | `services/settingService.js`, `controllers/settingController.js` |

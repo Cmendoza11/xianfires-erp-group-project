@@ -124,10 +124,29 @@ export async function createDocument(kind, data, adminUserId) {
     throw new AccountingValidationError("The due date must be on or after the date");
   }
   const vatRate = [true, "1", 1, "true", "on"].includes(data.vat) ? settings.vatRate : 0;
+  const vatInclusive = vatRate > 0 && [true, "1", 1, "true", "on"].includes(data.vat_inclusive);
   const lines = await prepareLines(kind, data.lines);
-  const subtotal = lines.reduce((sum, l) => sum + l.amountCents, 0);
-  const vat = Math.round((subtotal * vatRate) / 100);
-  const total = subtotal + vat;
+  let subtotal;
+  let vat;
+  let total;
+  if (vatInclusive) {
+    // The amounts already include VAT (e.g. a supplier's VAT-inclusive invoice): the VAT is taken out
+    // of the total, so the document total matches the paper exactly, and each line keeps its net share.
+    total = lines.reduce((sum, l) => sum + l.amountCents, 0);
+    vat = Math.round((total * vatRate) / (100 + vatRate));
+    let left = vat;
+    lines.forEach((l, index) => {
+      const share = index === lines.length - 1 ? left : Math.round((l.amountCents * vat) / total);
+      left -= share;
+      l.amountCents -= share;
+      l.unitPriceCents = Math.round(l.amountCents / l.quantity);
+    });
+    subtotal = total - vat;
+  } else {
+    subtotal = lines.reduce((sum, l) => sum + l.amountCents, 0);
+    vat = Math.round((subtotal * vatRate) / 100);
+    total = subtotal + vat;
+  }
   const controls = await getControlAccounts();
   const reference = data.reference ? String(data.reference).trim().slice(0, 255) || null : null;
 

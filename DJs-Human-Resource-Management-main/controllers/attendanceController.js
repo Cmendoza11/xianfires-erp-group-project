@@ -3,6 +3,7 @@ import { Attendance, Employee } from "../models/index.js";
 import { asyncHandler, parseId, findEmployeeForUser } from "../utils/helpers.js";
 import { ATTENDANCE_STATUSES, lateMinutesFor } from "../utils/hr.js";
 import { localDateISO } from "../utils/format.js";
+import { overtimeMinutes } from "../services/payrollCalc.js";
 
 const buildRow = (employee, record) => ({
   employeeId: employee.id,
@@ -13,6 +14,8 @@ const buildRow = (employee, record) => ({
   checkIn: record ? record.checkIn : null,
   checkOut: record ? record.checkOut : null,
   lateMinutes: record ? record.lateMinutes : 0,
+  // Hours beyond 8 worked (lunch hour taken out), the same rule payroll uses.
+  overtimeHours: record ? Math.round((overtimeMinutes(record) / 60) * 100) / 100 : 0,
   remarks: record ? record.remarks : null,
   recordId: record ? record.id : null
 });

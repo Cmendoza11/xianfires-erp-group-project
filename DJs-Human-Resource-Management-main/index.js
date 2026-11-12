@@ -13,6 +13,7 @@ import { fileURLToPath, pathToFileURL } from "url";
 import { dirname } from "path";
 
 import router from "./routes/index.js";
+import erpApi from "./routes/erpApi.js";
 import { syncDatabase } from "./models/index.js";
 import { attachUser } from "./middleware/authMiddleware.js";
 import { erpModules } from "./middleware/erpModules.js";
@@ -111,6 +112,8 @@ app.use((req, res, next) => {
   next();
 });
 
+// Internal API for the other DJ's ERP modules (X-ERP-Key), before the page routes and their login checks.
+app.use("/api/v1", erpApi);
 app.use(erpModules);
 app.use(attachUser);
 app.use("/", router);

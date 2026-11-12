@@ -30,19 +30,45 @@ import {
   toInt,
 } from "../utils/pos.js";
 import { deliverSoon, queueIntegration } from "../utils/erpSync.js";
-import { customersInstalled, findCustomer, searchCustomers } from "../utils/crm.js";
+import { customersInstalled, findCustomer, quotePromo, searchCustomers } from "../utils/crm.js";
+import { ErpApiError } from "../utils/erpClient.js";
 
-// The customer chosen on the checkout form (Customer Logs), validated on the server.
-// undefined = the form did not send the field, null = no customer.
-const customerFromForm = async (body, t) => {
+// The customer chosen on the checkout form, checked with the Customer Logs API before the DB
+// transaction starts (no transaction waits on another module). undefined = the form did not send
+// the field, null = no customer.
+const customerFromForm = async (body) => {
   if (!("customerId" in body)) return undefined;
   if (!String(body.customerId || "").trim()) return null;
-  const customer = await findCustomer(body.customerId, t);
+  const customer = await findCustomer(body.customerId, body.customerName);
   if (!customer) throw new PosError("The selected customer was not found in Customer Logs. Search again or leave it empty.");
   return customer;
 };
 const customerFields = (customer) =>
   customer === undefined ? {} : { customerId: customer?.customerId ?? null, customerName: customer?.name ?? null };
+
+const promoFields = (promo) =>
+  promo
+    ? { promoCode: promo.code, promoDiscountAmount: round2(promo.discountAmount) }
+    : { promoCode: null, promoDiscountAmount: 0 };
+
+const quotePromoFromForm = async (body, customer, subtotal) => {
+  const code = String(body.promoCode || "").trim();
+  if (!code) return null;
+  if (!customer?.customerId) {
+    throw new PosError("Search the registered customer first, then apply the promo code.");
+  }
+  try {
+    const quote = await quotePromo({ code, customerId: customer.customerId, subtotal });
+    if (!quote) throw new PosError("That promo code could not be applied.");
+    return quote;
+  } catch (error) {
+    if (error instanceof PosError) throw error;
+    if (error instanceof ErpApiError && error.status === 0) {
+      throw new PosError("Customer Logs is offline, so the promo cannot be checked. Pay without a promo or try again.");
+    }
+    throw new PosError(error.message || "That promo code cannot be used on this order.");
+  }
+};
 
 export const PAYMENT_METHODS = ["Cash", "GCash", "Maya", "Credit/Debit Card"];
 const ACTIVE_ORDER_STATUSES = ["Pending", "Preparing", "Ready"];
@@ -120,7 +146,8 @@ export const checkoutPage = async (req, res, next) => {
     const selectedDiscount = order.discountId
       ? context.discounts.find((discount) => discount.id === order.discountId)
       : null;
-    const discountAmount = discountAmountFor(selectedDiscount, context.subtotal);
+    const discountAmount = discountAmountFor(selectedDiscount, context.subtotal)
+      + num(order.promoDiscountAmount);
     const totals = computeTotals(context.subtotal, discountAmount, context.settings);
 
     return res.render("pos/checkout", {
@@ -145,6 +172,17 @@ export const saveOrderDetails = async (req, res, next) => {
   const orderId = toInt(req.params.orderId);
 
   try {
+    const customer = await customerFromForm(req.body);
+    const preview = await loadOrderForCheckout(orderId, null);
+    if (!preview) throw new PosError("Order not found.");
+    const previewSubtotal = round2(
+      (preview.items || []).reduce((sum, item) => sum + num(item.subtotal), 0)
+    );
+    const resolvedCustomer = customer === undefined
+      ? (preview.customerId ? { customerId: preview.customerId, name: preview.customerName } : null)
+      : customer;
+    const promo = await quotePromoFromForm(req.body, resolvedCustomer, previewSubtotal);
+
     await sequelize.transaction(async (t) => {
       const settings = await getSettings();
       const order = await loadOrderForCheckout(orderId, t);
@@ -198,13 +236,12 @@ export const saveOrderDetails = async (req, res, next) => {
       const subtotal = round2(
         order.items.reduce((sum, item) => sum + num(item.subtotal), 0)
       );
+      const posDiscount = discountAmountFor(discount, subtotal);
       const totals = computeTotals(
         subtotal,
-        discountAmountFor(discount, subtotal),
+        posDiscount + Number(promo?.discountAmount || 0),
         settings
       );
-
-      const customer = await customerFromForm(req.body, t);
 
       await order.update(
         {
@@ -213,6 +250,7 @@ export const saveOrderDetails = async (req, res, next) => {
           discountId: discount?.id ?? null,
           ...totals,
           ...customerFields(customer),
+          ...promoFields(promo),
         },
         { transaction: t }
       );
@@ -240,6 +278,16 @@ export const processPayment = async (req, res, next) => {
     const settings = await getSettings();
     let transactionId;
     let outboxIds = [];
+    const customer = await customerFromForm(req.body);
+    const preview = await loadOrderForCheckout(orderId, null);
+    if (!preview) throw new PosError("Order not found.");
+    const previewSubtotal = round2(
+      (preview.items || []).reduce((sum, item) => sum + num(item.subtotal), 0)
+    );
+    const resolvedCustomer = customer === undefined
+      ? (preview.customerId ? { customerId: preview.customerId, name: preview.customerName } : null)
+      : customer;
+    const promo = await quotePromoFromForm(req.body, resolvedCustomer, previewSubtotal);
 
     await sequelize.transaction(async (t) => {
       /* 1. Lock the order and make sure it can be paid exactly once. */
@@ -305,8 +353,8 @@ export const processPayment = async (req, res, next) => {
       const subtotal = round2(
         order.items.reduce((sum, item) => sum + num(item.subtotal), 0)
       );
-      const discountAmount = discountAmountFor(discount, subtotal);
-      const totals = computeTotals(subtotal, discountAmount, settings);
+      const posDiscountAmount = discountAmountFor(discount, subtotal);
+      const totals = computeTotals(subtotal, posDiscountAmount + Number(promo?.discountAmount || 0), settings);
 
       /* 4. Validate the payment itself. */
       const method = String(req.body.paymentMethod || "");
@@ -391,7 +439,6 @@ export const processPayment = async (req, res, next) => {
       }
 
       /* 6. Persist the sale, the payment and the applied discount. */
-      const customer = await customerFromForm(req.body, t);
       if (customer !== undefined) await order.update(customerFields(customer), { transaction: t });
       const sale = await SaleTransaction.create(
         {
@@ -409,6 +456,7 @@ export const processPayment = async (req, res, next) => {
           status: "Completed",
           customerId: order.customerId ?? null,
           customerName: order.customerName ?? null,
+          ...promoFields(promo),
         },
         { transaction: t }
       );
@@ -435,7 +483,7 @@ export const processPayment = async (req, res, next) => {
             name: discount.name,
             type: discount.type,
             value: discount.value,
-            amount: discountAmount,
+            amount: posDiscountAmount,
             authorizedBy: req.user.id,
             authorizedByName: req.user.name,
           },
@@ -450,6 +498,7 @@ export const processPayment = async (req, res, next) => {
           discountId: discount?.id ?? null,
           status: "Completed",
           ...totals,
+          ...promoFields(promo),
         },
         { transaction: t }
       );
@@ -520,8 +569,24 @@ export const paymentConfirmation = async (req, res, next) => {
 // GET /pos/customers/search?q= : customers from Customer Logs for the checkout picker (read-only).
 export const customerSearch = async (req, res, next) => {
   try {
-    res.json({ customers: await searchCustomers(req.query.q) });
+    res.json(await searchCustomers(req.query.q));
   } catch (error) {
+    next(error);
+  }
+};
+
+export const promoQuote = async (req, res, next) => {
+  try {
+    const quote = await quotePromo({
+      code: req.body?.code || req.query.code,
+      customerId: req.body?.customerId || req.query.customerId,
+      subtotal: req.body?.subtotal || req.query.subtotal,
+    });
+    res.json({ promo: quote });
+  } catch (error) {
+    if (error instanceof ErpApiError) {
+      return res.status(error.status || 400).json({ error: error.message });
+    }
     next(error);
   }
 };

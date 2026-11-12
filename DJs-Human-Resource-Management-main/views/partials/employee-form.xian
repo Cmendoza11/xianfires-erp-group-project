@@ -42,6 +42,34 @@
         <input name="phone" value="{{employee.phone}}" placeholder="09xx xxx xxxx"
                class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
       </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Birth Date</label>
+        <input type="date" name="birthDate" value="{{employee.birthDate}}" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Home Address</label>
+        <input name="address" value="{{employee.address}}" placeholder="House no., street, barangay, city" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6">
+    <h3 class="font-bold mb-5">Emergency Contact</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Name</label>
+        <input name="emergencyContactName" value="{{employee.emergencyContactName}}" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Relationship</label>
+        <input name="emergencyContactRelation" value="{{employee.emergencyContactRelation}}" placeholder="Spouse, parent, sibling…" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Phone</label>
+        <input name="emergencyContactPhone" value="{{employee.emergencyContactPhone}}" placeholder="09xx xxx xxxx" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
     </div>
   </div>
 
@@ -72,6 +100,11 @@
       </div>
 
       <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Rate per Day (₱)</label>
+        <input type="number" name="dailyRate" min="0" step="0.01" value="{{employee.dailyRate}}" placeholder="Blank = monthly salary ÷ 26" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+      </div>
+
+      <div>
         <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Date Hired *</label>
         <input type="date" name="dateHired" required value="{{employee.dateHired}}"
                class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
@@ -80,6 +113,7 @@
 
     <p class="mt-4 text-xs text-gray-500">
       Salary is visible to HR administrators only. Employees can view their own payslips.
+      Payroll from attendance pays the rate per day for each day worked; the rate per hour is the rate per day ÷ 8.
     </p>
   </div>
 

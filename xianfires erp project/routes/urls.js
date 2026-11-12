@@ -68,9 +68,13 @@ export const urls = {
   changePassword: "/admin/account/password",
   changePasswordApi: "/api/account/password",
 
+  accountingPayroll: "/admin/accounting/payroll",
+
   periodClosing: "/admin/accounting/period-closing",
   closePeriod: "/api/accounting/periods/close",
   reopenPeriod: "/api/accounting/periods/reopen",
+  lockMonth: "/api/accounting/periods/lock-month",
+  unlockMonth: "/api/accounting/periods/unlock-month",
   auditLog: "/admin/audit-log",
 
   reportGeneralLedger: "/admin/accounting/reports/general-ledger",

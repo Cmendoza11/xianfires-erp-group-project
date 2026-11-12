@@ -2,7 +2,7 @@ import { urls } from "../routes/urls.js";
 import { AccountingValidationError } from "../services/accountTypes.js";
 import { listAccounts } from "../services/accountService.js";
 import { logAudit } from "../services/auditService.js";
-import { closeFiscalYear, getLockDate, listFiscalYears, reopenFiscalYear } from "../services/periodService.js";
+import { closeFiscalYear, getLockDate, getMonthLockDate, getFiscalLockDate, listFiscalYears, listLockableMonths, lockMonth, reopenFiscalYear, unlockMonth } from "../services/periodService.js";
 import { formatEntryNumber, getAccountingSettings } from "../services/settingService.js";
 
 const DEFAULT_RETAINED_EARNINGS_CODE = "3200";
@@ -22,6 +22,9 @@ export const periodClosingPage = async (req, res) => {
     activeMenu: "periodClosing",
     urls,
     lockDate: await getLockDate(),
+    monthLock: await getMonthLockDate(),
+    fiscalLock: await getFiscalLockDate(),
+    lockableMonths: await listLockableMonths(),
     years: (await listFiscalYears()).reverse(),
     equityAccounts: equityAccounts.map((a, i) => ({
       uuid: a.uuid,
@@ -64,6 +67,36 @@ export const reopenPeriod = async (req, res) => {
       summary: `Reopened ${year.label} (${year.start} to ${year.end}); its closing entry was removed`
     });
     res.json({ data: { fiscalYear: year.label, lockDate: await getLockDate() } });
+  } catch (e) {
+    sendError(res, e);
+  }
+};
+
+export const lockMonthApi = async (req, res) => {
+  try {
+    const { lockDate, label, previous } = await lockMonth({ month: req.body.month });
+    await logAudit(req, {
+      action: "period.lock_month",
+      entityType: "period",
+      entityId: lockDate,
+      summary: `Locked the books through ${label} (${lockDate})${previous ? `; before: ${previous}` : ""}`
+    });
+    res.json({ data: { lockDate } });
+  } catch (e) {
+    sendError(res, e);
+  }
+};
+
+export const unlockMonthApi = async (req, res) => {
+  try {
+    const { unlocked, lockDate } = await unlockMonth();
+    await logAudit(req, {
+      action: "period.unlock_month",
+      entityType: "period",
+      entityId: lockDate || "open",
+      summary: `Unlocked ${unlocked}; the books are now ${lockDate ? `closed through ${lockDate}` : "open"}`
+    });
+    res.json({ data: { lockDate } });
   } catch (e) {
     sendError(res, e);
   }

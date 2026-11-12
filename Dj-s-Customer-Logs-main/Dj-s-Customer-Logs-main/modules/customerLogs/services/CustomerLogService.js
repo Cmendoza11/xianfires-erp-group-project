@@ -82,13 +82,19 @@ export class CustomerLogService {
           ...(activityType === "purchase" ? { lastPurchaseDate: activityAt } : {})
         }, { transaction });
 
-        const loyalty = await LoyaltyRecord.findOne({ where: { customerId }, transaction, lock: transaction.LOCK.UPDATE });
-        if (loyalty) {
-          const net = await netPurchaseCount(customerId, transaction);
+        const net = await netPurchaseCount(customerId, transaction);
+        const [loyalty, created] = await LoyaltyRecord.findOrCreate({
+          where: { customerId },
+          defaults: { pointsBalance: net, tier: tierFor(net) },
+          transaction
+        });
+        if (!created) {
           await loyalty.update({
             pointsBalance: Math.max(loyalty.pointsBalance + sign, 0),
             tier: tierFor(net)
           }, { transaction });
+        } else {
+          await loyalty.update({ tier: tierFor(net) }, { transaction });
         }
       }
       return { log, duplicate: false };

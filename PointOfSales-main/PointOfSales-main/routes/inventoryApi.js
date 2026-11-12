@@ -4,7 +4,8 @@
   Every route needs the shared X-ERP-Key. Stock changes write the same Inventory Movements the
   POS screens use, so they show up in Inventory > Movements and the inventory reports.
 
-  GET  /api/v1/inventory/products          catalog with stock (all active items, incl. Supply)
+  GET  /api/v1/inventory/products          catalog with stock (all active items, incl. Supply;
+                                           ?includeInactive=1 adds deactivated items, with "status")
   POST /api/v1/inventory/products          { name, unit } -> existing item with that name, or a new Supply item
   GET  /api/v1/inventory/low-stock-alerts  items at or below their minimum stock
   POST /api/v1/inventory/stock-in          goods receipt: { receiptNumber, items:[{ productId, acceptedQuantity }] }
@@ -46,6 +47,7 @@ const toCatalogItem = (product) => {
     name: product.name,
     sku: `POS-${String(product.id).padStart(4, "0")}`,
     type: product.type,
+    status: product.status,
     category: product.category?.name || null,
     unit: inventory?.unit || "pcs",
     price: Number(product.price),
@@ -55,9 +57,9 @@ const toCatalogItem = (product) => {
   };
 };
 
-const loadCatalog = (where = {}) =>
+const loadCatalog = (where = {}, { includeInactive = false } = {}) =>
   Product.findAll({
-    where: { status: "active", ...where },
+    where: includeInactive ? where : { status: "active", ...where },
     include: [
       { model: Category, as: "category", attributes: ["name"] },
       { model: Inventory, as: "inventory", required: false },
@@ -76,7 +78,8 @@ const wholeQuantity = (value, label) => {
 };
 
 router.get("/products", wrap(async (req, res) => {
-  const products = await loadCatalog();
+  const includeInactive = ["1", "true"].includes(String(req.query.includeInactive || ""));
+  const products = await loadCatalog({}, { includeInactive });
   res.json({ products: products.map(toCatalogItem) });
 }));
 

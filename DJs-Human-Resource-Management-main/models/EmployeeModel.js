@@ -70,7 +70,16 @@ export const Employee = sequelize.define("Employee", {
     type: DataTypes.ENUM("Active", "On Leave", "Resigned"),
     allowNull: false,
     defaultValue: "Active"
-  }
+  },
+  // Rate per day for payroll from attendance (DTR). Empty = monthly salary / 26 working days.
+  // The rate per hour is the daily rate / 8.
+  dailyRate: { type: DataTypes.DECIMAL(12, 2), allowNull: true },
+  // Personal details and emergency contact.
+  birthDate: { type: DataTypes.DATEONLY, allowNull: true },
+  address: { type: DataTypes.TEXT, allowNull: true },
+  emergencyContactName: { type: DataTypes.STRING(120), allowNull: true },
+  emergencyContactRelation: { type: DataTypes.STRING(60), allowNull: true },
+  emergencyContactPhone: { type: DataTypes.STRING(40), allowNull: true }
 }, { tableName: "hr_employees" });
 
 export default Employee;

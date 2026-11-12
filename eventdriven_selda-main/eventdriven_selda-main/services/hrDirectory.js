@@ -1,38 +1,38 @@
 /*
-  Departments are owned by HR (hr_departments). Procurement keeps scm_departments as a mirror
-  with the SAME ids, so purchase requests and orders keep their foreign keys, status filters and
-  history. The mirror is refreshed from HR at start-up, by `npm run migrate` and when department,
-  request or order pages are opened. HR's table is only read (raw SELECT, never a model), so a
-  Procurement sync can never change HR data.
+  Departments are owned by HR, which keeps them in its own database. Procurement keeps
+  scm_departments as a mirror with the SAME ids, so purchase requests and orders keep their
+  foreign keys, status filters and history. The mirror is refreshed from HR's API
+  (GET /api/v1/departments, shared X-ERP-Key) when department, request or order pages are opened
+  and by the background worker. When HR is offline the current mirror is simply kept.
 */
-import { Op, QueryTypes } from "sequelize";
+import { Op } from "sequelize";
 import { sequelize, Department } from "../models/index.js";
+import { peer } from "./erpClient.js";
 
 const REFRESH_EVERY_MS = 30_000;
 let lastRefresh = 0;
 
 const codeFor = (row) => String(row.code || `DEPT-${row.id}`).trim().toUpperCase().slice(0, 20);
 
-async function hrInstalled() {
-  const [row] = await sequelize.query(
-    `SELECT COUNT(*) AS n FROM information_schema.TABLES
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('hr_departments', 'hr_employees')`,
-    { type: QueryTypes.SELECT }
-  );
-  return Number(row.n) === 2;
-}
+/** Procurement runs as part of DJ's ERP (and not on its own) when the shared key is configured. */
+export const connectedToHr = () => Boolean(process.env.ERP_INTERNAL_KEY);
 
-/** Copies HR's departments into scm_departments. Returns how many were mirrored, or null without HR. */
+/**
+ * Copies HR's departments into scm_departments. Returns how many were mirrored, or null when HR
+ * is not connected or not reachable right now (the mirror is left as it is).
+ */
 export async function syncDepartmentsFromHr() {
   lastRefresh = Date.now();
-  if (!(await hrInstalled())) return null;
-  const rows = await sequelize.query(
-    `SELECT d.id, d.name, d.code, d.description,
-            NULLIF(TRIM(CONCAT(COALESCE(e.firstName, ''), ' ', COALESCE(e.lastName, ''))), '') AS head
-     FROM hr_departments d LEFT JOIN hr_employees e ON e.id = d.headId
-     ORDER BY d.id`,
-    { type: QueryTypes.SELECT }
-  );
+  if (!connectedToHr()) return null;
+  let rows;
+  try {
+    rows = (await peer("HR", 3002, "GET", "/api/v1/departments"))?.departments;
+  } catch (error) {
+    console.warn(`[hr-directory] HR not reachable, keeping the current departments: ${error.message}`);
+    return null;
+  }
+  if (!Array.isArray(rows)) return null;
+  rows = rows.map((r) => ({ ...r, id: Number(r.id), head: r.head || null }));
   const hrIds = rows.map((r) => r.id);
   const hrCodes = new Set(rows.map(codeFor));
 

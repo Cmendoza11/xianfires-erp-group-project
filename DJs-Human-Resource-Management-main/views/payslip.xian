@@ -64,9 +64,9 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            <tr><td class="py-2.5">Basic Salary</td><td class="py-2.5 text-right">{{formatMoney payroll.basicSalary}}</td></tr>
+            <tr><td class="py-2.5">Basic Salary{{#if hasDtr}} <span class="text-xs text-gray-500">({{payroll.daysWorked}} day(s) from attendance)</span>{{/if}}</td><td class="py-2.5 text-right">{{formatMoney payroll.basicSalary}}</td></tr>
             <tr><td class="py-2.5">Allowances</td><td class="py-2.5 text-right">{{formatMoney payroll.allowances}}</td></tr>
-            <tr><td class="py-2.5">Overtime</td><td class="py-2.5 text-right">{{formatMoney payroll.overtime}}</td></tr>
+            <tr><td class="py-2.5">Overtime{{#if hasDtr}} <span class="text-xs text-gray-500">({{payroll.overtimeHours}} hour(s) at 125%)</span>{{/if}}</td><td class="py-2.5 text-right">{{formatMoney payroll.overtime}}</td></tr>
           </tbody>
         </table>
 
@@ -78,7 +78,13 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            <tr><td class="py-2.5">Total Deductions</td><td class="py-2.5 text-right">{{formatMoney payroll.deductions}}</td></tr>
+            {{#if hasBreakdown}}
+            <tr><td class="py-2.5">SSS (employee share)</td><td class="py-2.5 text-right">{{formatMoney payroll.sssDeduction}}</td></tr>
+            <tr><td class="py-2.5">PhilHealth (employee share)</td><td class="py-2.5 text-right">{{formatMoney payroll.philhealthDeduction}}</td></tr>
+            <tr><td class="py-2.5">Pag-IBIG (employee share)</td><td class="py-2.5 text-right">{{formatMoney payroll.pagibigDeduction}}</td></tr>
+            <tr><td class="py-2.5">Cash Advance</td><td class="py-2.5 text-right">{{formatMoney payroll.cashAdvance}}</td></tr>
+            {{/if}}
+            <tr><td class="py-2.5 font-semibold">Total Deductions</td><td class="py-2.5 text-right font-semibold">{{formatMoney payroll.deductions}}</td></tr>
           </tbody>
         </table>
 
@@ -107,6 +113,12 @@
           </div>
           <button type="submit" class="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Update Status</button>
         </form>
+        {{#unless (eq payroll.status "Paid")}}
+        <form method="POST" action="/payroll/{{payroll.id}}/status">
+          <input type="hidden" name="status" value="Paid">
+          <button type="submit" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-emerald-400" onclick="return confirm('Mark this payroll as Paid? It is posted to Accounting and becomes final.');">Mark as Paid</button>
+        </form>
+        {{/unless}}
 
         <form action="/payroll/{{payroll.id}}/delete" method="POST" onsubmit="return confirm('Delete this payroll record?');">
           <button type="submit" class="rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500 hover:text-white">Delete Record</button>

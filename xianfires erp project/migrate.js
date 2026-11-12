@@ -33,6 +33,7 @@ const DEFAULT_ACCOUNTS = [
   ["1000", "Cash on Hand", "asset", "debit", "Petty cash and undeposited collections"],
   ["1010", "Cash in Bank", "asset", "debit", "Company bank accounts"],
   ["1100", "Accounts Receivable", "asset", "debit", "Amounts owed by customers"],
+  ["1110", "Advances to Employees", "asset", "debit", "Cash advances to employees, repaid through payroll"],
   ["1200", "Merchandise Inventory", "asset", "debit", "Goods held for sale"],
   ["1300", "Prepaid Expenses", "asset", "debit", "Expenses paid in advance"],
   ["1400", "Input VAT", "asset", "debit", "VAT paid on purchases"],
@@ -175,6 +176,13 @@ const DATA_MIGRATIONS = [
     ];
     for (const [code, name, values] of defaults) {
       await Account.update(values, { where: { code, name }, transaction });
+    }
+  }],
+  // HR payroll deducts cash advances; the repayment is credited to this asset (DJ's ERP payroll).
+  ["accounting-1.4.0-employee-advances-account", async (transaction) => {
+    const row = toAccountRow(["1110", "Advances to Employees", "asset", "debit", "Cash advances to employees, repaid through payroll"]);
+    if (!(await Account.findOne({ where: { code: row.code }, transaction }))) {
+      await Account.create(row, { transaction });
     }
   }]
 ];

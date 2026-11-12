@@ -1,7 +1,9 @@
 /*
-  Posts paid payroll to the Accounting ERP (/api/v1/journal-entries) as one journal entry:
+  Posts paid payroll to the Accounting ERP (/api/v1/journal-entries). HR marks a payroll Paid
+  ("Mark as Paid"); it is then booked automatically as one journal entry:
     Dr 6000 Salaries and Wages Expense        basic + allowances + overtime
-        Cr 2400 SSS/PhilHealth/Pag-IBIG Payable   deductions
+        Cr 2400 SSS/PhilHealth/Pag-IBIG Payable   government deductions
+        Cr 1110 Advances to Employees             cash advance repaid (when there is one)
         Cr 1010 Cash in Bank                      net pay
   external_id HR-PAY-<payroll id> makes retries safe: Accounting never books the same payslip twice.
   Once posted, a payroll stays Paid (HR blocks changing or deleting it); corrections are made in Accounting.
@@ -14,6 +16,7 @@ import { ErpApiError, accounting } from "./erpClient.js";
 const ACCOUNT = {
   salaries: process.env.ERP_ACCOUNT_SALARIES || "6000",
   deductions: process.env.ERP_ACCOUNT_PAYROLL_DEDUCTIONS || "2400",
+  advances: process.env.ERP_ACCOUNT_EMPLOYEE_ADVANCES || "1110",
   bank: process.env.ERP_ACCOUNT_PAYROLL_CASH || "1010"
 };
 const MAX_ATTEMPTS = 10;
@@ -31,16 +34,19 @@ const backoffMs = (attempts) => Math.min(30_000 * 2 ** (attempts - 1), 15 * 60_0
 /** True when the payroll is (or is being) booked in Accounting, so Paid must stay final. */
 export const isLockedByAccounting = (payroll) => ["Pending", "Synced"].includes(payroll.accountingSyncStatus);
 
-function payrollLines(payroll) {
+export function payrollLines(payroll) {
   const gross = cents(payroll.basicSalary) + cents(payroll.allowances) + cents(payroll.overtime);
   const deductions = cents(payroll.deductions);
+  const advance = Math.min(cents(payroll.cashAdvance), deductions);
+  const government = deductions - advance;
   const net = cents(payroll.netSalary);
   if (net < 0) throw new ErpApiError("Net pay is negative; fix the payroll amounts before posting", 400);
   if (gross !== net + deductions) {
     throw new ErpApiError(`Payroll does not add up (gross ${pesos(gross)} vs net ${pesos(net)} + deductions ${pesos(deductions)})`, 400);
   }
   const lines = [{ account: ACCOUNT.salaries, debit: pesos(gross), description: "Gross pay (basic, allowances, overtime)" }];
-  if (deductions) lines.push({ account: ACCOUNT.deductions, credit: pesos(deductions), description: "Payroll deductions" });
+  if (government) lines.push({ account: ACCOUNT.deductions, credit: pesos(government), description: "SSS, PhilHealth and Pag-IBIG (employee share)" });
+  if (advance) lines.push({ account: ACCOUNT.advances, credit: pesos(advance), description: "Cash advance repaid" });
   if (net) lines.push({ account: ACCOUNT.bank, credit: pesos(net), description: "Net pay released" });
   return lines;
 }

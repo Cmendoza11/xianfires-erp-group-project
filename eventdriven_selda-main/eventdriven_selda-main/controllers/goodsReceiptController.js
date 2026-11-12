@@ -211,6 +211,9 @@ export const goodsReceiptController = {
       const damagedQtys = Array.isArray(req.body['damaged_qty']) ? req.body['damaged_qty'] : [req.body['damaged_qty']].filter(Boolean);
       const units = Array.isArray(req.body['item_unit']) ? req.body['item_unit'] : [req.body['item_unit']].filter(Boolean);
       const itemRemarks = Array.isArray(req.body['item_remarks']) ? req.body['item_remarks'] : [req.body['item_remarks']].filter(Boolean);
+      const rowValues = (name) => (Array.isArray(req.body[name]) ? req.body[name] : [req.body[name]]);
+      const itemBatches = rowValues('item_batch');
+      const itemExpiries = rowValues('item_expiry');
 
       let totalDeliveredThisReceipt = 0;
       let totalAcceptedThisReceipt = 0;
@@ -239,6 +242,8 @@ export const goodsReceiptController = {
           damagedQuantity: damaged,
           missingQuantity: missing,
           unit: units[i] || 'kg',
+          batchLotNumber: String(itemBatches[i] || '').trim().slice(0, 60) || null,
+          expiryDate: /^\d{4}-\d{2}-\d{2}$/.test(String(itemExpiries[i] || '')) ? itemExpiries[i] : null,
           remarks: itemRemarks[i] ? itemRemarks[i].trim() : null
         }, { transaction: t });
       }

@@ -11,10 +11,12 @@ import {
   today
 } from "./dateUtils.js";
 import { accountTotals, netIncomeCents } from "./reportService.js";
-import { formatEntryNumber, getAccountingSettings } from "./settingService.js";
+import { formatEntryNumber, getAccountingSettings, getSetting, saveSettings } from "./settingService.js";
 
-// The books are locked through the end of the latest closed fiscal year (null when none is closed).
-export async function getLockDate() {
+const MONTH_LOCK_SETTING = "books_locked_through";
+
+// End of the latest closed fiscal year (null when none is closed).
+export async function getFiscalLockDate() {
   const latest = await PeriodClose.findOne({
     order: [["fiscal_year_end", "DESC"]],
     attributes: ["fiscal_year_end"],
@@ -23,13 +25,81 @@ export async function getLockDate() {
   return latest?.fiscal_year_end ?? null;
 }
 
+// Every month locked by hand in Period Closing, as its last day, oldest first. Unlocking takes the
+// latest one off, so the books go back to exactly how they were locked before.
+async function monthLocks() {
+  const value = await getSetting(MONTH_LOCK_SETTING, "");
+  const list = Array.isArray(value) ? value : value ? [value] : [];
+  return list.map(String).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+}
+
+// Last day of the latest month locked by hand (null when none).
+export async function getMonthLockDate() {
+  return (await monthLocks()).pop() ?? null;
+}
+
+// The books are locked through the later of the closed fiscal years and the locked months.
+export async function getLockDate() {
+  const [fiscal, month] = await Promise.all([getFiscalLockDate(), getMonthLockDate()]);
+  return [fiscal, month].filter(Boolean).sort().pop() ?? null;
+}
+
 export async function assertPeriodOpen(date, lockDate) {
   const lock = lockDate === undefined ? await getLockDate() : lockDate;
   if (lock && date <= lock) {
     throw new AccountingValidationError(
-      `The books are closed through ${lock}. Use a date after ${lock}, or reopen the fiscal year in Period Closing.`
+      `The books are closed through ${lock}. Use a date after ${lock}, or unlock the period in Period Closing.`
     );
   }
+}
+
+const pad2 = (n) => String(n).padStart(2, "0");
+const monthEnd = (year, month) => `${year}-${pad2(month)}-${pad2(new Date(year, month, 0).getDate())}`;
+const monthLabel = (iso) => new Date(`${iso.slice(0, 7)}-01T12:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+/** Months that have ended and are not locked yet, newest first (at most 24). */
+export async function listLockableMonths() {
+  const lock = await getLockDate();
+  const now = today();
+  const months = [];
+  let year = Number(now.slice(0, 4));
+  let month = Number(now.slice(5, 7)) - 1;
+  for (let i = 0; i < 24; i += 1) {
+    if (month === 0) {
+      month = 12;
+      year -= 1;
+    }
+    const end = monthEnd(year, month);
+    if (lock && end <= lock) break;
+    months.push({ value: `${year}-${pad2(month)}`, end, label: monthLabel(end) });
+    month -= 1;
+  }
+  return months;
+}
+
+/** Locks the books through the end of a month that has ended (every earlier month is locked too). */
+export async function lockMonth({ month }) {
+  const match = /^(\d{4})-(\d{2})$/.exec(String(month ?? ""));
+  if (!match || Number(match[2]) < 1 || Number(match[2]) > 12) throw new AccountingValidationError("Choose a month to lock");
+  const end = monthEnd(Number(match[1]), Number(match[2]));
+  if (end >= today()) throw new AccountingValidationError(`${monthLabel(end)} has not ended yet`);
+  const current = await getLockDate();
+  if (current && end <= current) throw new AccountingValidationError(`The books are already closed through ${current}`);
+  await saveSettings({ [MONTH_LOCK_SETTING]: [...(await monthLocks()), end] });
+  return { lockDate: end, label: monthLabel(end), previous: current };
+}
+
+/** Unlocks the latest locked month: the books go back to how they were locked before it. */
+export async function unlockMonth() {
+  const [locks, fiscal] = await Promise.all([monthLocks(), getFiscalLockDate()]);
+  const month = locks[locks.length - 1];
+  if (!month || (fiscal && month <= fiscal)) {
+    throw new AccountingValidationError(
+      fiscal ? `No month after the closed fiscal year (${fiscal}) is locked. Reopen the fiscal year to change it.` : "No month is locked"
+    );
+  }
+  await saveSettings({ [MONTH_LOCK_SETTING]: locks.slice(0, -1) });
+  return { unlocked: monthLabel(month), lockDate: await getLockDate() };
 }
 
 export async function hasClosedPeriods() {

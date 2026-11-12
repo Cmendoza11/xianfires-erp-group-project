@@ -50,6 +50,19 @@ export const SupplierInvoice = sequelize.define('SupplierInvoice', {
     defaultValue: 0.00,
     comment: "Synced from Financial System"
   },
+  // The total includes 12% VAT: Accounting books it as Input VAT (1400) and the rest as inventory.
+  // Older invoices default to false (they were booked without VAT).
+  vatInclusive: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  vatAmount: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false,
+    defaultValue: 0.00,
+    comment: "Input VAT as booked by the Financial System"
+  },
   outstandingBalance: {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: false,

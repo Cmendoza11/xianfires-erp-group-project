@@ -110,10 +110,15 @@ export const customerModulePage = async (req, res) => {
         { customerId: { [Op.like]: `%${search}%` } }
       ]
     } : undefined;
-    const rawCustomers = await Customer.findAll({ where: whereClause, order: [["createdAt", "DESC"]] });
+    const rawCustomers = await Customer.findAll({ where: whereClause, include: [LoyaltyRecord], order: [["createdAt", "DESC"]] });
     records = await Promise.all(rawCustomers.map(async (customer) => {
       const plain = customer.toJSON();
       plain.totalPurchases = await netPurchaseCount(customer.customerId);
+      // Visits = purchases (net of refunds) + dine-in visits recorded without a purchase.
+      plain.visits = plain.totalPurchases + await CustomerLog.count({ where: { customerId: customer.customerId, activityType: "visit" } });
+      plain.points = customer.LoyaltyRecord ? Number(customer.LoyaltyRecord.pointsBalance) : plain.totalPurchases;
+      plain.totalSpentText = Number(plain.totalSpent || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      plain.registered = plain.createdAt ? new Date(plain.createdAt).toISOString().slice(0, 10) : "";
       return plain;
     }));
   } else if (req.params.module === "reports") {
@@ -166,7 +171,7 @@ export const customerModulePage = async (req, res) => {
   } else if (req.params.module === "logs") {
     customers = await Customer.findAll({ order: [["name", "ASC"]] });
     const activityWhere = {
-      ...(req.query.type ? { activityType: String(req.query.type) } : { activityType: "purchase" }),
+      ...(req.query.type ? { activityType: String(req.query.type) } : {}),
       ...(req.query.date ? { activityAt: { [Op.gte]: new Date(`${req.query.date}T00:00:00`) } } : {})
     };
     if (req.query.date) {
@@ -273,18 +278,18 @@ export const customerModulePage = async (req, res) => {
 export const addCustomer = async (req, res) => {
   const user = await findStaff(req, res);
   if (!user) return;
-  const { name, contactNumber, email } = req.body;
+  const { name, contactNumber, email, address } = req.body;
   if (!name || !contactNumber) return res.status(400).send("Name and contact number are required");
   const duplicate = await Customer.findOne({ where: { [Op.or]: [{ contactNumber }, ...(email ? [{ email }] : [])] } });
   if (duplicate) return res.status(409).send("A customer with this contact number or email already exists");
-  await Customer.create({ name, contactNumber, email: email || null });
+  await Customer.create({ name, contactNumber, email: email || null, address: String(address || "").trim() || null });
   res.redirect("/staff/modules/customers");
 };
 
 export const updateCustomer = async (req, res) => {
   const user = await findStaff(req, res);
   if (!user) return;
-  const { name, contactNumber, email } = req.body;
+  const { name, contactNumber, email, address } = req.body;
   const customer = await Customer.findByPk(req.params.customerId);
   if (!customer || !name || !contactNumber) return res.status(400).send("Customer and required fields are missing");
   const duplicate = await Customer.findOne({
@@ -296,7 +301,7 @@ export const updateCustomer = async (req, res) => {
     }
   });
   if (duplicate) return res.status(409).send("Another customer has this contact number or email");
-  await customer.update({ name, contactNumber, email: email || null });
+  await customer.update({ name, contactNumber, email: email || null, ...(address !== undefined ? { address: String(address).trim() || null } : {}) });
   res.redirect("/staff/modules/customers");
 };
 
@@ -317,8 +322,11 @@ export const addCustomerLog = async (req, res) => {
   const { customerId, activityType, amount, transactionReference, activityAt } = req.body;
   const customer = await Customer.findByPk(customerId);
   if (!customer || !activityType) return res.status(400).send("A valid customer and activity type are required");
-  if (activityType === "purchase" && (amount === "" || amount === undefined || Number.isNaN(Number(amount)) || Number(amount) < 0)) {
-    return res.status(400).send("A valid purchase amount is required");
+  if (!["purchase", "visit", "refund"].includes(activityType)) {
+    return res.status(400).send("Choose purchase, dine-in visit or refund");
+  }
+  if (activityType !== "visit" && (amount === "" || amount === undefined || Number.isNaN(Number(amount)) || Number(amount) < 0)) {
+    return res.status(400).send("A valid amount is required for a purchase or refund");
   }
   const parsedActivityAt = new Date(activityAt);
   if (!activityAt || Number.isNaN(parsedActivityAt.getTime())) {
@@ -328,7 +336,7 @@ export const addCustomerLog = async (req, res) => {
   try {
     await CustomerLogService.recordLog(customerId, {
       activityType,
-      amount: amount ? Number(amount) : null,
+      amount: activityType === "visit" ? null : amount ? Number(amount) : null,
       transactionReference: transactionReference || null,
       activityAt: parsedActivityAt,
       sourceModule: "CRM",

@@ -61,7 +61,19 @@
           </div>
           <datalist id="customerOptions"></datalist>
           <input type="hidden" id="customerId" name="customerId" value="{{order.customerId}}" />
+          <input type="hidden" id="customerName" name="customerName" value="{{order.customerName}}" />
           <p id="customerHint" class="mt-1 text-[11px] text-stone-400">{{#if order.customerName}}Points go to {{order.customerName}} in Customer Logs.{{else}}Leave empty for a walk-in customer. Registered customers come from Customer Logs.{{/if}}</p>
+        </div>
+        <div class="mt-4">
+          <label class="label" for="promoCodeInput">Customer promo / voucher (from Customer Logs)</label>
+          <div class="flex gap-2">
+            <input id="promoCodeInput" class="input uppercase" maxlength="30" placeholder="e.g. DJ-YUM10" value="{{order.promoCode}}" autocomplete="off" />
+            <button type="button" id="promoApply" class="btn btn-light">Apply</button>
+            <button type="button" id="promoClear" class="btn btn-light">Clear</button>
+          </div>
+          <input type="hidden" id="promoCode" name="promoCode" value="{{order.promoCode}}" />
+          <input type="hidden" id="promoDiscountAmount" name="promoDiscountAmount" value="{{order.promoDiscountAmount}}" />
+          <p id="promoHint" class="mt-1 text-[11px] text-stone-400">{{#if order.promoCode}}Promo {{order.promoCode}} is applied.{{else}}Choose the customer first, then enter a promo code.{{/if}}</p>
         </div>
         {{/if}}
 
@@ -189,6 +201,8 @@
     let discount = 0;
     if (type === "percent") discount = (SUBTOTAL * value) / 100;
     else if (type === "fixed") discount = Math.min(value, SUBTOTAL);
+    discount += Number(document.getElementById("promoDiscountAmount")?.value || 0);
+    discount = Math.min(discount, SUBTOTAL);
     const taxable = Math.max(SUBTOTAL - discount, 0);
     const service = (taxable * SERVICE_RATE) / 100;
     const tax = ((taxable + service) * TAX_RATE) / 100;
@@ -211,6 +225,8 @@
     const type = option?.dataset?.type;
     const value = Number(option?.dataset?.value || 0);
     let discount = type === "percent" ? (SUBTOTAL * value) / 100 : type === "fixed" ? Math.min(value, SUBTOTAL) : 0;
+    discount += Number(document.getElementById("promoDiscountAmount")?.value || 0);
+    discount = Math.min(discount, SUBTOTAL);
     const taxable = Math.max(SUBTOTAL - discount, 0);
     const service = (taxable * SERVICE_RATE) / 100;
     const tax = ((taxable + service) * TAX_RATE) / 100;
@@ -293,6 +309,7 @@
     const input = document.getElementById("customerLookup");
     if (!input) return;
     const hidden = document.getElementById("customerId");
+    const hiddenName = document.getElementById("customerName");
     const list = document.getElementById("customerOptions");
     const hint = document.getElementById("customerHint");
     const walkIn = "Leave empty for a walk-in customer. Registered customers come from Customer Logs.";
@@ -308,12 +325,14 @@
       if (match) {
         selected = match;
         hidden.value = match.customerId;
+        hiddenName.value = match.name;
         input.value = match.name;
         hint.textContent = `Points go to ${match.name} in Customer Logs.`;
         return;
       }
       selected = null;
       hidden.value = "";
+      hiddenName.value = "";
       hint.textContent = input.value.trim() ? "Pick the customer from the list to add loyalty points." : walkIn;
       clearTimeout(timer);
       const q = input.value.trim();
@@ -322,7 +341,9 @@
         try {
           const res = await fetch(`/pos/customers/search?q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } });
           if (!res.ok) return;
-          found = (await res.json()).customers || [];
+          const data = await res.json();
+          found = data.customers || [];
+          if (data.available === false) hint.textContent = "Customer Logs is offline right now. The sale can go ahead as walk-in.";
           list.replaceChildren(...found.map((c) => Object.assign(document.createElement("option"), { value: label(c) })));
         } catch {
           // Search is a convenience; the sale can still go ahead as walk-in.
@@ -334,7 +355,70 @@
       selected = null;
       input.value = "";
       hidden.value = "";
+      hiddenName.value = "";
       hint.textContent = walkIn;
+      const promoCode = document.getElementById("promoCode");
+      const promoAmount = document.getElementById("promoDiscountAmount");
+      const promoInput = document.getElementById("promoCodeInput");
+      const promoHint = document.getElementById("promoHint");
+      if (promoCode) promoCode.value = "";
+      if (promoAmount) promoAmount.value = "0";
+      if (promoInput) promoInput.value = "";
+      if (promoHint) promoHint.textContent = "Choose the customer first, then enter a promo code.";
+      if (typeof computeTotals === "function") computeTotals();
+    });
+  })();
+
+  (() => {
+    const apply = document.getElementById("promoApply");
+    if (!apply) return;
+    const input = document.getElementById("promoCodeInput");
+    const hidden = document.getElementById("promoCode");
+    const amount = document.getElementById("promoDiscountAmount");
+    const hint = document.getElementById("promoHint");
+    const customerId = () => document.getElementById("customerId")?.value || "";
+
+    apply.addEventListener("click", async () => {
+      const code = input.value.trim();
+      if (!code) {
+        hint.textContent = "Enter a promo code from Customer Logs.";
+        return;
+      }
+      if (!customerId()) {
+        hint.textContent = "Search the customer first, then apply the promo.";
+        return;
+      }
+      hint.textContent = "Checking promo…";
+      try {
+        const res = await fetch("/pos/promos/quote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ code, customerId: customerId(), subtotal: SUBTOTAL })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.promo) {
+          amount.value = "0";
+          hidden.value = "";
+          hint.textContent = data.error || "That promo cannot be used.";
+          computeTotals();
+          return;
+        }
+        hidden.value = data.promo.code;
+        amount.value = data.promo.discountAmount;
+        input.value = data.promo.code;
+        hint.textContent = `${data.promo.code} · ${data.promo.name} · ₱${Number(data.promo.discountAmount).toFixed(2)} off`;
+        computeTotals();
+      } catch {
+        hint.textContent = "Customer Logs is offline. Pay without a promo or try again.";
+      }
+    });
+
+    document.getElementById("promoClear").addEventListener("click", () => {
+      input.value = "";
+      hidden.value = "";
+      amount.value = "0";
+      hint.textContent = "Choose the customer first, then enter a promo code.";
+      computeTotals();
     });
   })();
 </script>

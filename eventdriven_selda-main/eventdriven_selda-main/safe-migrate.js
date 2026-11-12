@@ -23,7 +23,7 @@ import {
   SupplierInvoice,
   SupplierActivityLog
 } from "./models/index.js";
-import { syncDepartmentsFromHr } from "./services/hrDirectory.js";
+import { syncDepartmentsFromHr, connectedToHr } from "./services/hrDirectory.js";
 
 // sync() never changes an existing ENUM; new values on a model (e.g. 'Voided') are added here.
 async function addMissingEnumValues(db) {
@@ -45,14 +45,11 @@ async function addMissingEnumValues(db) {
   }
 }
 
-// POS product id for a seed item (POS seeds these as kitchen Supply items), or the old placeholder.
+// Seed items start with a placeholder product id: the POS keeps its products in its own database,
+// which Procurement never reads. Once the POS app answers, the integration worker links each item
+// to the POS stock item with the same name (inventoryService.linkCatalogByName).
 async function posProductId(name, placeholder) {
-  try {
-    const [row] = await sequelize.query("SELECT id FROM pos_products WHERE name = ? ORDER BY id LIMIT 1", { replacements: [name], type: Sequelize.QueryTypes.SELECT });
-    return row ? row.id : placeholder;
-  } catch {
-    return placeholder;
-  }
+  return placeholder;
 }
 
 // Adds columns that exist on a model but not yet in its table (new integration fields). Never drops.
@@ -72,7 +69,7 @@ async function addMissingColumns(db) {
   }
 }
 
-const dbName = process.env.DB_NAME || 'xianfires_erp';
+const dbName = process.env.DB_NAME || 'djs_procurement';
 const dbUser = process.env.DB_USER || 'root';
 const dbPass = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : '';
 const dbHost = process.env.DB_HOST || 'localhost';
@@ -103,24 +100,29 @@ try {
 
   // 4. Data Backfill & Seeding
 
-  // A. Seed Default Admin User if no users exist
+  // A. Seed the first admin if no users exist. The root `npm run migrate` passes ADMIN_EMAIL/ADMIN_PASSWORD,
+  // so a shared database never gets the well-known admin@gmail.com / admin123 login.
   const userCount = await User.count();
   if (userCount === 0) {
-    const hashedPassword = await bcrypt.hash("admin123", 10);
+    const envEmail = String(process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+    const envPassword = process.env.ADMIN_PASSWORD || "";
+    const useEnv = Boolean(envEmail && envPassword);
+    const hashedPassword = await bcrypt.hash(useEnv ? envPassword : "admin123", 10);
     await User.create({
-      name: "DJ's System Administrator",
-      email: "admin@gmail.com",
+      name: useEnv ? process.env.ADMIN_NAME || "System Administrator" : "DJ's System Administrator",
+      email: useEnv ? envEmail : "admin@gmail.com",
       password: hashedPassword,
       role: "admin"
     });
-    console.log("🌱 Default admin created: admin@gmail.com / admin123");
+    console.log(useEnv ? `🌱 Admin created: ${envEmail}` : "🌱 Default admin created: admin@gmail.com / admin123");
   }
 
-  // B. Departments come from HR (shared across DJ's ERP). Seed our own only when HR is not installed.
+  // B. Departments come from HR's API (DJ's ERP). Seed our own only when Procurement runs on its own.
   const mirrored = await syncDepartmentsFromHr();
   if (mirrored !== null) console.log(`🔗 ${mirrored} department(s) mirrored from HR.`);
+  else if (connectedToHr()) console.log("🔗 Departments come from HR; they are copied in as soon as the HR app is running.");
   const deptCount = await Department.count();
-  if (mirrored === null && deptCount === 0) {
+  if (mirrored === null && deptCount === 0 && !connectedToHr()) {
     await Department.bulkCreate([
       { code: "KIT", name: "Kitchen", departmentHead: "Executive Chef Marco", description: "Food preparation & recipe inventory requisitions", status: "Active" },
       { code: "PUR", name: "Purchasing", departmentHead: "Purchasing Officer Sarah", description: "Supplier procurement, purchase orders & vendor relations", status: "Active" },
@@ -192,19 +194,8 @@ try {
     console.log("🌱 Seeded initial suppliers and supplier product catalog offerings.");
   }
 
-  // E. Link supplier products to the POS & Inventory catalog by name (older rows had placeholder ids).
-  try {
-    const [linked] = await sequelize.query(
-      `UPDATE scm_supplier_products sp
-       JOIN pos_products p ON p.name = sp.productName
-       LEFT JOIN pos_products current ON current.id = sp.productId
-       SET sp.productId = p.id
-       WHERE current.id IS NULL OR current.name <> sp.productName`
-    );
-    if (linked.affectedRows) console.log(`🔗 Linked ${linked.affectedRows} supplier product(s) to POS inventory items.`);
-  } catch {
-    // POS & Inventory not installed in this database: nothing to link.
-  }
+  // E. Supplier products are linked to POS stock items by the integration worker once the POS app
+  //    answers (the POS database is never read from here).
 
   console.log("\n========================================================");
   console.log("🎉 SAFE MIGRATION & SEEDING COMPLETED SUCCESSFULLY!");

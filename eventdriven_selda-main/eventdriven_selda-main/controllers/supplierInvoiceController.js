@@ -156,6 +156,7 @@ export const supplierInvoiceController = {
         invoiceDate: invoiceDate || new Date(),
         dueDate: dueDate,
         invoiceTotal: totalVal,
+        vatInclusive: ["1", "on", "true", true].includes(req.body.vatInclusive),
         amountPaid: 0.00,
         outstandingBalance: totalVal, // Initially equals invoice total until financial synchronization
         paymentStatus: 'Pending',

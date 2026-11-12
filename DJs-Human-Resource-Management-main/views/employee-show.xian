@@ -49,6 +49,8 @@
               <div class="flex justify-between gap-3"><dt class="text-gray-500">Date Hired</dt><dd>{{formatDate employee.dateHired}}</dd></div>
               {{#unless isLimited}}
               <div class="flex justify-between gap-3"><dt class="text-gray-500">Monthly Salary</dt><dd class="font-semibold text-yellow-400">{{formatMoney employee.salary}}</dd></div>
+              <div class="flex justify-between gap-3"><dt class="text-gray-500">Rate per Day</dt><dd>{{formatMoney rates.daily}}{{#unless employee.dailyRate}} <span class="text-xs text-gray-500">(salary ÷ 26)</span>{{/unless}}</dd></div>
+              <div class="flex justify-between gap-3"><dt class="text-gray-500">Rate per Hour</dt><dd>{{formatMoney rates.hourly}}</dd></div>
               {{/unless}}
             </dl>
           </div>
@@ -58,7 +60,20 @@
             <dl class="space-y-3 text-sm">
               <div><dt class="text-gray-500 text-xs uppercase tracking-wider mb-1">Email</dt><dd class="break-all">{{employee.email}}</dd></div>
               <div><dt class="text-gray-500 text-xs uppercase tracking-wider mb-1">Phone</dt><dd>{{dash employee.phone}}</dd></div>
+              <div><dt class="text-gray-500 text-xs uppercase tracking-wider mb-1">Birth Date</dt><dd>{{#if employee.birthDate}}{{formatDate employee.birthDate}}{{else}}—{{/if}}</dd></div>
+              <div><dt class="text-gray-500 text-xs uppercase tracking-wider mb-1">Address</dt><dd>{{dash employee.address}}</dd></div>
             </dl>
+          </div>
+
+          <div class="rounded-2xl border border-white/5 bg-[#171717] p-5">
+            <h3 class="font-bold mb-4">Emergency Contact</h3>
+            {{#if employee.emergencyContactName}}
+              <p class="text-sm font-semibold">{{employee.emergencyContactName}}</p>
+              <p class="text-xs text-gray-500">{{dash employee.emergencyContactRelation}}</p>
+              <p class="text-sm mt-1">{{dash employee.emergencyContactPhone}}</p>
+            {{else}}
+              <p class="text-sm text-gray-500">No emergency contact recorded.</p>
+            {{/if}}
           </div>
 
           <div class="rounded-2xl border border-white/5 bg-[#171717] p-5">

@@ -36,6 +36,8 @@ import indexRoutes from "./routes/index.js";
 import { initializeDatabase, syncDatabase } from "./config/database.js";
 import customerApi from "./modules/customerLogs/api/customerApi.js";
 import customerLogApi from "./modules/customerLogs/api/customerLogApi.js";
+import promoApi from "./modules/customerLogs/api/promoApi.js";
+import erpSummaryApi from "./routes/erpApi.js";
 import { requireErpKey } from "./middleware/erpKey.js";
 import { erpModules } from "./middleware/erpModules.js";
 
@@ -127,6 +129,8 @@ app.set("view engine", "xian");
 // Only other ERP modules call these, with the shared X-ERP-Key (the web UI does not use /api).
 app.use("/api/customers", requireErpKey, customerApi);
 app.use("/api/customer-logs", requireErpKey, customerLogApi);
+app.use("/api/promos", requireErpKey, promoApi);
+app.use("/api/erp", requireErpKey, erpSummaryApi);
 
 // ==================== Web UI Routes ====================
 app.use(erpModules);

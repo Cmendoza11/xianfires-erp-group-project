@@ -50,7 +50,8 @@ import {
     updatePromoStatus,
     deletePromo,
     promoRedemptionPage,
-    recordRedemption
+    recordRedemption,
+  voidRedemption
 } from "../controllers/promoController.js";
 
 const router = express.Router();
@@ -71,6 +72,7 @@ router.post("/admin/promos/:promoId/toggle", updatePromoStatus);
 router.post("/admin/promos/:promoId/delete", deletePromo);
 router.get("/staff/modules/promos", promoRedemptionPage);
 router.post("/staff/promo-redemptions", recordRedemption);
+router.post("/staff/promo-redemptions/:id/void", voidRedemption);
 router.get("/staff/modules/:module", customerModulePage);
 router.post("/staff/customers", addCustomer);
 router.post("/staff/customers/:customerId", updateCustomer);

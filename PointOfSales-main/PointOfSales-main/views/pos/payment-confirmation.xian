@@ -22,6 +22,9 @@
           <div class="flex justify-between"><span class="text-stone-500">Reference</span><span class="font-mono text-xs font-semibold">{{this.referenceNumber}}</span></div>
         {{/if}}
       {{/each}}
+      {{#if transaction.promoCode}}
+        <div class="flex justify-between"><span class="text-stone-500">Promo applied</span><span class="font-semibold">{{transaction.promoCode}} (−{{money transaction.promoDiscountAmount}})</span></div>
+      {{/if}}
       {{#each transaction.discounts}}
         <div class="flex justify-between"><span class="text-stone-500">Discount applied</span><span class="font-semibold">{{this.name}} (−{{money this.amount}})</span></div>
       {{/each}}

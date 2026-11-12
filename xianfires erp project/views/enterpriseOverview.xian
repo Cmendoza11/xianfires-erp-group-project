@@ -8,7 +8,7 @@
       <div class="flex flex-wrap items-end justify-between gap-4 pb-2">
         <div class="flex-1 basis-80 min-w-0">
           <h1 class="text-[1.375rem] font-semibold tracking-tight">Enterprise Overview</h1>
-          <p class="text-[13px] text-muted mt-0.5">{{#if company}}{{ company }} · {{/if}}Live figures from all 5 DJ's ERP modules, read from the shared database · {{ currency }}</p>
+          <p class="text-[13px] text-muted mt-0.5">{{#if company}}{{ company }} · {{/if}}Live figures from all 5 DJ's ERP modules, asked from each module's API (each module has its own database) · {{ currency }}</p>
         </div>
       </div>
 
@@ -20,22 +20,22 @@
         <div class="metric">
           <div class="metric-label">POS sales today</div>
           <div class="metric-value">{{#if overview.pos}}{{ formatMoney overview.pos.todaySales }}{{else}}—{{/if}}</div>
-          <div class="metric-sub">{{#if overview.pos}}{{ overview.pos.todayCount }} transaction(s){{else}}POS not connected{{/if}}</div>
+          <div class="metric-sub">{{#if overview.pos}}{{ overview.pos.todayCount }} transaction(s){{else}}Not reachable{{/if}}</div>
         </div>
         <div class="metric">
           <div class="metric-label">Active employees</div>
           <div class="metric-value">{{#if overview.hr}}{{ overview.hr.activeEmployees }}{{else}}—{{/if}}</div>
-          <div class="metric-sub">{{#if overview.hr}}{{ overview.hr.onLeave }} on leave{{else}}HR not connected{{/if}}</div>
+          <div class="metric-sub">{{#if overview.hr}}{{ overview.hr.onLeave }} on leave{{else}}Not reachable{{/if}}</div>
         </div>
         <div class="metric">
           <div class="metric-label">Open purchase orders</div>
           <div class="metric-value">{{#if overview.scm}}{{ overview.scm.openOrders }}{{else}}—{{/if}}</div>
-          <div class="metric-sub">{{#if overview.scm}}{{ formatMoney overview.scm.openOrdersTotal }} on order{{else}}Procurement not connected{{/if}}</div>
+          <div class="metric-sub">{{#if overview.scm}}{{ formatMoney overview.scm.openOrdersTotal }} on order{{else}}Not reachable{{/if}}</div>
         </div>
         <div class="metric">
           <div class="metric-label">Customers</div>
           <div class="metric-value">{{#if overview.crm}}{{ overview.crm.customers }}{{else}}—{{/if}}</div>
-          <div class="metric-sub">{{#if overview.crm}}{{ overview.crm.month.count }} purchase(s) this month{{else}}Customer Logs not connected{{/if}}</div>
+          <div class="metric-sub">{{#if overview.crm}}{{ overview.crm.month.count }} purchase(s) this month{{else}}Not reachable{{/if}}</div>
         </div>
       </section>
 
@@ -56,7 +56,7 @@
             </div>
             {{/each}}
             {{else}}
-            <p class="list-empty">POS tables are not installed in this database yet. Run <code>npm run migrate</code> at the ERP root.</p>
+            <p class="list-empty">{{ overview.errors.pos }}</p>
             {{/if}}
           </div>
         </section>
@@ -73,7 +73,7 @@
             <div class="list-row"><span class="list-row-title">Unpaid supplier invoices</span><span class="list-row-amount">{{ overview.scm.unpaid.count }} · {{ formatMoney overview.scm.unpaid.total }}</span></div>
             <div class="list-row"><a href="{{ urls.reportApAging }}" class="list-row-sub hover:underline">Compare with AP aging in Accounting</a></div>
             {{else}}
-            <p class="list-empty">Procurement tables are not installed in this database yet.</p>
+            <p class="list-empty">{{ overview.errors.scm }}</p>
             {{/if}}
           </div>
         </section>
@@ -89,7 +89,7 @@
             <div class="list-row"><span class="list-row-title">On leave</span><span class="list-row-amount">{{ overview.hr.onLeave }}</span></div>
             <div class="list-row"><span class="list-row-title">Net payroll paid this month</span><span class="list-row-amount">{{ formatMoney overview.hr.payroll.total }} · {{ overview.hr.payroll.count }} payslip(s)</span></div>
             {{else}}
-            <p class="list-empty">HR tables are not installed in this database yet.</p>
+            <p class="list-empty">{{ overview.errors.hr }}</p>
             {{/if}}
           </div>
         </section>
@@ -105,7 +105,7 @@
             <div class="list-row"><span class="list-row-title">Customer purchases this month (net of refunds)</span><span class="list-row-amount">{{ overview.crm.month.count }} · {{ formatMoney overview.crm.month.total }}</span></div>
             <div class="list-row"><span class="list-row-title">… recorded automatically by POS</span><span class="list-row-amount">{{ overview.crm.month.fromPos }}</span></div>
             {{else}}
-            <p class="list-empty">Customer Logs tables are not installed in this database yet.</p>
+            <p class="list-empty">{{ overview.errors.crm }}</p>
             {{/if}}
           </div>
         </section>
@@ -125,7 +125,7 @@
                 <td class="num">{{#if (gt failed 0)}}<span class="badge badge-danger">{{ failed }}</span>{{else}}0{{/if}}</td>
               </tr>
               {{else}}
-              <tr><td colspan="4" class="text-center text-muted">No module integrations installed yet</td></tr>
+              <tr><td colspan="4" class="text-center text-muted">No module answered yet</td></tr>
               {{/each}}
             </tbody>
           </table>

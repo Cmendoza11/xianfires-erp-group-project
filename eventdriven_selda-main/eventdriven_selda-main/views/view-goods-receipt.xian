@@ -131,6 +131,8 @@
                 <th class="py-3 px-3 text-center text-emerald-400 print-text-dark font-bold">Accepted</th>
                 <th class="py-3 px-3 text-center text-red-400 print-text-dark font-bold">Damaged</th>
                 <th class="py-3 px-3 text-center text-amber-400 print-text-dark font-bold">Missing</th>
+                <th class="py-3 px-3">Batch / Lot</th>
+                <th class="py-3 px-3">Expiry</th>
                 <th class="py-3 px-3">Inspection Remarks</th>
               </tr>
             </thead>
@@ -144,6 +146,8 @@
                   <td class="py-3 px-3 text-center font-mono font-bold text-emerald-400 print-text-dark bg-emerald-950/20">{{acceptedQuantity}} {{unit}}</td>
                   <td class="py-3 px-3 text-center font-mono font-bold text-red-400 print-text-dark bg-red-950/20">{{damagedQuantity}} {{unit}}</td>
                   <td class="py-3 px-3 text-center font-mono font-bold text-amber-400 print-text-dark">{{missingQuantity}} {{unit}}</td>
+                  <td class="py-3 px-3 font-mono text-gray-300 print-text-dark">{{#if batchLotNumber}}{{batchLotNumber}}{{else}}-{{/if}}</td>
+                  <td class="py-3 px-3 font-mono text-gray-300 print-text-dark whitespace-nowrap">{{#if expiryDate}}{{expiryDate}}{{else}}-{{/if}}</td>
                   <td class="py-3 px-3 text-gray-400 print-text-gray italic text-[11px]">{{#if remarks}}{{remarks}}{{else}}-{{/if}}</td>
                 </tr>
               {{/each}}

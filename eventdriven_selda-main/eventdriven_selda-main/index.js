@@ -28,6 +28,7 @@ import path from "path";
 import session from "express-session";
 import flash from "connect-flash";
 import router from "./routes/index.js";
+import erpApi from "./routes/erpApi.js";
 import fs from 'fs';
 import hbs from "hbs";
 import { fileURLToPath, pathToFileURL } from "url";
@@ -226,6 +227,8 @@ fs.readdir(partialsDir, (err, files) => {
     });
 });
 
+// Internal API for the other DJ's ERP modules (X-ERP-Key).
+app.use("/api/v1/erp", erpApi);
 app.use(erpModules);
 // Departments come from HR: refresh the read-only mirror before pages that list them.
 app.use(["/departments", "/purchase-requests", "/purchase-orders"], refreshDepartmentsFromHr);

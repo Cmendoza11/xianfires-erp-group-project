@@ -42,6 +42,8 @@ const ACTION_LABELS = {
   "user.password": "Changed password",
   "period.close": "Closed fiscal year",
   "period.reopen": "Reopened fiscal year",
+  "period.lock_month": "Locked month",
+  "period.unlock_month": "Unlocked month",
   "settings.update": "Updated settings",
   "integration.create": "Created integration",
   "integration.update": "Updated integration",

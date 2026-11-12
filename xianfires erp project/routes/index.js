@@ -44,7 +44,8 @@ import {
   reconciliationGrid, reconciliationView, startReconciliation, toggleReconciliationLine,
   completeReconciliation, undoReconciliation, deleteReconciliation
 } from "../controllers/bankRecController.js";
-import { periodClosingPage, closePeriod, reopenPeriod } from "../controllers/periodController.js";
+import { periodClosingPage, closePeriod, reopenPeriod, lockMonthApi, unlockMonthApi } from "../controllers/periodController.js";
+import { payrollPage } from "../controllers/payrollController.js";
 import { auditLogPage } from "../controllers/auditController.js";
 import { accountingSettingPage, saveSetting } from "../controllers/settingController.js";
 import {
@@ -130,6 +131,7 @@ router.get("/admin/accounting/reports/purchase-book", read, h(documentBook("bill
 // Controls (administrators)
 router.get("/admin/setting/accounting", admin, h(accountingSettingPage));
 router.get("/admin/accounting/period-closing", admin, h(periodClosingPage));
+router.get(urls.accountingPayroll, read, h(payrollPage));
 router.get("/admin/audit-log", admin, h(auditLogPage));
 router.get("/admin/users", admin, h(userGrid));
 router.get("/admin/users/new", admin, userNew);
@@ -159,6 +161,8 @@ router.post("/api/banking/reconciliations/:id/complete", ...writeJsonApi, h(comp
 router.post("/api/banking/reconciliations/:id/undo", ...writeJsonApi, h(undoReconciliation));
 router.delete("/api/banking/reconciliations/:id", ...writeApi, h(deleteReconciliation));
 router.post("/api/accounting/periods/close", ...adminJsonApi, h(closePeriod));
+router.post(urls.lockMonth, ...adminJsonApi, h(lockMonthApi));
+router.post(urls.unlockMonth, ...adminJsonApi, h(unlockMonthApi));
 router.post("/api/accounting/periods/reopen", ...adminJsonApi, h(reopenPeriod));
 router.post("/api/settings", ...adminJsonApi, h(saveSetting));
 router.post("/api/users", ...adminJsonApi, h(createUser));

@@ -15,6 +15,7 @@
 import { Op } from "sequelize";
 import { IntegrationOutbox, Payment, Transaction as SaleTransaction } from "../models/index.js";
 import { ErpApiError, accounting, peer } from "./erpClient.js";
+import { redeemPromo, voidPromo } from "./crm.js";
 
 // Default chart-of-accounts codes of the Accounting ERP; override in the root .env if they differ.
 const ACCOUNT = {
@@ -159,12 +160,28 @@ const HANDLERS = {
 
   "customers:sale": async (sale) => {
     const res = await customerLog(sale, "purchase", sale.createdAt);
+    if (sale.promoCode) {
+      await redeemPromo({
+        code: sale.promoCode,
+        customerId: sale.customerId,
+        subtotal: Number(sale.subtotal),
+        discountAmount: Number(sale.promoDiscountAmount || 0),
+        transactionReference: sale.transactionNumber,
+        source: "POS",
+      });
+    }
     return `log #${res.data.log.id}`;
   },
 
   "customers:void": async (sale) => {
     await ensureDelivered("customers", "sale", sale);
     const res = await customerLog(sale, "refund", sale.voidedAt || new Date());
+    if (sale.promoCode) {
+      await voidPromo({
+        transactionReference: sale.transactionNumber,
+        reason: sale.voidReason || "POS void",
+      });
+    }
     return `log #${res.data.log.id}`;
   },
 };

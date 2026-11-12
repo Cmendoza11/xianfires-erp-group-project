@@ -64,6 +64,7 @@
     <div class="mt-3 space-y-1 border-t border-dashed border-stone-300 pt-3 text-[11px]">
       <div class="flex justify-between"><span class="text-stone-500">Subtotal</span><span class="font-semibold">{{money transaction.subtotal}}</span></div>
       <div class="flex justify-between"><span class="text-stone-500">Discount</span><span class="font-semibold">−{{money transaction.discountAmount}}</span></div>
+      {{#if transaction.promoCode}}<div class="flex justify-between text-[11px]"><span class="text-stone-500">incl. promo {{transaction.promoCode}}</span><span>−{{money transaction.promoDiscountAmount}}</span></div>{{/if}}
       {{#if (gt transaction.serviceCharge 0)}}
         <div class="flex justify-between"><span class="text-stone-500">Service charge</span><span class="font-semibold">{{money transaction.serviceCharge}}</span></div>
       {{/if}}

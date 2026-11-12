@@ -1,6 +1,6 @@
 // npm run dev [-- --only=pos,hr]: starts every module on its own port with one shared environment.
 import { spawn } from "node:child_process";
-import { MODULES, moduleDir, moduleEnv, portOf } from "./erp-env.js";
+import { MODULES, moduleDir, moduleEnv, portOf, dbNameOf } from "./erp-env.js";
 
 const onlyArg = process.argv.find((a) => a.startsWith("--only="));
 const only = onlyArg ? onlyArg.slice(7).split(",").map((s) => s.trim()) : null;
@@ -30,7 +30,7 @@ for (const mod of selected) {
 }
 
 console.log("\nDJ's ERP modules:");
-for (const mod of selected) console.log(`  ${mod.name.padEnd(16)} http://localhost:${portOf(mod, moduleEnv())}`);
+for (const mod of selected) console.log(`  ${mod.name.padEnd(16)} http://localhost:${String(portOf(mod, moduleEnv())).padEnd(6)} database ${dbNameOf(mod)}`);
 console.log("Press Ctrl+C to stop all.\n");
 
 function stopAll() {

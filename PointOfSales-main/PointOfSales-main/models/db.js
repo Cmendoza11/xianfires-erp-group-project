@@ -28,7 +28,7 @@ import { Sequelize } from "sequelize";
 
 // Central DJ's ERP database (shared with the other modules; POS tables use the pos_ prefix).
 export const sequelize = new Sequelize(
-  process.env.DB_NAME || "xianfires_erp",
+  process.env.DB_NAME || "djs_pos",
   process.env.DB_USER || "root",
   process.env.DB_PASSWORD ?? "",
   {

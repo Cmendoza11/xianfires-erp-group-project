@@ -32,6 +32,35 @@
         </div>
 
         <div class="card">
+          <div class="card-header">
+            <div class="card-title">Monthly lock</div>
+            <p class="card-description">
+              Lock a month once its books are final, so nobody can post, change or delete entries dated in it or before it.
+              No closing entry is made. Only the latest locked month can be unlocked.
+            </p>
+          </div>
+          <div class="card-content">
+            <div class="flex flex-wrap items-end gap-3">
+              <label class="grid gap-1 text-sm min-w-[14rem]">
+                <span class="font-medium">Month</span>
+                <select class="select" data-lock-month-select {{#unless lockableMonths.length}}disabled{{/unless}}>
+                  {{#each lockableMonths}}
+                  <option value="{{ value }}">{{ label }} (through {{ end }})</option>
+                  {{else}}
+                  <option value="">No ended month left to lock</option>
+                  {{/each}}
+                </select>
+              </label>
+              <button type="button" class="btn btn-primary" data-lock-month {{#unless lockableMonths.length}}disabled{{/unless}}>Lock month</button>
+              {{#if monthLock}}{{#unless (eq monthLock fiscalLock)}}
+              <button type="button" class="btn btn-outline" data-unlock-month data-label="{{ monthLock }}">Unlock latest month</button>
+              {{/unless}}{{/if}}
+            </div>
+            <p class="field-help mt-2">{{#if monthLock}}Months locked through {{ monthLock }}.{{else}}No month is locked yet.{{/if}}</p>
+          </div>
+        </div>
+
+        <div class="card">
           <div class="card-content pt-5 overflow-x-auto">
             <table class="data-table">
               <thead>
@@ -81,5 +110,5 @@
     </div>
   </main>
 </div>
-<script src="/js/period-closing.js" defer data-close-api="{{ urls.closePeriod }}" data-reopen-api="{{ urls.reopenPeriod }}"></script>
+<script src="/js/period-closing.js" defer data-close-api="{{ urls.closePeriod }}" data-reopen-api="{{ urls.reopenPeriod }}" data-lock-month-api="{{ urls.lockMonth }}" data-unlock-month-api="{{ urls.unlockMonth }}"></script>
 {{> footer }}

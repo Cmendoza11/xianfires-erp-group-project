@@ -52,6 +52,7 @@ import {
   payrollUpdateStatus,
   payrollDelete,
   payrollRetrySync,
+  payrollCompute,
   myPayslips
 } from "../controllers/payrollController.js";
 import { reportsIndex, reportShow } from "../controllers/reportController.js";
@@ -121,6 +122,7 @@ router.post("/leaves/:id/delete", requireAuth, leaveDelete);
 router.get("/payroll", requireRole("admin"), payrollList);
 router.get("/payroll/create", requireRole("admin"), payrollCreatePage);
 router.post("/payroll/create", requireRole("admin"), payrollCreate);
+router.get("/payroll/compute", requireRole("admin"), payrollCompute);
 router.get("/payroll/:id", requireAuth, payrollShow);
 router.post("/payroll/:id/status", requireRole("admin"), payrollUpdateStatus);
 router.post("/payroll/:id/delete", requireRole("admin"), payrollDelete);

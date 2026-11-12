@@ -33,6 +33,7 @@ router.get("/checkout/:orderId", allow("admin", "cashier"), checkout.checkoutPag
 router.post("/checkout/:orderId/details", allow("admin", "cashier"), checkout.saveOrderDetails);
 router.post("/checkout/:orderId/pay", allow("admin", "cashier"), checkout.processPayment);
 router.get("/customers/search", allow("admin", "cashier"), checkout.customerSearch);
+router.post("/promos/quote", allow("admin", "cashier"), checkout.promoQuote);
 router.get(
   "/payment/:transactionId/confirmation",
   allow("admin", "cashier"),

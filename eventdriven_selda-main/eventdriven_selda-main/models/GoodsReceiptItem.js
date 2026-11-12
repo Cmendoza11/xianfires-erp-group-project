@@ -64,6 +64,14 @@ export const GoodsReceiptItem = sequelize.define('GoodsReceiptItem', {
     allowNull: false,
     defaultValue: 'kg'
   },
+  batchLotNumber: {
+    type: DataTypes.STRING(60),
+    allowNull: true
+  },
+  expiryDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
   remarks: {
     type: DataTypes.STRING(255),
     allowNull: true

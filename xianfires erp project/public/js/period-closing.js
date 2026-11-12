@@ -1,5 +1,5 @@
 (function () {
-  const { closeApi, reopenApi } = document.currentScript.dataset;
+  const { closeApi, reopenApi, lockMonthApi, unlockMonthApi } = document.currentScript.dataset;
   const retainedEarnings = document.querySelector("[data-retained-earnings]");
 
   async function run(api, body, successMessage) {
@@ -47,5 +47,34 @@
       await run(reopenApi, { fiscal_year_start: button.dataset.reopenYear }, `${button.dataset.label} reopened`);
       XF.setLoading(button, false);
     });
+  });
+
+  const monthSelect = document.querySelector("[data-lock-month-select]");
+  document.querySelector("[data-lock-month]")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    if (!monthSelect?.value) return;
+    const label = monthSelect.selectedOptions[0].textContent;
+    const confirmed = await XF.confirm({
+      heading: "Lock month",
+      content: `Entries dated in ${label} and every earlier month can no longer be posted, changed or deleted.`,
+      confirmText: "Lock"
+    });
+    if (!confirmed) return;
+    XF.setLoading(button, true);
+    await run(lockMonthApi, { month: monthSelect.value }, `Books locked through ${label}`);
+    XF.setLoading(button, false);
+  });
+
+  document.querySelector("[data-unlock-month]")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const confirmed = await XF.confirm({
+      heading: "Unlock latest month",
+      content: `The month ending ${button.dataset.label} is opened again for posting.`,
+      confirmText: "Unlock"
+    });
+    if (!confirmed) return;
+    XF.setLoading(button, true);
+    await run(unlockMonthApi, {}, "Latest month unlocked");
+    XF.setLoading(button, false);
   });
 })();

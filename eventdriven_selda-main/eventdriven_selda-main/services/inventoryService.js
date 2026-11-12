@@ -5,21 +5,25 @@
     Mindoro State University - Philippines
 */
 /*
-  Procurement <-> POS & Inventory (the DJ's ERP module that owns products and stock).
-  - Catalog and low-stock alerts come from the POS inventory API; if the POS app is not running,
-    they are read straight from its tables in the shared database (read-only).
+  Procurement <-> POS & Inventory (the DJ's ERP module that owns products and stock). The POS keeps
+  its data in its own database, so Procurement reaches it only through the POS inventory API:
+  - Catalog and low-stock alerts come from GET /api/v1/inventory/products and /low-stock-alerts.
   - Deliveries (goods receipts) and supplier returns are sent to the POS API, which records the
     stock movements. Receipt / return numbers make retries safe (the POS applies each once).
+  - Rows saved while the POS was offline keep the form's placeholder product id; linkCatalogByName()
+    (run by services/integrationWorker.js) links them to the POS item with the same name later.
   Status on the record: Synced, Pending (POS not reachable; retried by services/integrationWorker.js)
   or Failed (the POS refused it, e.g. an unknown product or a fractional quantity; see the error).
 */
-import { QueryTypes } from "sequelize";
-import { sequelize, GoodsReceipt, GoodsReceiptItem, PurchaseOrder, Supplier, SupplierReturn, SupplierReturnItem, SupplierActivityLog } from "../models/index.js";
+import { GoodsReceipt, GoodsReceiptItem, PurchaseOrder, PurchaseOrderItem, PurchaseRequestItem, Supplier, SupplierProduct, SupplierReturn, SupplierReturnItem, SupplierActivityLog } from "../models/index.js";
 import { ErpApiError, peer } from "./erpClient.js";
 
 const pos = (method, path, body) => peer("POS", 3001, method, path, body);
 
-// Used only when neither the POS API nor its tables exist (e.g. Procurement installed on its own).
+// Procurement is part of DJ's ERP (not running on its own) when the shared key is configured.
+const connectedToPos = () => Boolean(process.env.ERP_INTERNAL_KEY);
+
+// Used only when Procurement runs on its own, without DJ's ERP.
 const FALLBACK_INVENTORY_CATALOG = [
   { id: 1, name: "Premium Ground Beef Patty (150g)", sku: "INV-BEEF-001", unit: "kg", category: "Meat & Poultry", minStock: 20, currentStock: 45 },
   { id: 2, name: "Brioche Burger Buns", sku: "INV-BUN-002", unit: "pcs", category: "Bakery", minStock: 100, currentStock: 320 },
@@ -31,37 +35,15 @@ const FALLBACK_INVENTORY_CATALOG = [
   { id: 8, name: "Food Grade Takeout Boxes", sku: "INV-PKG-008", unit: "boxes", category: "Packaging", minStock: 200, currentStock: 500 }
 ];
 
-async function posTablesInstalled() {
-  const [row] = await sequelize.query(
-    `SELECT COUNT(*) AS n FROM information_schema.TABLES
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('pos_products', 'pos_inventory', 'pos_categories')`,
-    { type: QueryTypes.SELECT }
-  );
-  return Number(row.n) === 3;
+// Every POS item, deactivated ones too, so an id is never mistaken for a missing product.
+async function fullPosCatalog() {
+  const data = await pos("GET", "/api/v1/inventory/products?includeInactive=1");
+  return Array.isArray(data?.products) ? data.products : [];
 }
 
-// Read-only view of the POS catalog straight from the shared database.
-async function readCatalogFromDatabase() {
-  if (!(await posTablesInstalled())) return null;
-  const rows = await sequelize.query(
-    `SELECT p.id, p.name, p.type, p.price, c.name AS category,
-            COALESCE(i.unit, 'pcs') AS unit, COALESCE(i.currentStock, 0) AS currentStock, COALESCE(i.minStockLevel, 0) AS minStock
-     FROM pos_products p
-     LEFT JOIN pos_categories c ON c.id = p.categoryId
-     LEFT JOIN pos_inventory i ON i.productId = p.id
-     WHERE p.status = 'active'
-     ORDER BY p.name`,
-    { type: QueryTypes.SELECT }
-  );
-  return rows.map((r) => ({
-    ...r,
-    sku: `POS-${String(r.id).padStart(4, "0")}`,
-    price: Number(r.price),
-    currentStock: Number(r.currentStock),
-    minStock: Number(r.minStock),
-    lowStock: Number(r.currentStock) <= Number(r.minStock)
-  }));
-}
+const sameName = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+const findByName = (catalog, name) =>
+  catalog.find((p) => sameName(p.name, name) && p.status !== "inactive") || catalog.find((p) => sameName(p.name, name));
 
 const errorText = (error) => String(error?.message || error).slice(0, 1000);
 
@@ -73,9 +55,10 @@ export const inventoryService = {
     try {
       const data = await pos("GET", "/api/v1/inventory/products");
       return { source: "inventory_live_api", products: data.products || [] };
-    } catch {
-      const products = await readCatalogFromDatabase().catch(() => null);
-      if (products) return { source: "shared_database", products };
+    } catch (error) {
+      if (connectedToPos()) {
+        return { source: "unavailable", message: `POS & Inventory is not reachable right now (${error.message}).`, products: [] };
+      }
     }
     return {
       source: "cached_fallback",
@@ -91,18 +74,23 @@ export const inventoryService = {
    */
   resolveProductId: async ({ productId, productName, unit }) => {
     const name = String(productName || "").trim();
-    if (await posTablesInstalled()) {
-      const id = parseInt(productId, 10);
-      if (id) {
-        const [byId] = await sequelize.query("SELECT id, name FROM pos_products WHERE id = ?", { replacements: [id], type: QueryTypes.SELECT });
-        // The PO / request forms send a placeholder id (101) on new rows, so an id only counts
-        // when it belongs to the product the user named.
-        if (byId && (!name || byId.name.toLowerCase() === name.toLowerCase())) return byId.id;
-      }
-      if (name) {
-        const [byName] = await sequelize.query("SELECT id FROM pos_products WHERE name = ? ORDER BY id LIMIT 1", { replacements: [name], type: QueryTypes.SELECT });
-        if (byName) return byName.id;
-      }
+    let catalog = null;
+    try {
+      catalog = await fullPosCatalog();
+    } catch (error) {
+      console.warn(`[InventoryService] POS not reachable while saving "${name}": ${error.message}`);
+      return null; // the caller keeps the form's id; linkCatalogByName() fixes it when the POS is back
+    }
+    const id = parseInt(productId, 10);
+    if (id) {
+      const byId = catalog.find((p) => p.id === id);
+      // The PO / request forms send a placeholder id (101) on new rows, so an id only counts
+      // when it belongs to the product the user named.
+      if (byId && (!name || sameName(byId.name, name))) return byId.id;
+    }
+    if (name) {
+      const byName = findByName(catalog, name);
+      if (byName) return byName.id;
     }
     if (!name) return null;
     try {
@@ -112,6 +100,39 @@ export const inventoryService = {
       console.warn(`[InventoryService] Could not register "${name}" in POS: ${error.message}`);
       return null;
     }
+  },
+
+  /**
+   * Links rows whose product id is not a POS item (saved while the POS was offline, or seeded
+   * before the POS answered) to the POS item with the same name, registering a Supply item in the
+   * POS when there is none. Rows that point at a real POS item are never touched. Throws when the
+   * POS is not reachable; returns how many rows were linked.
+   */
+  linkCatalogByName: async () => {
+    if (!connectedToPos()) return 0;
+    const catalog = await fullPosCatalog();
+    const ids = new Set(catalog.map((p) => p.id));
+    let linked = 0;
+    for (const model of [SupplierProduct, PurchaseRequestItem, PurchaseOrderItem, GoodsReceiptItem, SupplierReturnItem]) {
+      const attributes = ["id", "productId", "productName"].concat(model.rawAttributes.unit ? ["unit"] : []);
+      const rows = await model.findAll({ attributes, paranoid: false });
+      for (const row of rows) {
+        const name = String(row.productName || "").trim();
+        if (!name || ids.has(row.productId)) continue;
+        let target = findByName(catalog, name);
+        if (!target) {
+          const data = await pos("POST", "/api/v1/inventory/products", { name, unit: row.unit || "kg" });
+          target = data.product;
+          if (!target) continue;
+          catalog.push(target);
+          ids.add(target.id);
+        }
+        await model.update({ productId: target.id }, { where: { id: row.id }, paranoid: false });
+        linked += 1;
+      }
+    }
+    if (linked) console.log(`[InventoryService] Linked ${linked} row(s) to POS items by name.`);
+    return linked;
   },
 
   /**
@@ -227,10 +248,11 @@ export const inventoryService = {
     try {
       const data = await pos("GET", "/api/v1/inventory/low-stock-alerts");
       return { success: true, source: "inventory_live_api", alerts: data.alerts || [] };
-    } catch {
-      const products = await readCatalogFromDatabase().catch(() => null);
-      const list = products || (await posTablesInstalled().catch(() => false) ? [] : FALLBACK_INVENTORY_CATALOG);
-      const alerts = list
+    } catch (error) {
+      if (connectedToPos()) {
+        return { success: true, source: "unavailable", message: `POS & Inventory is not reachable right now (${error.message}).`, alerts: [] };
+      }
+      const alerts = FALLBACK_INVENTORY_CATALOG
         .filter(item => item.currentStock <= item.minStock)
         .map(item => ({
           productId: item.id,
@@ -241,7 +263,7 @@ export const inventoryService = {
           unit: item.unit,
           severity: item.currentStock === 0 ? "Critical" : "Warning"
         }));
-      return { success: true, source: products ? "shared_database" : "simulated_cache", alerts };
+      return { success: true, source: "simulated_cache", alerts };
     }
   }
 };

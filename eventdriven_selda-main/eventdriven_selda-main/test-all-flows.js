@@ -27,7 +27,7 @@ import { financialService } from "./services/financialService.js";
 
 // The database is shared with the other DJ's ERP modules, and these sample records also flow
 // through the integrations (POS stock, Accounting). Run only on purpose, ideally on a QA database:
-//   DB_NAME=xianfires_erp_qa node test-all-flows.js --write-test-data
+//   DB_NAME=djs_procurement_qa node test-all-flows.js --write-test-data
 if (!process.argv.includes("--write-test-data")) {
   console.error("Refusing to run: this writes sample records to the shared ERP database. Add --write-test-data to confirm.");
   process.exit(1);

@@ -1,6 +1,6 @@
 <nav data-nav data-nav-active="{{ navSection activeMenu }}" class="app-nav hidden" aria-label="Main">
   <div class="app-rail">
-    <a href="{{ urls.dashboard }}" class="rail-logo" aria-label="XianFire Accounting home">{{> logo class="w-8 h-8" }}</a>
+    <a href="{{ urls.dashboard }}" class="rail-logo" aria-label="DJ's ERP Accounting home">{{> logo class="w-8 h-8" }}</a>
     <a href="{{ urls.dashboard }}" class="rail-item {{#if (eq (navSection activeMenu) "home")}}active{{/if}}" data-tip="Dashboard" aria-label="Dashboard">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
     </a>
@@ -28,6 +28,10 @@
   </div>
 
   <div class="app-panel">
+    <a href="{{ urls.dashboard }}" class="panel-brand">
+      <span class="panel-brand-title">DJ's ERP</span>
+      <span class="panel-brand-sub">Accounting</span>
+    </a>
     <button type="button" class="nav-search" data-palette-open aria-label="Search pages and actions">
       <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       Search
@@ -57,6 +61,7 @@
           <li><a href="{{ urls.accountingJournalGrid }}" class="nav-item">Journal Entries</a></li>
           <li><a href="{{ urls.invoiceGrid }}" class="nav-item">Sales Invoices</a></li>
           <li><a href="{{ urls.billGrid }}" class="nav-item">Bills</a></li>
+          <li><a href="{{ urls.accountingPayroll }}" class="nav-item">Payroll</a></li>
           <li><a href="{{ urls.reportTrialBalance }}" class="nav-item">Trial Balance</a></li>
           <li><a href="{{ urls.reportIncomeStatement }}" class="nav-item">Income Statement</a></li>
           <li><a href="{{ urls.reportBalanceSheet }}" class="nav-item">Balance Sheet</a></li>
@@ -105,6 +110,7 @@
         <ul>
           <li><a href="{{ urls.supplierGrid }}" class="nav-item {{#if (eq activeMenu "suppliers")}}active{{/if}}">Suppliers</a></li>
           <li><a href="{{ urls.billGrid }}" class="nav-item {{#if (eq activeMenu "bills")}}active{{/if}}">Bills</a></li>
+          <li><a href="{{ urls.accountingPayroll }}" class="nav-item {{#if (eq activeMenu "payroll")}}active{{/if}}">Payroll</a></li>
         </ul>
       </div>
     </div>

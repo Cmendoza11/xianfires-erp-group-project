@@ -37,6 +37,7 @@ import { initializeDatabase } from "./utils/bootstrap.js";
 import { erpModules } from "./middleware/erpModules.js";
 import { startSyncWorker } from "./utils/erpSync.js";
 import inventoryApi from "./routes/inventoryApi.js";
+import erpApi from "./routes/erpApi.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -118,6 +119,7 @@ fs.readdir(partialsDir, (err, files) => {
 app.use(erpModules);
 // Inventory API for the other ERP modules (Procurement); protected by the shared X-ERP-Key.
 app.use("/api/v1/inventory", inventoryApi);
+app.use("/api/v1/erp", erpApi);
 app.use("/", router);
 
 // Friendly 404 + error page instead of an unstyled stack trace.

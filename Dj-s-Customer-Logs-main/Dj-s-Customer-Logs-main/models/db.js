@@ -29,7 +29,7 @@ import { Sequelize } from "sequelize";
 // Central DJ's ERP database (shared with the other modules; Customer Logs tables use the crm_ prefix).
 // The web UI and the /api routes both use this one connection and one set of models.
 export const sequelize = new Sequelize(
-  process.env.DB_NAME || "xianfires_erp",
+  process.env.DB_NAME || "djs_customer_logs",
   process.env.DB_USER || "root",
   process.env.DB_PASSWORD ?? "",
   {

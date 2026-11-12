@@ -1,20 +1,23 @@
 # DJ's ERP
 
-An ERP for DJ's FoodHub restaurant, made of five systems that share **one central MySQL database**
-and work together:
+An ERP for DJ's FoodHub restaurant, made of five systems. **Each system has its own MySQL database**,
+and they share data only through each other's APIs:
 
-| Module | Folder | Port |
-|---|---|---|
-| Accounting | `xianfires erp project/` | 3000 |
-| POS & Inventory | `PointOfSales-main/PointOfSales-main/` | 3001 |
-| Human Resources | `DJs-Human-Resource-Management-main/` | 3002 |
-| Procurement (suppliers) | `eventdriven_selda-main/eventdriven_selda-main/` | 3003 |
-| Customer Logs (loyalty) | `Dj-s-Customer-Logs-main/Dj-s-Customer-Logs-main/` | 3004 |
+| Module | Folder | Port | Database |
+|---|---|---|---|
+| Accounting | `xianfires erp project/` | 3000 | `xianfires_erp` |
+| POS & Inventory | `PointOfSales-main/PointOfSales-main/` | 3001 | `djs_pos` |
+| Human Resources | `DJs-Human-Resource-Management-main/` | 3002 | `djs_hr` |
+| Procurement (suppliers) | `eventdriven_selda-main/eventdriven_selda-main/` | 3003 | `djs_procurement` |
+| Customer Logs (loyalty) | `Dj-s-Customer-Logs-main/Dj-s-Customer-Logs-main/` | 3004 | `djs_customer_logs` |
 
-Each module keeps its own login and screens. What they share:
+Each module keeps its own login, screens and database. What they share, through their APIs:
 
 - POS sales and voids post to Accounting, and customer purchases add loyalty points in Customer Logs.
-- Paid payroll in HR posts to Accounting. HR's departments are used by Procurement.
+- HR computes payroll from attendance (DTR) with SSS, PhilHealth, Pag-IBIG and cash advances; "Mark as
+  Paid" posts it to Accounting. HR's departments are used by Procurement.
+- Customer Logs promo codes are applied at the POS checkout; the redemption and loyalty points are
+  recorded in Customer Logs, and a void gives them back.
 - Procurement deliveries and returns update POS stock. Supplier invoices become bills in
   Accounting, and their payment status is read back from Accounting.
 - Accounting's **Enterprise Overview** shows live figures from all five modules.
@@ -29,21 +32,26 @@ Each module keeps its own login and screens. What they share:
 From this folder:
 
 ```bash
-npm run setup     # installs every module's dependencies
-npm run migrate   # creates the central database (xianfires_erp) and the API keys; safe to re-run
-npm run dev       # starts all five modules
+npm run setup      # installs every module's dependencies
+npm run migrate    # creates the five databases and the API keys; safe to re-run
+npm run accounts   # one admin login (same email and password) in all five modules
+npm run dev        # starts all five modules
 ```
 
 The first `npm run migrate` creates `.env` from `.env.example` and fills in the generated keys.
 Change database settings or ports in `.env`. `npm run check` syntax-checks every module.
+An older install that kept every module inside `xianfires_erp` is split into the five databases
+by `npm run migrate` (rows, indexes and each module's own foreign keys move with their tables).
 
-First accounts:
+Other first accounts, if you do not use `npm run accounts`:
 
 - **Accounting**: `npm run user:create -- --name "Your Name" --email you@example.com --password yourpassword` in its folder
 - **POS & Inventory**: the first account registered at `/register` becomes the admin
-- **HR**: created by `npm run migrate` (it asks for the admin email and password)
-- **Procurement**: seeded as `admin@gmail.com` / `admin123`; change it
+- **HR**: created by `npm run migrate` (it uses `ADMIN_EMAIL` / `ADMIN_PASSWORD`, or asks)
+- **Procurement**: created by `npm run migrate` from `ADMIN_EMAIL` / `ADMIN_PASSWORD`
 - **Customer Logs**: register at `/register`
+
+See [COMMANDS.md](COMMANDS.md) for every command, including the `_demo` database set.
 
 ## Documentation
 

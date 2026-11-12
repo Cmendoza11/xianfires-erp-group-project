@@ -14,7 +14,7 @@ import bcrypt from "bcrypt";
 
 import { sequelize, User, Employee, Department, syncDatabase } from "./models/index.js";
 
-const DB_NAME = process.env.DB_NAME || "xianfires_erp";
+const DB_NAME = process.env.DB_NAME || "djs_hr";
 const DB_USER = process.env.DB_USER || "root";
 const DB_PASS = process.env.DB_PASSWORD ?? process.env.DB_PASS ?? "";
 const DB_HOST = process.env.DB_HOST || "localhost";
