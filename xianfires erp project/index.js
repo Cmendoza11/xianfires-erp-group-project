@@ -32,7 +32,7 @@ import fs from 'fs';
 import hbs from "hbs";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import { registerHelpers } from "./helpers/handlebars.js";
+import { registerHelpers } from "./services/viewHelpers.js";
 import { loadAdminUser } from "./middleware/auth.js";
 import { erpModules } from "./middleware/erpModules.js";
 import { notFoundPage } from "./controllers/homeController.js";
