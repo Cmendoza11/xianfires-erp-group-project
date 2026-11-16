@@ -97,24 +97,32 @@
                 <td class="px-5 py-3 text-gray-400">{{lateMinutes}} min</td>
                 <td class="px-5 py-3 {{#if overtimeHours}}text-yellow-400{{else}}text-gray-400{{/if}}">{{overtimeHours}} h</td>
                 <td class="px-5 py-3 text-right">
-                  <details class="no-print">
+                  <details data-modal class="no-print">
                     <summary class="cursor-pointer text-xs text-yellow-400 hover:underline">Edit</summary>
-                    <form method="POST" action="/attendance" class="mt-3 w-64 space-y-2 rounded-xl border border-white/10 bg-[#0F0F0F] p-3 text-left">
+                    <div data-modal-panel>
+                    <form data-modal-box method="POST" action="/attendance" class="space-y-3 rounded-2xl border border-white/10 bg-[#171717] p-6 text-left text-white">
+                      <div class="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 class="text-lg font-bold">Edit attendance</h3>
+                          <p class="text-xs text-gray-500">{{name}} · {{code}} · {{formatDate ../date}}</p>
+                        </div>
+                        <button type="button" data-modal-close aria-label="Close" class="rounded-lg px-2 text-xl leading-none text-gray-500 hover:bg-white/5 hover:text-white">&times;</button>
+                      </div>
                       <input type="hidden" name="employeeId" value="{{employeeId}}">
                       <input type="hidden" name="date" value="{{../date}}">
                       <div>
                         <label class="text-[10px] uppercase tracking-wider text-gray-500">Check in</label>
                         <input type="time" name="checkIn" value="{{checkIn}}"
-                               class="w-full rounded-lg border border-white/10 bg-[#171717] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
+                               class="w-full rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2.5 text-sm outline-none focus:border-yellow-400/60">
                       </div>
                       <div>
                         <label class="text-[10px] uppercase tracking-wider text-gray-500">Check out</label>
                         <input type="time" name="checkOut" value="{{checkOut}}"
-                               class="w-full rounded-lg border border-white/10 bg-[#171717] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
+                               class="w-full rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2.5 text-sm outline-none focus:border-yellow-400/60">
                       </div>
                       <div>
                         <label class="text-[10px] uppercase tracking-wider text-gray-500">Status</label>
-                        <select name="status" class="w-full rounded-lg border border-white/10 bg-[#171717] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
+                        <select name="status" class="w-full rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2.5 text-sm outline-none focus:border-yellow-400/60">
                           {{#each ../statuses}}
                           <option value="{{this}}" {{#if (eq this ../status)}}selected{{/if}}>{{this}}</option>
                           {{/each}}
@@ -123,10 +131,14 @@
                       <div>
                         <label class="text-[10px] uppercase tracking-wider text-gray-500">Remarks</label>
                         <input name="remarks" value="{{remarks}}" placeholder="Optional"
-                               class="w-full rounded-lg border border-white/10 bg-[#171717] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
+                               class="w-full rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2.5 text-sm outline-none focus:border-yellow-400/60">
                       </div>
-                      <button type="submit" class="w-full rounded-lg bg-yellow-400 px-3 py-2 text-xs font-bold text-black hover:bg-yellow-300">Save</button>
+                      <div class="flex gap-3 pt-2">
+                        <button type="button" data-modal-close class="flex-1 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-gray-300 hover:bg-white/5">Cancel</button>
+                        <button type="submit" class="flex-1 rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Save</button>
+                      </div>
                     </form>
+                    </div>
                   </details>
                 </td>
               </tr>

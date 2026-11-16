@@ -80,13 +80,21 @@
                   </form>
                 </td>
                 <td class="px-5 py-4 text-right">
-                  <details class="inline-block text-left">
+                  <details data-modal class="inline-block text-left">
                     <summary class="cursor-pointer list-none rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-300 hover:bg-white/10">Manage</summary>
 
-                    <div class="mt-2 w-60 space-y-3 rounded-xl border border-white/10 bg-[#0F0F0F] p-3">
+                    <div data-modal-panel>
+                    <div data-modal-box class="space-y-4 rounded-2xl border border-white/10 bg-[#171717] p-6 text-white">
+                      <div class="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 class="text-lg font-bold">Manage account</h3>
+                          <p class="text-xs text-gray-500 break-all">{{name}} · {{email}}</p>
+                        </div>
+                        <button type="button" data-modal-close aria-label="Close" class="rounded-lg px-2 text-xl leading-none text-gray-500 hover:bg-white/5 hover:text-white">&times;</button>
+                      </div>
                       <form method="POST" action="/users/{{id}}/employee" class="space-y-2">
                         <label class="block text-[10px] uppercase tracking-wider text-gray-500">Link to employee</label>
-                        <select name="employeeId" class="w-full rounded-lg border border-white/10 bg-[#171717] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
+                        <select name="employeeId" class="w-full rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2.5 text-sm outline-none focus:border-yellow-400/60">
                           <option value="">— Not linked —</option>
                           {{#if employee}}
                           <option value="{{employee.id}}" selected>{{employee.employeeCode}} {{employee.firstName}} {{employee.lastName}}</option>
@@ -101,15 +109,16 @@
                       <form method="POST" action="/users/{{id}}/password" class="space-y-2">
                         <label class="block text-[10px] uppercase tracking-wider text-gray-500">Reset password</label>
                         <input type="password" name="newPassword" required minlength="8" placeholder="New password (8+ chars)"
-                               class="w-full rounded-lg border border-white/10 bg-[#171717] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
+                               class="w-full rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2.5 text-sm outline-none focus:border-yellow-400/60">
                         <button type="submit" class="w-full rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black">Reset Password</button>
                       </form>
 
                       {{#unless (eq id ../currentUser.id)}}
-                      <form action="/users/{{id}}/delete" method="POST" onsubmit="return confirm('Delete this account?');">
+                      <form action="/users/{{id}}/delete" method="POST" data-confirm-title="Delete account?" data-confirm="The login {{email}} will be deleted. The employee record is kept." data-confirm-ok="Delete">
                         <button type="submit" class="w-full rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 hover:bg-red-500 hover:text-white">Delete Account</button>
                       </form>
                       {{/unless}}
+                    </div>
                     </div>
                   </details>
                 </td>

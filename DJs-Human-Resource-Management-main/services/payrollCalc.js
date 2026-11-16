@@ -6,7 +6,8 @@
                    (every type except Unpaid) that have no attendance row and are not rest days
     late           late minutes x (daily rate / 480), taken out of the basic pay
     basic pay      days paid x daily rate (employee's rate per day, or monthly salary / 26) - late
-    overtime       hours worked beyond 8 a day (1 hour lunch taken out of days over 5 hours),
+    overtime       hours worked beyond 8 a day, counted from 08:00 (coming in early is not overtime;
+                   1 hour lunch taken out of days over 5 hours),
                    paid at the hourly rate (daily rate / 8) x 125%
 
   Employee share of the contributions (per month; a payroll of 16 days or less takes half)
@@ -18,7 +19,7 @@
 */
 import { Op } from "sequelize";
 import { Attendance, Leave } from "../models/index.js";
-import { isRestDay } from "../utils/hr.js";
+import { isRestDay, OFFICE_START_MINUTES } from "../utils/hr.js";
 
 const WORKING_DAYS_PER_MONTH = 26;
 const HOURS_PER_DAY = 8;
@@ -55,7 +56,9 @@ export function overtimeMinutes(row) {
   const start = minutesOf(row.checkIn);
   const end = minutesOf(row.checkOut);
   if (start === null || end === null) return 0;
-  let worked = end - start;
+  // Coming in before the shift starts is not overtime: count from the shift start (08:00).
+  const from = Math.max(start, OFFICE_START_MINUTES);
+  let worked = end - from;
   if (worked < 0) worked += 24 * 60; // shift past midnight
   if (worked > 5 * 60) worked -= 60; // lunch break
   return Math.max(worked - HOURS_PER_DAY * 60, 0);

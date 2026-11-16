@@ -114,13 +114,13 @@
           <button type="submit" class="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Update Status</button>
         </form>
         {{#unless (eq payroll.status "Paid")}}
-        <form method="POST" action="/payroll/{{payroll.id}}/status">
+        <form method="POST" action="/payroll/{{payroll.id}}/status" data-confirm-title="Mark as Paid?" data-confirm="This payroll is posted to Accounting as a journal entry and becomes final. Corrections are then made in Accounting." data-confirm-ok="Mark as Paid" data-confirm-tone="success">
           <input type="hidden" name="status" value="Paid">
-          <button type="submit" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-emerald-400" onclick="return confirm('Mark this payroll as Paid? It is posted to Accounting and becomes final.');">Mark as Paid</button>
+          <button type="submit" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-emerald-400">Mark as Paid</button>
         </form>
         {{/unless}}
 
-        <form action="/payroll/{{payroll.id}}/delete" method="POST" onsubmit="return confirm('Delete this payroll record?');">
+        <form action="/payroll/{{payroll.id}}/delete" method="POST" data-confirm-title="Delete payroll record?" data-confirm="This payslip will be deleted." data-confirm-ok="Delete">
           <button type="submit" class="rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500 hover:text-white">Delete Record</button>
         </form>
 
