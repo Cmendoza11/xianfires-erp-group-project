@@ -66,10 +66,23 @@ export const promoManagementPage = async (req, res) => {
     raw: true
   });
   const used = new Map(counts.map((c) => [c.promoId, Number(c.n)]));
+  
+  // Calculate stats
+  const totalPromos = promos.length;
+  const activePromos = promos.filter(p => p.status === "active").length;
+  const inactivePromos = promos.filter(p => p.status === "inactive").length;
+  const totalRedemptions = counts.reduce((sum, c) => sum + Number(c.n), 0);
+  
   res.render("promoManagement", {
     title: "Promo Management",
     user,
-    promos: promos.map((p) => ({ ...p.toJSON(), summary: promoSummary(p), redeemed: used.get(p.promoId) || 0 }))
+    promos: promos.map((p) => ({ ...p.toJSON(), summary: promoSummary(p), redeemed: used.get(p.promoId) || 0 })),
+    stats: {
+      total: totalPromos,
+      active: activePromos,
+      inactive: inactivePromos,
+      totalRedemptions
+    }
   });
 };
 

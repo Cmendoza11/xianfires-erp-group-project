@@ -29,10 +29,8 @@ import express from "express";
 import { homePage } from "../controllers/homeController.js";
 import {
     loginPage,
-    registerPage,
     forgotPasswordPage,
     loginUser,
-    registerUser,
     logoutUser
 } from "../controllers/authController.js";
 import { staffDashboardPage } from "../controllers/dashboardController.js";
@@ -51,34 +49,71 @@ import {
     deletePromo,
     promoRedemptionPage,
     recordRedemption,
-  voidRedemption
+    voidRedemption
 } from "../controllers/promoController.js";
+import {
+    userManagementPage,
+    createUser,
+    updateUserRole,
+    toggleUserStatus,
+    resetUserPassword,
+    deleteUser,
+    adminDashboardPage,
+    topCustomersReport
+} from "../controllers/userController.js";
+import { requireAuth, requireRole, redirectIfAuthenticated } from "../middleware/auth.js";
 
 const router = express.Router();
 
+// ==================== PUBLIC ROUTES ====================
 router.get("/", homePage);
 
-// AUTH ROUTES
-router.get("/login", loginPage);
+// ==================== AUTH ROUTES (Unified for Staff & Admin) ====================
+router.get("/login", redirectIfAuthenticated, loginPage);
 router.post("/login", loginUser);
-router.get("/register", registerPage);
-router.post("/register", registerUser);
 router.get("/forgot-password", forgotPasswordPage);
-router.get("/staff/dashboard", staffDashboardPage);
-router.get("/admin/promo-management", promoManagementPage);
-router.post("/admin/promos", createPromo);
-router.post("/admin/promos/:promoId", updatePromo);
-router.post("/admin/promos/:promoId/toggle", updatePromoStatus);
-router.post("/admin/promos/:promoId/delete", deletePromo);
-router.get("/staff/modules/promos", promoRedemptionPage);
-router.post("/staff/promo-redemptions", recordRedemption);
-router.post("/staff/promo-redemptions/:id/void", voidRedemption);
-router.get("/staff/modules/:module", customerModulePage);
-router.post("/staff/customers", addCustomer);
-router.post("/staff/customers/:customerId", updateCustomer);
-router.post("/staff/customers/:customerId/delete", deleteCustomer);
-router.post("/staff/customer-logs", addCustomerLog);
-router.get("/dashboard", (req, res) => res.redirect("/staff/dashboard"));
-router.get("/logout", logoutUser);
+
+// ==================== LOGOUT (for both) ====================
+router.get("/logout", requireAuth, logoutUser);
+
+// ==================== STAFF ROUTES (staff ONLY - admin cannot access) ====================
+router.get("/staff/dashboard", requireRole("staff"), staffDashboardPage);
+router.get("/staff/modules/:module", requireRole("staff"), customerModulePage);
+router.post("/staff/customers", requireRole("staff"), addCustomer);
+router.post("/staff/customers/:customerId", requireRole("staff"), updateCustomer);
+router.post("/staff/customers/:customerId/delete", requireRole("staff"), deleteCustomer);
+router.post("/staff/customer-logs", requireRole("staff"), addCustomerLog);
+router.post("/staff/promo-redemptions", requireRole("staff"), recordRedemption);
+router.post("/staff/promo-redemptions/:id/void", requireRole("staff"), voidRedemption);
+
+// ==================== ADMIN ROUTES (admin only) ====================
+// Admin Dashboard
+router.get("/admin/dashboard", requireRole("admin"), adminDashboardPage);
+
+// Promo Management
+router.get("/admin/promo-management", requireRole("admin"), promoManagementPage);
+router.post("/admin/promos", requireRole("admin"), createPromo);
+router.post("/admin/promos/:promoId", requireRole("admin"), updatePromo);
+router.post("/admin/promos/:promoId/toggle", requireRole("admin"), updatePromoStatus);
+router.post("/admin/promos/:promoId/delete", requireRole("admin"), deletePromo);
+
+// User Management
+router.get("/admin/users", requireRole("admin"), userManagementPage);
+router.post("/admin/users", requireRole("admin"), createUser);
+router.post("/admin/users/:id/role", requireRole("admin"), updateUserRole);
+router.post("/admin/users/:id/toggle-status", requireRole("admin"), toggleUserStatus);
+router.post("/admin/users/:id/reset-password", requireRole("admin"), resetUserPassword);
+router.post("/admin/users/:id/delete", requireRole("admin"), deleteUser);
+
+// Reports
+router.get("/admin/reports/top-customers", requireRole("admin"), topCustomersReport);
+
+// ==================== CONVENIENCE REDIRECTS ====================
+router.get("/dashboard", (req, res) => {
+    if (req.session && req.session.role === "admin") {
+        return res.redirect("/admin/dashboard");
+    }
+    res.redirect("/staff/dashboard");
+});
 
 export default router;

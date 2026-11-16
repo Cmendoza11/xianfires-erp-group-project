@@ -23,6 +23,7 @@
     SOFTWARE.
     */
     
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import session from "express-session";
@@ -40,6 +41,7 @@ import promoApi from "./modules/customerLogs/api/promoApi.js";
 import erpSummaryApi from "./routes/erpApi.js";
 import { requireErpKey } from "./middleware/erpKey.js";
 import { erpModules } from "./middleware/erpModules.js";
+import { attachUser } from "./middleware/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -61,6 +63,9 @@ hbs.registerHelper("ifEquals", function (left, right, options) {
 });
 hbs.registerHelper("unlessEquals", function (left, right, options) {
   return left !== right ? options.fn(this) : options.inverse(this);
+});
+hbs.registerHelper("json", function (context) {
+  return JSON.stringify(context);
 });
 
 app.use(express.json());
@@ -120,6 +125,9 @@ app.use((req, res, next) => {
   res.locals.error_msg = req.flash("error_msg");
   next();
 });
+
+// Attach user to all requests (loads logged-in user)
+app.use(attachUser);
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "xian");

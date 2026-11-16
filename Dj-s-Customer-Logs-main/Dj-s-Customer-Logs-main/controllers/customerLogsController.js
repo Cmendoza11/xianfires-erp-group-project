@@ -14,7 +14,6 @@ const moduleDefinitions = {
   customers: { title: "Customers", description: "Register, search, and manage customer records." },
   logs: { title: "Customer Logs", description: "Record each visit or transaction against an existing customer." },
   promos: { title: "Promo Redemption Records", description: "Review promo eligibility and redemption history received from POS." },
-  loyalty: { title: "Loyalty Records", description: "Review purchase-based loyalty points, status, and customer summaries." },
   reports: { title: "Reports", description: "Review customer activity and promo summaries." }
 };
 
@@ -202,75 +201,6 @@ export const customerModulePage = async (req, res) => {
     }
   } else if (req.params.module === "promos") {
     records = await PromoRedemption.findAll({ include: [Customer], order: [["redemptionDate", "DESC"]], limit: 50 });
-  } else if (req.params.module === "loyalty") {
-    const loyaltySearch = search.toLowerCase();
-    const status = String(req.query.status || "").trim();
-    const date = String(req.query.date || "").trim();
-    const customersWithLogs = await Customer.findAll({
-      include: [CustomerLog, LoyaltyRecord],
-      order: [["name", "ASC"]]
-    });
-    const loyaltySummary = customersWithLogs.map((customer) => {
-      const purchaseLogs = (customer.CustomerLogs || []).filter((log) => log.activityType === "purchase");
-      // Refunds (e.g. a voided POS sale) take back the purchase, its amount and its point.
-      const refundLogs = (customer.CustomerLogs || []).filter((log) => log.activityType === "refund");
-      const loyalty = customer.LoyaltyRecord;
-      const totalPurchases = Math.max(purchaseLogs.length - refundLogs.length, 0);
-      const sumAmount = (logs) => logs.reduce((total, log) => total + Number(log.amount || 0), 0);
-      const totalAmountSpent = Math.max(sumAmount(purchaseLogs) - sumAmount(refundLogs), 0);
-      const loyaltyPointsEarned = totalPurchases;
-      const availablePoints = loyalty ? Number(loyalty.pointsBalance || 0) : loyaltyPointsEarned;
-      const pointsRedeemed = Math.max(loyaltyPointsEarned - availablePoints, 0);
-      const loyaltyStatus = loyalty?.tier || (totalPurchases >= 10 ? "Gold" : totalPurchases >= 5 ? "Silver" : "Regular");
-      const latestPurchase = purchaseLogs.reduce((latest, log) => {
-        if (!latest || new Date(log.activityAt) > new Date(latest)) return log.activityAt;
-        return latest;
-      }, null);
-      const rawDate = loyalty?.updatedAt || latestPurchase || customer.updatedAt;
-      const validDate = rawDate && !isNaN(new Date(rawDate).getTime()) ? new Date(rawDate) : null;
-      const lastUpdated = validDate ? validDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "N/A";
-      const lastUpdatedAt = validDate ? validDate.toISOString().slice(0, 10) : "";
-      return {
-        customerId: customer.customerId,
-        customerName: customer.name,
-        totalPurchases,
-        totalAmountSpent: totalAmountSpent.toFixed(2),
-        loyaltyPointsEarned,
-        pointsRedeemed,
-        availablePoints,
-        loyaltyStatus,
-        lastUpdated,
-        lastUpdatedAt
-      };
-    }).filter((record) => {
-      const matchesSearch = !loyaltySearch ||
-        record.customerName.toLowerCase().includes(loyaltySearch) ||
-        record.customerId.toLowerCase().includes(loyaltySearch);
-      const matchesStatus = !status || record.loyaltyStatus === status;
-      const matchesDate = !date || record.lastUpdatedAt === date;
-      return matchesSearch && matchesStatus && matchesDate;
-    }).sort((left, right) => right.totalPurchases - left.totalPurchases);
-    const topCustomers = loyaltySummary.slice(0, 3);
-    const loyaltyStats = {
-      totalCustomers: loyaltySummary.length,
-      totalPointsEarned: loyaltySummary.reduce((total, record) => total + record.loyaltyPointsEarned, 0),
-      pointsRedeemed: loyaltySummary.reduce((total, record) => total + record.pointsRedeemed, 0),
-      topCustomers: topCustomers.length
-    };
-    res.render("module", {
-      title: `CustomerLogs ${module.title}`,
-      module,
-      moduleKey: req.params.module,
-      records,
-      customers,
-      search,
-      date: req.query.date || "",
-      loyaltySummary,
-      loyaltyStats,
-      topCustomers,
-      status
-    });
-    return;
   }
   res.render("module", { title: `CustomerLogs ${module.title}`, module, moduleKey: req.params.module, records, customers, search, date: req.query.date || "" });
 };

@@ -33,7 +33,6 @@
                 <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Name</th>
                 <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Contact</th>
                 <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Purchases</th>
-                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Visits</th>
                 <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Total Spent</th>
                 <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Points</th>
                 <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Registered</th>
@@ -47,14 +46,12 @@
                 <td class="p-3 font-semibold text-[#171717] dark:text-white">{{name}}</td>
                 <td class="p-3 text-gray-600 dark:text-gray-300">{{contactNumber}}</td>
                 <td class="p-3"><span class="inline-flex items-center justify-center rounded-full bg-[#fff8d8] dark:bg-[#2a2500] px-3 py-1 text-xs font-bold text-[#75651d] dark:text-[#f7d83d] min-w-[32px]">{{totalPurchases}}</span></td>
-                <td class="p-3 text-gray-600 dark:text-gray-300">{{visits}}</td>
                 <td class="p-3 font-semibold text-[#171717] dark:text-white">₱{{totalSpentText}}</td>
                 <td class="p-3 text-gray-600 dark:text-gray-300">{{points}}</td>
                 <td class="p-3 text-xs text-gray-500 dark:text-gray-400">{{registered}}</td>
                 <td class="p-3">
                   <div class="flex flex-wrap gap-2">
                     <button class="rounded-lg bg-[#171717] dark:bg-[#f7d83d] px-3 py-1.5 text-xs font-semibold text-[#f7d83d] dark:text-[#171717] hover:opacity-80 transition-all" type="button" onclick="document.getElementById('edit-{{customerId}}').classList.remove('hidden'); document.getElementById('edit-{{customerId}}').classList.add('flex')">Edit</button>
-                    <a class="rounded-lg border border-[#ead36a] dark:border-[#2d2d2d] px-3 py-1.5 text-xs font-semibold text-[#75651d] dark:text-[#f7d83d] hover:bg-[#f7d83d] hover:text-[#171717] transition-all" href="/staff/modules/logs?search={{customerId}}">Profile</a>
                     {{#ifEquals totalPurchases 0}}
                     <form method="POST" action="/staff/customers/{{customerId}}/delete" onsubmit="return confirm('Delete this customer? This cannot be undone.')">
                       <button class="rounded-lg border border-red-300 dark:border-red-800 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all" type="submit">Delete</button>
@@ -79,7 +76,7 @@
                 </td>
               </tr>
               {{else}}
-              <tr><td class="p-4 text-center text-gray-400 dark:text-gray-500" colspan="9">No customer records found.</td></tr>
+              <tr><td class="p-4 text-center text-gray-400 dark:text-gray-500" colspan="8">No customer records found.</td></tr>
               {{/each}}
             </tbody>
           </table>
@@ -131,71 +128,74 @@
       </div>
       {{/ifEquals}}
 
-      {{!-- LOYALTY --}}
-      {{#ifEquals moduleKey "loyalty"}}
-      <section class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm">
-        <div class="flex flex-wrap gap-3 items-end mb-5">
-          <form class="flex flex-wrap gap-2 flex-1" method="GET">
-            <input class="min-w-0 flex-1 rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="search" value="{{search}}" placeholder="Search customer name or ID" />
-            <select class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm" name="status">
-              <option value="">All statuses</option>
-              <option value="Regular" {{#ifEquals status "Regular"}}selected{{/ifEquals}}>Regular</option>
-              <option value="Silver" {{#ifEquals status "Silver"}}selected{{/ifEquals}}>Silver</option>
-              <option value="Gold" {{#ifEquals status "Gold"}}selected{{/ifEquals}}>Gold</option>
-            </select>
-            <input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm" name="date" value="{{date}}" type="date" />
-            <button class="rounded-xl bg-[#171717] dark:bg-[#f7d83d] px-5 py-2.5 text-sm font-semibold text-[#f7d83d] dark:text-[#171717] hover:opacity-90 transition-all" type="submit">Filter</button>
-          </form>
-        </div>
-
-        <!-- Loyalty Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div class="rounded-xl bg-[#fffdf2] dark:bg-[#111] border border-[#ead36a] dark:border-[#2d2d2d] p-3 text-center">
-            <p class="text-2xl font-bold text-[#171717] dark:text-white">{{loyaltyStats.totalCustomers}}</p>
-            <p class="text-xs text-[#75651d] dark:text-[#f5edbd] mt-1">Total Customers</p>
-          </div>
-          <div class="rounded-xl bg-[#fffdf2] dark:bg-[#111] border border-[#ead36a] dark:border-[#2d2d2d] p-3 text-center">
-            <p class="text-2xl font-bold text-[#171717] dark:text-white">{{loyaltyStats.totalPointsEarned}}</p>
-            <p class="text-xs text-[#75651d] dark:text-[#f5edbd] mt-1">Points Earned</p>
-          </div>
-          <div class="rounded-xl bg-[#fffdf2] dark:bg-[#111] border border-[#ead36a] dark:border-[#2d2d2d] p-3 text-center">
-            <p class="text-2xl font-bold text-[#171717] dark:text-white">{{loyaltyStats.pointsRedeemed}}</p>
-            <p class="text-xs text-[#75651d] dark:text-[#f5edbd] mt-1">Points Redeemed</p>
-          </div>
-          <div class="rounded-xl bg-[#fffdf2] dark:bg-[#111] border border-[#ead36a] dark:border-[#2d2d2d] p-3 text-center">
-            <p class="text-2xl font-bold text-[#171717] dark:text-white">{{loyaltyStats.topCustomers}}</p>
-            <p class="text-xs text-[#75651d] dark:text-[#f5edbd] mt-1">Top Customers</p>
-          </div>
-        </div>
-
+      {{!-- PROMO REDEMPTION RECORDS --}}
+      {{#ifEquals moduleKey "promos"}}
+      <section class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full min-w-[980px] text-left text-sm">
-            <thead>
-              <tr class="border-b border-[#ead36a] dark:border-[#2d2d2d]">
-                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Customer</th>
-                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Total Purchases</th>
-                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Total Amount Spent</th>
-                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Points Earned</th>
-                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Points Redeemed</th>
-                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Available Points</th>
-                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Status</th>
-                <th class="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Last Updated</th>
+          <table class="w-full text-sm">
+            <thead class="bg-[#171717] text-white">
+              <tr>
+                <th class="p-4 text-left text-xs uppercase tracking-wide font-semibold">Date</th>
+                <th class="p-4 text-left text-xs uppercase tracking-wide font-semibold">Customer</th>
+                <th class="p-4 text-left text-xs uppercase tracking-wide font-semibold">Promo Code</th>
+                <th class="p-4 text-left text-xs uppercase tracking-wide font-semibold">Points Cost</th>
+                <th class="p-4 text-left text-xs uppercase tracking-wide font-semibold">Status</th>
+                <th class="p-4 text-left text-xs uppercase tracking-wide font-semibold">Voided By</th>
               </tr>
             </thead>
-            <tbody>
-              {{#each loyaltySummary}}
-              <tr class="border-b border-[#f1e8ae] dark:border-[#1f1f1f] hover:bg-[#fffdf2] dark:hover:bg-[#111] transition-colors">
-                <td class="p-3"><p class="font-semibold text-[#171717] dark:text-white">{{customerName}}</p><p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{{customerId}}</p></td>
-                <td class="p-3 text-[#171717] dark:text-white font-medium">{{totalPurchases}}</td>
-                <td class="p-3 text-[#171717] dark:text-white">₱{{totalAmountSpent}}</td>
-                <td class="p-3 text-[#171717] dark:text-white">{{loyaltyPointsEarned}}</td>
-                <td class="p-3 text-[#171717] dark:text-white">{{pointsRedeemed}}</td>
-                <td class="p-3 font-bold text-[#171717] dark:text-white">{{availablePoints}}</td>
-                <td class="p-3"><span class="rounded-full px-3 py-1 text-xs font-semibold {{#ifEquals loyaltyStatus "Gold"}}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400{{else}}{{#ifEquals loyaltyStatus "Silver"}}bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300{{else}}bg-[#fff8d8] text-[#75651d] dark:bg-[#2a2500] dark:text-[#f5edbd]{{/ifEquals}}{{/ifEquals}}">{{loyaltyStatus}}</span></td>
-                <td class="p-3 text-gray-500 dark:text-gray-400 text-xs">{{lastUpdated}}</td>
+            <tbody class="divide-y divide-[#ead36a] dark:divide-[#2d2d2d]">
+              {{#each records}}
+              <tr class="hover:bg-[#fffdf2] dark:hover:bg-[#111] transition-colors">
+                <td class="p-4 text-sm text-gray-600 dark:text-gray-400">
+                  {{#if redemptionDate}}
+                    {{formatDate redemptionDate}}
+                  {{else}}
+                    N/A
+                  {{/if}}
+                </td>
+                <td class="p-4">
+                  <p class="font-semibold text-[#171717] dark:text-white">{{Customer.name}}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{{Customer.contactNumber}}</p>
+                </td>
+                <td class="p-4">
+                  <span class="inline-flex items-center rounded-full bg-[#f7d83d]/20 px-3 py-1 text-sm font-semibold text-[#75651d] dark:text-[#f7d83d]">
+                    {{promoCode}}
+                  </span>
+                </td>
+                <td class="p-4 font-semibold text-[#171717] dark:text-white">
+                  {{pointsCost}} pts
+                </td>
+                <td class="p-4">
+                  {{#ifEquals status "voided"}}
+                    <span class="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/30 px-3 py-1 text-xs font-semibold text-red-700 dark:text-red-400">
+                      Voided
+                    </span>
+                  {{else}}
+                    <span class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-3 py-1 text-xs font-semibold text-green-700 dark:text-green-400">
+                      Redeemed
+                    </span>
+                  {{/ifEquals}}
+                </td>
+                <td class="p-4 text-sm text-gray-600 dark:text-gray-400">
+                  {{#if voidedBy}}
+                    {{voidedBy}}
+                  {{else}}
+                    —
+                  {{/if}}
+                </td>
               </tr>
               {{else}}
-              <tr><td class="p-4 text-center text-gray-400 dark:text-gray-500" colspan="8">No loyalty records found.</td></tr>
+              <tr>
+                <td colspan="6" class="p-12 text-center">
+                  <div class="flex flex-col items-center gap-3">
+                    <svg class="h-16 w-16 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                    </svg>
+                    <p class="text-gray-500 dark:text-gray-400 font-semibold">No promo redemptions yet</p>
+                    <p class="text-sm text-gray-400 dark:text-gray-500">Redemptions from POS will appear here</p>
+                  </div>
+                </td>
+              </tr>
               {{/each}}
             </tbody>
           </table>
