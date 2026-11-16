@@ -22,6 +22,18 @@ export const LEAVE_ALLOCATION = {
 };
 
 export const OFFICE_START_MINUTES = 8 * 60; // 08:00
+export const OFFICE_END_MINUTES = 17 * 60; // 5:00 PM
+export const CHECK_IN_OPENS_MINUTES = 5 * 60; // 5:00 AM
+
+/**
+ * Self-service Check In works only from 5:00 AM to 5:00 PM. Returns the message to show outside
+ * that window, else null. Check Out has no limit (overtime), and HR can record any time.
+ */
+export const checkInWindowProblem = (time) => {
+  const minutes = timeToMinutes(time);
+  if (minutes !== null && minutes >= CHECK_IN_OPENS_MINUTES && minutes <= OFFICE_END_MINUTES) return null;
+  return "Check-in is open from 5:00 AM to 5:00 PM only. If you worked outside these hours, ask HR to record your attendance.";
+};
 
 export const timeToMinutes = (value) => {
   if (!value) return null;

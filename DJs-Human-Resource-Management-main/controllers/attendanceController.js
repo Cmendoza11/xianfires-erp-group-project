@@ -1,7 +1,7 @@
 import { Op } from "sequelize";
 import { Attendance, Employee } from "../models/index.js";
 import { asyncHandler, parseId, findEmployeeForUser, paginate } from "../utils/helpers.js";
-import { ATTENDANCE_STATUSES, lateMinutesFor } from "../utils/hr.js";
+import { ATTENDANCE_STATUSES, lateMinutesFor, checkInWindowProblem } from "../utils/hr.js";
 import { localDateISO, monthEndISO } from "../utils/format.js";
 import { overtimeMinutes } from "../services/payrollCalc.js";
 
@@ -117,6 +117,12 @@ export const checkIn = asyncHandler(async (req, res) => {
   const date = localDateISO();
   const now = new Date();
   const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+  const windowProblem = checkInWindowProblem(time);
+  if (windowProblem) {
+    req.flash("error_msg", windowProblem);
+    return res.redirect("/my-attendance");
+  }
 
   const existing = await Attendance.findOne({ where: { employeeId: employee.id, date } });
   if (existing && existing.checkIn) {
