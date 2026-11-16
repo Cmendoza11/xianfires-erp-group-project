@@ -50,6 +50,7 @@ html.light .bg-gradient-to-r .bg-black.text-yellow-400 { color: #FACC15; }
 html.light .text-green-400 { color: #15803D; }
 html.light .text-orange-400 { color: #C2410C; }
 html.light .text-red-400 { color: #B91C1C; }
+html.light .text-blue-400 { color: #1D4ED8; }
 html.light .hover\:text-red-400:hover { color: #991B1B; }
 
 /* Sidebar: the black panel becomes a light panel */

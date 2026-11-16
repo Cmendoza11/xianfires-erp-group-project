@@ -5,16 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{#if title}}{{title}}{{else}}DJs HRMS{{/if}}</title>
   <link rel="icon" type="image/svg+xml" href="/images/djs-logo.svg">
-  <script>
-    (function () {
-      try {
-        if (localStorage.getItem("hrms-theme") === "light") {
-          document.documentElement.classList.add("light");
-          document.documentElement.classList.remove("dark");
-        }
-      } catch (error) { /* storage unavailable */ }
-    })();
-  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {

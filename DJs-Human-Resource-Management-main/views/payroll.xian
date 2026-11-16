@@ -90,7 +90,7 @@
                 <td class="px-5 py-4 text-gray-400">{{formatMoney deductions}}</td>
                 <td class="px-5 py-4 font-semibold text-yellow-400">{{formatMoney netSalary}}</td>
                 <td class="px-5 py-4">
-                  <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Paid")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Processed")}}bg-blue-500/10 text-blue-400{{else}}bg-white/5 text-gray-300{{/if}}{{/if}}">{{status}}</span>
+                  <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Paid")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Processed")}}bg-blue-500/10 text-blue-400{{else}}bg-white/5 text-gray-300{{/if}}{{/if}}">{{status}}</span>
                 </td>
                 <td class="px-5 py-4">
                   <div class="flex items-center justify-end gap-2">
@@ -113,9 +113,11 @@
             </tbody>
           </table>
         </div>
+        {{> pagination pagination=pagination label="payroll record(s)"}}
       </div>
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

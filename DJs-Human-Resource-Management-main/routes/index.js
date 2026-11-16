@@ -77,7 +77,8 @@ router.post("/login", loginUser);
 router.get("/register", registerPage);
 router.post("/register", registerUser);
 router.get("/forgot-password", forgotPasswordPage);
-router.get("/logout", requireAuth, logoutUser);
+// No requireAuth: it would save /logout as the page to return to, and the next login would log out at once.
+router.get("/logout", logoutUser);
 
 // DASHBOARD
 router.get("/dashboard", requireAuth, dashboard);

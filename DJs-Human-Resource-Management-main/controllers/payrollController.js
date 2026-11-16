@@ -1,6 +1,6 @@
 import { Op } from "sequelize";
 import { Payroll, Employee } from "../models/index.js";
-import { asyncHandler, parseId, parseMoney, findEmployeeForUser } from "../utils/helpers.js";
+import { asyncHandler, parseId, parseMoney, findEmployeeForUser, paginate } from "../utils/helpers.js";
 import { isValidDate } from "../utils/hr.js";
 import { startOfMonthISO, endOfMonthISO, monthEndISO, localDateISO } from "../utils/format.js";
 import { isLockedByAccounting, postPayroll, queuePayroll } from "../services/accountingSync.js";
@@ -30,17 +30,20 @@ export const payrollList = asyncHandler(async (req, res) => {
     order: [["periodEnd", "DESC"], ["createdAt", "DESC"]]
   });
 
-  const rows = records.map((r) => r.toJSON());
+  const all = records.map((r) => r.toJSON());
+  // The summary counts the whole month; the table shows 9 per page.
   const summary = {
-    count: rows.length,
-    totalNet: rows.reduce((sum, r) => sum + Number(r.netSalary || 0), 0),
-    draft: rows.filter((r) => r.status === "Draft").length,
-    paid: rows.filter((r) => r.status === "Paid").length
+    count: all.length,
+    totalNet: all.reduce((sum, r) => sum + Number(r.netSalary || 0), 0),
+    draft: all.filter((r) => r.status === "Draft").length,
+    paid: all.filter((r) => r.status === "Paid").length
   };
+  const { rows, pagination } = paginate(req, all);
 
   res.render("payroll", {
     title: "Payroll | DJs HRMS",
     rows,
+    pagination,
     summary,
     month,
     monthEnd,
@@ -264,10 +267,12 @@ export const myPayslips = asyncHandler(async (req, res) => {
     order: [["periodEnd", "DESC"]]
   });
 
+  const { rows, pagination } = paginate(req, records.map((r) => r.toJSON()));
   res.render("my-payslips", {
     title: "My Payslips | DJs HRMS",
     employee: employee.toJSON(),
-    rows: records.map((r) => r.toJSON()),
+    rows,
+    pagination,
     totalNet: records.reduce((sum, r) => sum + Number(r.netSalary || 0), 0)
   });
 });

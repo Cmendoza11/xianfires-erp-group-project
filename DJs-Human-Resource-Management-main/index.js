@@ -108,8 +108,23 @@ hbs.registerHelper("formatNumber", formatNumber);
 hbs.registerHelper("dash", (value) => (value === 0 ? 0 : value || "—"));
 hbs.registerHelper("json", (value) => JSON.stringify(value));
 
+// What kind of change a POST made, so the success banner can be coloured:
+// add = green, edit = blue, delete = red (views/partials/flash.xian).
+const actionKind = (path) => {
+  if (/\/(delete|reject)$/.test(path)) return "delete";
+  if (/\/(create|approve|check-in)$/.test(path) || ["/departments", "/users", "/login", "/register"].includes(path)) return "add";
+  return "edit";
+};
+
 app.use((req, res, next) => {
+  // Every success message set while handling a POST remembers its kind.
+  const flash = req.flash.bind(req);
+  req.flash = (type, message) => {
+    if (type === "success_msg" && message !== undefined && req.method === "POST") flash("success_kind", actionKind(req.path));
+    return flash(type, message);
+  };
   res.locals.success_msg = req.flash("success_msg");
+  res.locals.success_kind = req.flash("success_kind").pop() || "add";
   res.locals.error_msg = req.flash("error_msg");
   next();
 });

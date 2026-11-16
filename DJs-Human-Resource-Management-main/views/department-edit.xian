@@ -16,7 +16,7 @@
 
       {{> flash}}
 
-      <form method="POST" action="/departments/{{department.id}}/edit" class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6 space-y-4">
+      <form method="POST" action="/departments/{{department.id}}/edit" data-confirm-title="Save department changes?" data-confirm="The changes to {{department.name}} will be saved." data-confirm-ok="Save Changes" data-confirm-tone="info" class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6 space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Department Name *</label>
@@ -62,7 +62,7 @@
           <a href="/employees?department={{urlEncode department.name}}" class="text-xs text-yellow-400 hover:underline">Manage in directory →</a>
         </div>
 
-        <form method="POST" action="/departments/{{department.id}}/assign" class="flex flex-wrap items-end gap-3 border-b border-white/5 px-5 py-4">
+        <form method="POST" action="/departments/{{department.id}}/assign" data-confirm-title="Assign employee?" data-confirm="The selected employee will be moved to {{department.name}}." data-confirm-ok="Assign" data-confirm-tone="info" class="flex flex-wrap items-end gap-3 border-b border-white/5 px-5 py-4">
           <div class="flex-1 min-w-[14rem]">
             <label class="block text-[10px] uppercase tracking-wider text-gray-500 mb-2">Assign an employee to this department</label>
             <select name="employeeId" required class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
@@ -82,24 +82,26 @@
               <tr><th class="px-5 py-3">Employee</th><th class="px-5 py-3">Position</th><th class="px-5 py-3"></th></tr>
             </thead>
             <tbody class="divide-y divide-white/5">
-              {{#each employees}}
-                {{#if (eq this.department ../department.name)}}
+              {{#each members}}
                 <tr>
                   <td class="px-5 py-3">{{firstName}} {{lastName}}</td>
                   <td class="px-5 py-3 text-gray-400">{{position}}</td>
                   <td class="px-5 py-3 text-right"><a href="/employees/{{id}}/edit" class="text-xs text-yellow-400 hover:underline">Change department</a></td>
                 </tr>
-                {{/if}}
+              {{else}}
+                <tr><td colspan="3" class="px-5 py-8 text-center text-gray-500">No employees in this department yet.</td></tr>
               {{/each}}
             </tbody>
           </table>
         </div>
+        {{> pagination pagination=pagination label="employee(s)"}}
         <p class="px-5 py-4 text-xs text-gray-500 border-t border-white/5">
           To assign an employee, edit their record and choose this department.
         </p>
       </div>
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

@@ -93,14 +93,7 @@
       </span>
     </a>
 
-    <button type="button" data-theme-toggle aria-pressed="false"
-            class="mt-3 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-400 transition hover:bg-white/5 hover:text-yellow-400">
-      <svg class="h-4 w-4" data-theme-icon="sun" aria-hidden="true"><use href="#i-sun"></use></svg>
-      <svg class="hidden h-4 w-4" data-theme-icon="moon" aria-hidden="true"><use href="#i-moon"></use></svg>
-      <span data-theme-label>Light mode</span>
-    </button>
-
-    <a href="/logout" class="mt-1 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition">
+    <a href="/logout" class="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition">
       <svg class="h-4 w-4" aria-hidden="true"><use href="#i-logout"></use></svg> Logout
     </a>
   </div>

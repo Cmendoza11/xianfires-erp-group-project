@@ -16,7 +16,7 @@
 
       {{> flash}}
 
-      <form method="POST" action="/payroll/create" class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6 space-y-5" id="payrollForm">
+      <form method="POST" action="/payroll/create" data-confirm-title="Save payroll?" data-confirm="The payslip for this employee and period will be saved. If Paid is selected, it is posted to Accounting." data-confirm-ok="Save Payroll" data-confirm-tone="success" class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6 space-y-5" id="payrollForm">
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -128,6 +128,7 @@
       </form>
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

@@ -16,7 +16,7 @@
 
       {{> flash}}
 
-      <form method="POST" action="/users" class="rounded-2xl border border-white/5 bg-[#171717] p-5">
+      <form method="POST" action="/users" data-confirm-title="Create account?" data-confirm="A new login will be created with the temporary password." data-confirm-ok="Create Account" data-confirm-tone="success" class="rounded-2xl border border-white/5 bg-[#171717] p-5">
         <h3 class="font-bold mb-4">Create Account</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
@@ -44,7 +44,7 @@
       <div class="rounded-2xl border border-white/5 bg-[#171717] overflow-hidden">
         <div class="p-5 border-b border-white/5 flex items-center justify-between">
           <h3 class="font-bold">Accounts</h3>
-          <p class="text-xs text-gray-500">{{users.length}} account(s)</p>
+          <p class="text-xs text-gray-500">{{pagination.count}} account(s)</p>
         </div>
 
         <div class="overflow-x-auto">
@@ -70,7 +70,7 @@
                   {{#if employee}}{{employee.firstName}} {{employee.lastName}}{{else}}<span class="text-gray-600">Not linked</span>{{/if}}
                 </td>
                 <td class="px-5 py-4">
-                  <form method="POST" action="/users/{{id}}/role" class="flex items-center gap-2">
+                  <form method="POST" action="/users/{{id}}/role" data-confirm-title="Change role?" data-confirm="The role of {{name}} will be changed to the one selected." data-confirm-ok="Save Role" data-confirm-tone="info" class="flex items-center gap-2">
                     <select name="role" class="rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
                       {{#each ../roles}}
                       <option value="{{this}}" {{#if (eq this ../role)}}selected{{/if}}>{{this}}</option>
@@ -92,7 +92,7 @@
                         </div>
                         <button type="button" data-modal-close aria-label="Close" class="rounded-lg px-2 text-xl leading-none text-gray-500 hover:bg-white/5 hover:text-white">&times;</button>
                       </div>
-                      <form method="POST" action="/users/{{id}}/employee" class="space-y-2">
+                      <form method="POST" action="/users/{{id}}/employee" data-confirm-title="Save employee link?" data-confirm="{{name}} will see only the linked employee record (profile, attendance, leave and payslips)." data-confirm-ok="Save Link" data-confirm-tone="info" class="space-y-2">
                         <label class="block text-[10px] uppercase tracking-wider text-gray-500">Link to employee</label>
                         <select name="employeeId" class="w-full rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2.5 text-sm outline-none focus:border-yellow-400/60">
                           <option value="">— Not linked —</option>
@@ -106,7 +106,7 @@
                         <button type="submit" class="w-full rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black">Save Link</button>
                       </form>
 
-                      <form method="POST" action="/users/{{id}}/password" class="space-y-2">
+                      <form method="POST" action="/users/{{id}}/password" data-confirm-title="Reset password?" data-confirm="The password of {{email}} will be replaced. Share the new one with the user securely." data-confirm-ok="Reset Password" data-confirm-tone="info" class="space-y-2">
                         <label class="block text-[10px] uppercase tracking-wider text-gray-500">Reset password</label>
                         <input type="password" name="newPassword" required minlength="8" placeholder="New password (8+ chars)"
                                class="w-full rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2.5 text-sm outline-none focus:border-yellow-400/60">
@@ -127,6 +127,7 @@
             </tbody>
           </table>
         </div>
+        {{> pagination pagination=pagination label="account(s)"}}
 
         <p class="px-5 py-4 text-xs text-gray-500 border-t border-white/5">
           At least one administrator must remain. You cannot remove your own administrator access or delete your own account.
@@ -134,6 +135,7 @@
       </div>
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

@@ -43,7 +43,7 @@
               <div class="flex justify-between gap-3"><dt class="text-gray-500">Position</dt><dd>{{employee.position}}</dd></div>
               <div class="flex justify-between gap-3"><dt class="text-gray-500">Status</dt>
                 <dd>
-                  <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq employee.status "Active")}}bg-green-500/10 text-green-400{{else}}{{#if (eq employee.status "On Leave")}}bg-orange-500/10 text-orange-400{{else}}bg-red-500/10 text-red-400{{/if}}{{/if}}">{{employee.status}}</span>
+                  <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] {{#if (eq employee.status "Active")}}bg-green-500/10 text-green-400{{else}}{{#if (eq employee.status "On Leave")}}bg-orange-500/10 text-orange-400{{else}}bg-red-500/10 text-red-400{{/if}}{{/if}}">{{employee.status}}</span>
                 </dd>
               </div>
               <div class="flex justify-between gap-3"><dt class="text-gray-500">Date Hired</dt><dd>{{formatDate employee.dateHired}}</dd></div>
@@ -108,7 +108,7 @@
                     <td class="px-5 py-3 text-gray-400">{{formatTime checkIn}}</td>
                     <td class="px-5 py-3 text-gray-400">{{formatTime checkOut}}</td>
                     <td class="px-5 py-3">
-                      <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Late")}}bg-orange-500/10 text-orange-400{{else}}{{#if (eq status "Absent")}}bg-red-500/10 text-red-400{{else}}bg-green-500/10 text-green-400{{/if}}{{/if}}">{{status}}</span>
+                      <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Late")}}bg-orange-500/10 text-orange-400{{else}}{{#if (eq status "Absent")}}bg-red-500/10 text-red-400{{else}}bg-green-500/10 text-green-400{{/if}}{{/if}}">{{status}}</span>
                     </td>
                   </tr>
                   {{else}}
@@ -136,7 +136,7 @@
                     <td class="px-5 py-3 text-gray-400 text-xs">{{formatDate startDate}} → {{formatDate endDate}}</td>
                     <td class="px-5 py-3 text-gray-400">{{days}}</td>
                     <td class="px-5 py-3">
-                      <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Approved")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Rejected")}}bg-red-500/10 text-red-400{{else}}bg-yellow-500/10 text-yellow-400{{/if}}{{/if}}">{{status}}</span>
+                      <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Approved")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Rejected")}}bg-red-500/10 text-red-400{{else}}bg-yellow-500/10 text-yellow-400{{/if}}{{/if}}">{{status}}</span>
                     </td>
                   </tr>
                   {{else}}
@@ -177,6 +177,7 @@
       </div>
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

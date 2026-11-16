@@ -14,8 +14,9 @@
 
     <section class="p-6 max-w-4xl space-y-6">
       {{> flash}}
-      {{> employee-form formAction="/employees/create" submitLabel="Save Employee"}}
+      {{> employee-form formAction="/employees/create" submitLabel="Save Employee" confirmTitle="Add employee?" confirmMessage="A new employee record will be created." confirmTone="success"}}
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

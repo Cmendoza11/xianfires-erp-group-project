@@ -24,10 +24,10 @@
           <p class="text-xs text-gray-500">{{employee.position}} · {{employee.department}}</p>
         </div>
         <div class="flex gap-2">
-          <form method="POST" action="/attendance/check-in">
+          <form method="POST" action="/attendance/check-in" data-confirm-title="Check in now?" data-confirm="Your time in is recorded with the current time. After 8:00 AM it counts as late." data-confirm-ok="Check In" data-confirm-tone="success">
             <button type="submit" class="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Check In</button>
           </form>
-          <form method="POST" action="/attendance/check-out">
+          <form method="POST" action="/attendance/check-out" data-confirm-title="Check out now?" data-confirm="Your time out is recorded with the current time." data-confirm-ok="Check Out" data-confirm-tone="info">
             <button type="submit" class="rounded-xl border border-white/10 px-5 py-2.5 text-sm font-semibold text-gray-200 hover:bg-white/5">Check Out</button>
           </form>
         </div>
@@ -81,7 +81,7 @@
                 <td class="px-5 py-3 text-gray-400">{{formatTime checkIn}}</td>
                 <td class="px-5 py-3 text-gray-400">{{formatTime checkOut}}</td>
                 <td class="px-5 py-3">
-                  <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Present")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Late")}}bg-orange-500/10 text-orange-400{{else}}{{#if (eq status "Absent")}}bg-red-500/10 text-red-400{{else}}bg-blue-500/10 text-blue-400{{/if}}{{/if}}{{/if}}">{{status}}</span>
+                  <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Present")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Late")}}bg-orange-500/10 text-orange-400{{else}}{{#if (eq status "Absent")}}bg-red-500/10 text-red-400{{else}}bg-blue-500/10 text-blue-400{{/if}}{{/if}}{{/if}}">{{status}}</span>
                 </td>
                 <td class="px-5 py-3 text-gray-400">{{lateMinutes}} min</td>
                 <td class="px-5 py-3 text-gray-500 text-xs">{{dash remarks}}</td>
@@ -92,6 +92,7 @@
             </tbody>
           </table>
         </div>
+        {{> pagination pagination=pagination label="day(s)"}}
       </div>
       {{else}}
       <div class="rounded-2xl border border-white/5 bg-[#171717] p-12 text-center">
@@ -102,6 +103,7 @@
       {{/if}}
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

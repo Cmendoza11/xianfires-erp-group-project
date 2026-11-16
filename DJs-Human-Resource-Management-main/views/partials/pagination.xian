@@ -1,0 +1,26 @@
+{{!--
+  Table pagination (9 rows per page, utils/helpers.js pageInfo / paginate).
+  Usage, inside the table card after </table>'s wrapper:  {{> pagination pagination=pagination label="employee(s)"}}
+--}}
+{{#if pagination.count}}
+<div class="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 px-5 py-4 text-sm no-print">
+  <p class="text-gray-500">Page {{pagination.page}} of {{pagination.totalPages}} · {{pagination.count}} {{label}}</p>
+  {{#if (gt pagination.totalPages 1)}}
+  <nav class="flex flex-wrap items-center gap-2" aria-label="Pages">
+    {{#if pagination.hasPrev}}
+    <a href="{{pagination.prevHref}}" class="rounded-lg border border-white/10 px-4 py-2 text-gray-300 hover:bg-white/5">← Previous</a>
+    {{/if}}
+    {{#each pagination.pages}}
+    {{#if current}}
+    <span aria-current="page" class="grid h-9 min-w-[36px] place-items-center rounded-lg bg-yellow-400 px-3 font-bold text-black">{{number}}</span>
+    {{else}}
+    <a href="{{href}}" class="grid h-9 min-w-[36px] place-items-center rounded-lg border border-white/10 px-3 text-gray-300 hover:bg-white/5">{{number}}</a>
+    {{/if}}
+    {{/each}}
+    {{#if pagination.hasNext}}
+    <a href="{{pagination.nextHref}}" class="rounded-lg border border-white/10 px-4 py-2 text-gray-300 hover:bg-white/5">Next →</a>
+    {{/if}}
+  </nav>
+  {{/if}}
+</div>
+{{/if}}

@@ -13,7 +13,8 @@ import {
   parseMoney,
   generateEmployeeCode,
   getDepartmentNames,
-  findEmployeeForUser
+  findEmployeeForUser,
+  pageInfo
 } from "../utils/helpers.js";
 import { EMPLOYMENT_STATUSES, isValidDate } from "../utils/hr.js";
 import { dailyRateOf, hourlyRateOf } from "../services/payrollCalc.js";
@@ -79,8 +80,6 @@ export const employeeList = asyncHandler(async (req, res) => {
   const q = String(req.query.q || "").trim();
   const department = String(req.query.department || "").trim();
   const status = EMPLOYMENT_STATUSES.includes(req.query.status) ? req.query.status : "";
-  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-  const limit = 10;
 
   const where = {};
   if (status) where.status = status;
@@ -95,14 +94,14 @@ export const employeeList = asyncHandler(async (req, res) => {
     ];
   }
 
-  const { count, rows } = await Employee.findAndCountAll({
+  // 9 per page; a page number past the end shows the last page.
+  const pagination = pageInfo(req, await Employee.count({ where }));
+  const rows = await Employee.findAll({
     where,
     order: [["createdAt", "DESC"]],
-    limit,
-    offset: (page - 1) * limit
+    limit: pagination.limit,
+    offset: pagination.offset
   });
-
-  const totalPages = Math.max(1, Math.ceil(count / limit));
 
   res.render("employees", {
     title: "Employees | DJs HRMS",
@@ -110,15 +109,7 @@ export const employeeList = asyncHandler(async (req, res) => {
     departments: await getDepartmentNames(),
     statuses: EMPLOYMENT_STATUSES,
     filters: { q, department, status },
-    pagination: {
-      page,
-      count,
-      totalPages,
-      hasPrev: page > 1,
-      hasNext: page < totalPages,
-      prevPage: Math.max(1, page - 1),
-      nextPage: Math.min(totalPages, page + 1)
-    }
+    pagination
   });
 });
 

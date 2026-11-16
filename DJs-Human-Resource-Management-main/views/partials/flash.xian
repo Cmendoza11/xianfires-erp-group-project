@@ -1,13 +1,26 @@
+{{!-- success_kind (set in index.js from the route that saved): add = green, edit = blue, delete = red --}}
 {{#if success_msg}}
-<div class="flex items-start gap-3 rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-300 no-print">
-  <span class="text-base leading-none mt-0.5">✓</span>
+{{#if (eq success_kind "delete")}}
+<div role="status" class="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400 no-print">
+  <span class="text-base leading-none mt-0.5" aria-hidden="true">🗑</span>
   <div>{{success_msg}}</div>
 </div>
+{{else}}{{#if (eq success_kind "edit")}}
+<div role="status" class="flex items-start gap-3 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-400 no-print">
+  <span class="text-base leading-none mt-0.5" aria-hidden="true">✎</span>
+  <div>{{success_msg}}</div>
+</div>
+{{else}}
+<div role="status" class="flex items-start gap-3 rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-400 no-print">
+  <span class="text-base leading-none mt-0.5" aria-hidden="true">✓</span>
+  <div>{{success_msg}}</div>
+</div>
+{{/if}}{{/if}}
 {{/if}}
 
 {{#if error_msg}}
-<div class="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300 no-print">
-  <span class="text-base leading-none mt-0.5">!</span>
+<div role="alert" class="flex items-start gap-3 rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 text-sm text-orange-400 no-print">
+  <span class="text-base leading-none mt-0.5" aria-hidden="true">⚠</span>
   <div>{{error_msg}}</div>
 </div>
 {{/if}}

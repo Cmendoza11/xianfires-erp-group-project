@@ -1,6 +1,4 @@
-  <footer class="mt-10 py-6 text-center text-xs text-gray-600 no-print">
-    © 2026 DJs Human Resource Management System · Powered by XianFire Framework
-  </footer>
+  {{!-- The visible page footer is partials/page-footer.xian, at the end of each page's <main>. --}}
 
   <!--
     Modals (every page):
@@ -29,6 +27,9 @@
     @keyframes hrms-fade { from { opacity: 0; } to { opacity: 1; } }
     @keyframes hrms-pop { from { transform: translateY(8px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
     html.hrms-modal-open { overflow: hidden; }
+    /* Main column is a flex column so the page footer sits at the bottom of short pages. */
+    main:has(> .app-footer) { display: flex; flex-direction: column; min-height: 100vh; }
+    @media (max-width: 767px) { main:has(> .app-footer) { min-height: 0; } }
     [data-modal-box] input::placeholder, [data-modal-box] textarea::placeholder { color: #6B7280; }
     @media print { [data-modal-panel], #confirmModal { display: none !important; } }
   </style>
@@ -50,10 +51,13 @@
       var modal = document.getElementById("confirmModal");
       var okBtn = document.getElementById("confirmOk");
       var pendingForm = null;
+      var pendingAction = null;
       var lastFocus = null;
+      // Same colours as the banners after saving: add = green, edit = blue, delete = red.
       var TONES = {
         danger: "bg-red-500 text-white hover:bg-red-400",
         success: "bg-emerald-500 text-black hover:bg-emerald-400",
+        info: "bg-blue-500 text-white hover:bg-blue-400",
         primary: "bg-yellow-400 text-black hover:bg-yellow-300"
       };
 
@@ -68,13 +72,16 @@
         });
       }
 
-      function openConfirm(form) {
+      // src = the form, or the clicked button when it has its own data-confirm (e.g. Approve / Reject).
+      function openConfirm(form, src, action) {
         pendingForm = form;
+        pendingAction = action;
         lastFocus = document.activeElement;
-        document.getElementById("confirmTitle").textContent = form.getAttribute("data-confirm-title") || "Please confirm";
-        document.getElementById("confirmMessage").textContent = form.getAttribute("data-confirm");
-        okBtn.textContent = form.getAttribute("data-confirm-ok") || "Confirm";
-        okBtn.className = "rounded-xl px-5 py-2.5 text-sm font-bold " + (TONES[form.getAttribute("data-confirm-tone")] || TONES.danger);
+        document.getElementById("confirmTitle").textContent = src.getAttribute("data-confirm-title") || "Please confirm";
+        document.getElementById("confirmMessage").textContent = src.getAttribute("data-confirm");
+        okBtn.textContent = src.getAttribute("data-confirm-ok") || "Confirm";
+        okBtn.disabled = false;
+        okBtn.className = "rounded-xl px-5 py-2.5 text-sm font-bold " + (TONES[src.getAttribute("data-confirm-tone")] || TONES.danger);
         modal.setAttribute("data-open", "");
         syncScrollLock();
         okBtn.focus();
@@ -87,18 +94,23 @@
         if (lastFocus && lastFocus.focus) lastFocus.focus();
       }
 
-      // Forms with data-confirm ask first. The confirmed form is sent with form.submit(), which skips this handler.
+      // Forms (or their submit buttons) with data-confirm ask first. The confirmed form is sent with
+      // form.submit(), which skips this handler, so a button's formaction is copied onto the form first.
       document.addEventListener("submit", function (event) {
         var form = event.target;
-        if (!form.hasAttribute || !form.hasAttribute("data-confirm")) return;
+        var button = event.submitter;
+        var src = button && button.hasAttribute("data-confirm") ? button : form;
+        if (!src.hasAttribute || !src.hasAttribute("data-confirm")) return;
+        if (!form.checkValidity()) return; // let the browser show "please fill in this field" first
         event.preventDefault();
-        openConfirm(form);
+        openConfirm(form, src, button && button.hasAttribute("formaction") ? button.formAction : null);
       }, true);
 
       okBtn.addEventListener("click", function () {
         var form = pendingForm;
         if (!form) return;
         okBtn.disabled = true;
+        if (pendingAction) form.action = pendingAction;
         HTMLFormElement.prototype.submit.call(form);
       });
       document.getElementById("confirmCancel").addEventListener("click", closeConfirm);
@@ -134,43 +146,11 @@
   </script>
 
   <script>
+    // The HRMS is dark only (the light/dark toggle was removed). Closes the user menu on outside click / Esc.
     (function () {
-      var root = document.documentElement;
-      var KEY = "hrms-theme";
-
-      function apply(theme) {
-        var light = theme === "light";
-        root.classList.toggle("light", light);
-        root.classList.toggle("dark", !light);
-        root.style.colorScheme = light ? "light" : "dark";
-
-        document.querySelectorAll("[data-theme-toggle]").forEach(function (button) {
-          button.setAttribute("aria-pressed", String(light));
-          button.setAttribute("aria-label", light ? "Switch to dark mode" : "Switch to light mode");
-          button.title = light ? "Switch to dark mode" : "Switch to light mode";
-
-          button.querySelectorAll("[data-theme-icon]").forEach(function (icon) {
-            var name = icon.getAttribute("data-theme-icon");
-            icon.classList.toggle("hidden", name !== (light ? "sun" : "moon"));
-          });
-
-          var label = button.querySelector("[data-theme-label]");
-          if (label) label.textContent = light ? "Light mode" : "Dark mode";
-        });
-      }
-
-      apply(root.classList.contains("light") ? "light" : "dark");
+      try { localStorage.removeItem("hrms-theme"); } catch (error) { /* storage blocked */ }
 
       document.addEventListener("click", function (event) {
-        var toggle = event.target.closest("[data-theme-toggle]");
-        if (toggle) {
-          event.preventDefault();
-          var next = root.classList.contains("light") ? "dark" : "light";
-          apply(next);
-          try { localStorage.setItem(KEY, next); } catch (error) { /* storage blocked */ }
-          return;
-        }
-
         document.querySelectorAll("details[data-user-menu][open]").forEach(function (menu) {
           if (!menu.contains(event.target)) menu.open = false;
         });

@@ -102,7 +102,7 @@
       <div class="no-print rounded-2xl border border-white/5 bg-[#171717] p-5 space-y-4">
         <h3 class="font-bold">Manage Payroll Record</h3>
 
-        <form method="POST" action="/payroll/{{payroll.id}}/status" class="flex flex-wrap items-end gap-3">
+        <form method="POST" action="/payroll/{{payroll.id}}/status" data-confirm-title="Update payroll status?" data-confirm="The status of this payslip will be changed to the one selected. Paid posts it to Accounting." data-confirm-ok="Update Status" data-confirm-tone="info" class="flex flex-wrap items-end gap-3">
           <div>
             <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Status</label>
             <select name="status" class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
@@ -134,7 +134,7 @@
             </p>
             {{#unless (eq payroll.accountingSyncStatus "Synced")}}
               {{#if payroll.accountingSyncError}}<p class="mt-1 text-xs text-red-400">{{payroll.accountingSyncError}}</p>{{/if}}
-              <form method="POST" action="/payroll/{{payroll.id}}/sync" class="mt-3">
+              <form method="POST" action="/payroll/{{payroll.id}}/sync" data-confirm-title="Retry posting to Accounting?" data-confirm="HR will send this paid payroll to Accounting again." data-confirm-ok="Retry" data-confirm-tone="info" class="mt-3">
                 <button type="submit" class="rounded-xl border border-yellow-400/40 px-4 py-2 text-sm text-yellow-400 hover:bg-yellow-400 hover:text-black">Retry posting now</button>
               </form>
             {{/unless}}
@@ -146,6 +146,7 @@
       {{/if}}
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

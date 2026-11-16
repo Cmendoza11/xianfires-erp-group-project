@@ -1,6 +1,6 @@
 import { fn, col, Op } from "sequelize";
 import { Department, Employee } from "../models/index.js";
-import { asyncHandler, parseId } from "../utils/helpers.js";
+import { asyncHandler, parseId, paginate } from "../utils/helpers.js";
 
 const nameTaken = async (name, ignoreId = null) => {
   const where = { name };
@@ -75,10 +75,16 @@ export const departmentEditPage = asyncHandler(async (req, res) => {
     order: [["lastName", "ASC"]]
   });
 
+  const all = employees.map((e) => e.toJSON());
+  // Members of this department, 9 per page; the "assign" list still offers everyone else.
+  const { rows: members, pagination } = paginate(req, all.filter((e) => e.department === department.name));
+
   res.render("department-edit", {
     title: "Edit Department | DJs HRMS",
     department: department.toJSON(),
-    employees: employees.map((e) => e.toJSON())
+    employees: all,
+    members,
+    pagination
   });
 });
 

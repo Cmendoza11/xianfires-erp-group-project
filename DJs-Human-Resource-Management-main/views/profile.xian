@@ -22,7 +22,7 @@
           <h3 class="font-bold mb-1">Account details</h3>
           <p class="text-xs text-gray-500 mb-5">Your name and the email you sign in with.</p>
 
-          <form method="POST" action="/account/profile" class="space-y-4">
+          <form method="POST" action="/account/profile" data-confirm-title="Save your profile?" data-confirm="Your name and email will be updated." data-confirm-ok="Save" data-confirm-tone="info" class="space-y-4">
             <div>
               <label for="name" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Full name</label>
               <input id="name" type="text" name="name" required minlength="2" autocomplete="name"
@@ -76,7 +76,7 @@
         <h3 class="font-bold mb-1">Change Password</h3>
         <p class="text-xs text-gray-500 mb-4">Use a strong password with at least 8 characters.</p>
 
-        <form method="POST" action="/account/password" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <form method="POST" action="/account/password" data-confirm-title="Change your password?" data-confirm="You will use the new password the next time you log in." data-confirm-ok="Change Password" data-confirm-tone="info" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Current Password</label>
             <input type="password" name="currentPassword" required autocomplete="current-password"
@@ -99,6 +99,7 @@
       </div>
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 
