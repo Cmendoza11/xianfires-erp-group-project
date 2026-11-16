@@ -90,7 +90,8 @@ export const employeeList = asyncHandler(async (req, res) => {
       { lastName: { [Op.like]: `%${q}%` } },
       { email: { [Op.like]: `%${q}%` } },
       { employeeCode: { [Op.like]: `%${q}%` } },
-      { position: { [Op.like]: `%${q}%` } }
+      { position: { [Op.like]: `%${q}%` } },
+      { department: { [Op.like]: `%${q}%` } }
     ];
   }
 
