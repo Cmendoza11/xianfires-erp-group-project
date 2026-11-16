@@ -54,7 +54,8 @@ export const dashboard = asyncHandler(async (req, res) => {
         order: [["date", "DESC"]]
       }),
       Leave.findAll({ where: { employeeId: employee.id }, order: [["createdAt", "DESC"]] }),
-      Payroll.findAll({ where: { employeeId: employee.id }, order: [["periodEnd", "DESC"]], limit: 5 })
+      // Draft payroll is still being prepared by HR, so employees see only Processed and Paid.
+      Payroll.findAll({ where: { employeeId: employee.id, status: { [Op.ne]: "Draft" } }, order: [["periodEnd", "DESC"]], limit: 5 })
     ]);
 
     const presentThisMonth = attendance.filter((a) => ["Present", "Late", "Half Day"].includes(a.status)).length;

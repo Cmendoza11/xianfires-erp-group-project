@@ -2,7 +2,7 @@ import { Op } from "sequelize";
 import { Payroll, Employee } from "../models/index.js";
 import { asyncHandler, parseId, parseMoney, findEmployeeForUser } from "../utils/helpers.js";
 import { isValidDate } from "../utils/hr.js";
-import { startOfMonthISO, endOfMonthISO, localDateISO } from "../utils/format.js";
+import { startOfMonthISO, endOfMonthISO, monthEndISO, localDateISO } from "../utils/format.js";
 import { isLockedByAccounting, postPayroll, queuePayroll } from "../services/accountingSync.js";
 import { computePayroll, dailyRateOf, hourlyRateOf } from "../services/payrollCalc.js";
 
@@ -16,8 +16,9 @@ export const payrollList = asyncHandler(async (req, res) => {
     ? req.query.month
     : localDateISO().slice(0, 7);
 
+  const monthEnd = monthEndISO(month);
   const where = {
-    periodStart: { [Op.between]: [`${month}-01`, `${month}-31`] }
+    periodStart: { [Op.between]: [`${month}-01`, monthEnd] }
   };
   if (status) where.status = status;
 
@@ -42,6 +43,7 @@ export const payrollList = asyncHandler(async (req, res) => {
     rows,
     summary,
     month,
+    monthEnd,
     status,
     statuses: PAYROLL_STATUSES
   });
@@ -107,6 +109,9 @@ export const payrollCreate = asyncHandler(async (req, res) => {
   const deductions = round2(withBreakdown ? sssDeduction + philhealthDeduction + pagibigDeduction + cashAdvance : parseMoney(body.deductions));
   const daysWorked = has("daysWorked") ? Number(body.daysWorked) || 0 : Number(computed?.daysWorked ?? 0);
   const overtimeHours = has("overtimeHours") ? Number(body.overtimeHours) || 0 : Number(computed?.overtimeHours ?? 0);
+  // Tardiness is already inside basicSalary; these two are kept only to show it on the payslip.
+  const lateMinutes = has("lateMinutes") ? Math.max(parseInt(body.lateMinutes, 10) || 0, 0) : Number(computed?.lateMinutes ?? 0);
+  const lateDeduction = has("lateDeduction") ? parseMoney(body.lateDeduction) : Number(computed?.lateDeduction ?? 0);
 
   if (!errors.length && (!basicSalary || basicSalary < 0)) {
     errors.push(auto
@@ -145,6 +150,8 @@ export const payrollCreate = asyncHandler(async (req, res) => {
     netSalary,
     daysWorked,
     overtimeHours,
+    lateMinutes,
+    lateDeduction,
     sssDeduction,
     philhealthDeduction,
     pagibigDeduction,
@@ -172,7 +179,7 @@ export const payrollShow = asyncHandler(async (req, res) => {
 
   if (res.locals.isLimited) {
     const employee = await findEmployeeForUser(req.user);
-    if (!employee || payroll.employeeId !== employee.id) {
+    if (!employee || payroll.employeeId !== employee.id || payroll.status === "Draft") {
       return res.status(403).render("403", { title: "Access Denied | DJs HRMS" });
     }
   }
@@ -251,8 +258,9 @@ export const myPayslips = asyncHandler(async (req, res) => {
     });
   }
 
+  // Draft payroll is still being prepared by HR, so employees see only Processed and Paid.
   const records = await Payroll.findAll({
-    where: { employeeId: employee.id },
+    where: { employeeId: employee.id, status: { [Op.ne]: "Draft" } },
     order: [["periodEnd", "DESC"]]
   });
 

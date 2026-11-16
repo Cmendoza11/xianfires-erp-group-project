@@ -12,6 +12,7 @@
     "dev": "nodemon index.js",
     "xian": "nodemon index.js",
     "migrate": "node migrate.js",
+    "check:lan": "node check-connection.js",
     "create:model": "node create.js model",
     "create:controller": "node create.js controller",
     "create:add-middleware": "node create.js middleware",

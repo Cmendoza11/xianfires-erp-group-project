@@ -84,7 +84,7 @@
               <span class="mt-3 inline-block rounded-full bg-yellow-500/10 px-2.5 py-1 text-[11px] uppercase tracking-wider text-yellow-400">{{employee.account.role}}</span>
             {{else}}
               <p class="text-sm text-gray-500">No login account is linked yet.</p>
-              <p class="text-xs text-gray-600 mt-1">The account is linked automatically when a user registers with this email.</p>
+              <p class="text-xs text-gray-600 mt-1">An administrator links the login account on the User Accounts page.</p>
             {{/if}}
           </div>
         </div>

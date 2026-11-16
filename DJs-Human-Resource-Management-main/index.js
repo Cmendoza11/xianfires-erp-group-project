@@ -3,7 +3,9 @@
     Built on the XianFire Framework (Christian I. Cabrera, Mindoro State University)
 */
 
+import "./config/env.js"; // must stay first: loads HR's own .env (LAN mode) before the models
 import express from "express";
+import os from "os";
 import path from "path";
 import fs from "fs";
 import session from "express-session";
@@ -134,13 +136,21 @@ export default app;
 // Resolves once the server is listening and the database is ready.
 export const startServer = async (port = PORT) => {
   await syncDatabase();
-  console.log("✅ Connected to MySQL");
+  console.log(
+    `✅ Connected to MySQL at ${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || 3306} (${process.env.DB_NAME || "djs_hr"})`
+  );
   // Retries paid payroll that could not reach the Accounting ERP yet.
   startAccountingSync();
 
   return new Promise((resolve, reject) => {
     const server = app.listen(port, () => {
       console.log(`🔥 XianFire running at http://localhost:${port}`);
+      // Addresses the other laptops on the same Wi-Fi use to open HR.
+      for (const list of Object.values(os.networkInterfaces())) {
+        for (const net of list || []) {
+          if (net.family === "IPv4" && !net.internal) console.log(`   LAN: http://${net.address}:${port}`);
+        }
+      }
       resolve(server);
     });
     server.on("error", reject);

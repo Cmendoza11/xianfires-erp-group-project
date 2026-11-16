@@ -64,7 +64,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            <tr><td class="py-2.5">Basic Salary{{#if hasDtr}} <span class="text-xs text-gray-500">({{payroll.daysWorked}} day(s) from attendance)</span>{{/if}}</td><td class="py-2.5 text-right">{{formatMoney payroll.basicSalary}}</td></tr>
+            <tr><td class="py-2.5">Basic Salary{{#if hasDtr}} <span class="text-xs text-gray-500">({{payroll.daysWorked}} day(s) from attendance{{#if (gt payroll.lateDeduction 0)}}, less {{formatMoney payroll.lateDeduction}} for {{payroll.lateMinutes}} late minute(s){{/if}})</span>{{/if}}</td><td class="py-2.5 text-right">{{formatMoney payroll.basicSalary}}</td></tr>
             <tr><td class="py-2.5">Allowances</td><td class="py-2.5 text-right">{{formatMoney payroll.allowances}}</td></tr>
             <tr><td class="py-2.5">Overtime{{#if hasDtr}} <span class="text-xs text-gray-500">({{payroll.overtimeHours}} hour(s) at 125%)</span>{{/if}}</td><td class="py-2.5 text-right">{{formatMoney payroll.overtime}}</td></tr>
           </tbody>

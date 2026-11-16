@@ -24,22 +24,11 @@ export const generateEmployeeCode = async () => {
   return code;
 };
 
+// The employee record an account may see. Only the link an administrator made (users.employeeId)
+// counts; a matching email is never enough, because anyone can register with any email.
 export const findEmployeeForUser = async (user) => {
-  if (!user) return null;
-
-  let employee = user.employeeId ? await Employee.findByPk(user.employeeId) : null;
-
-  if (!employee && user.email) {
-    employee = await Employee.findOne({
-      where: { email: String(user.email).toLowerCase() },
-      order: [["id", "ASC"]]
-    });
-    if (employee && !user.employeeId) {
-      await user.update({ employeeId: employee.id });
-    }
-  }
-
-  return employee;
+  if (!user || !user.employeeId) return null;
+  return Employee.findByPk(user.employeeId);
 };
 
 export const getDepartmentNames = async () => {

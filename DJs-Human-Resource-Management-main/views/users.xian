@@ -35,7 +35,8 @@
         </div>
 
         <p class="mt-3 text-xs text-gray-500">
-          The account is linked automatically when an employee record uses the same email.
+          If an employee record without an account uses the same email, the new account is linked to it.
+          Self-registered accounts are never linked automatically: use Manage → Link to employee.
           Share the temporary password securely — users can change it from My Profile.
         </p>
       </form>
@@ -83,6 +84,20 @@
                     <summary class="cursor-pointer list-none rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-300 hover:bg-white/10">Manage</summary>
 
                     <div class="mt-2 w-60 space-y-3 rounded-xl border border-white/10 bg-[#0F0F0F] p-3">
+                      <form method="POST" action="/users/{{id}}/employee" class="space-y-2">
+                        <label class="block text-[10px] uppercase tracking-wider text-gray-500">Link to employee</label>
+                        <select name="employeeId" class="w-full rounded-lg border border-white/10 bg-[#171717] px-3 py-2 text-xs outline-none focus:border-yellow-400/60">
+                          <option value="">— Not linked —</option>
+                          {{#if employee}}
+                          <option value="{{employee.id}}" selected>{{employee.employeeCode}} {{employee.firstName}} {{employee.lastName}}</option>
+                          {{/if}}
+                          {{#each ../freeEmployees}}
+                          <option value="{{id}}">{{employeeCode}} {{firstName}} {{lastName}}</option>
+                          {{/each}}
+                        </select>
+                        <button type="submit" class="w-full rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black">Save Link</button>
+                      </form>
+
                       <form method="POST" action="/users/{{id}}/password" class="space-y-2">
                         <label class="block text-[10px] uppercase tracking-wider text-gray-500">Reset password</label>
                         <input type="password" name="newPassword" required minlength="8" placeholder="New password (8+ chars)"

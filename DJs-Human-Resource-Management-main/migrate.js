@@ -8,6 +8,7 @@
  *
  * Existing rows are never dropped or reset.
  */
+import "./config/env.js"; // must stay first: loads HR's own .env (LAN mode) before the models
 import { Sequelize, DataTypes } from "sequelize";
 import inquirer from "inquirer";
 import bcrypt from "bcrypt";

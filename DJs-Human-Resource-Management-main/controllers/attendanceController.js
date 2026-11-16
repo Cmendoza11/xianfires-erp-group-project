@@ -2,7 +2,7 @@ import { Op } from "sequelize";
 import { Attendance, Employee } from "../models/index.js";
 import { asyncHandler, parseId, findEmployeeForUser } from "../utils/helpers.js";
 import { ATTENDANCE_STATUSES, lateMinutesFor } from "../utils/hr.js";
-import { localDateISO } from "../utils/format.js";
+import { localDateISO, monthEndISO } from "../utils/format.js";
 import { overtimeMinutes } from "../services/payrollCalc.js";
 
 const buildRow = (employee, record) => ({
@@ -172,7 +172,7 @@ export const myAttendance = asyncHandler(async (req, res) => {
     ? req.query.month
     : localDateISO().slice(0, 7);
   const from = `${month}-01`;
-  const to = `${month}-31`;
+  const to = monthEndISO(month);
 
   const records = await Attendance.findAll({
     where: { employeeId: employee.id, date: { [Op.between]: [from, to] } },

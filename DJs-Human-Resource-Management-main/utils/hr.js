@@ -36,12 +36,34 @@ export const lateMinutesFor = (checkIn) => {
   return Math.max(0, minutes - OFFICE_START_MINUTES);
 };
 
+// Weekly rest days (0 = Sunday ... 6 = Saturday). Default Sunday, matching the 26 working days a month
+// payroll uses. Set HR_REST_DAYS in .env to change it (for example HR_REST_DAYS=0,6, or empty for none).
+export const REST_DAYS = new Set(
+  String(process.env.HR_REST_DAYS ?? "0")
+    .split(",")
+    .map((d) => d.trim())
+    .filter((d) => /^[0-6]$/.test(d))
+    .map(Number)
+);
+
+export const isRestDay = (isoDate) => REST_DAYS.has(new Date(`${String(isoDate).slice(0, 10)}T12:00:00`).getDay());
+
+// Every YYYY-MM-DD from startDate to endDate (inclusive).
+export function* eachDay(startDate, endDate) {
+  const d = new Date(`${String(startDate).slice(0, 10)}T12:00:00`);
+  const end = new Date(`${String(endDate).slice(0, 10)}T12:00:00`);
+  while (d <= end) {
+    yield `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    d.setDate(d.getDate() + 1);
+  }
+}
+
+// Working days a leave covers: rest days are not counted (a Saturday-to-Monday leave is 2 days).
 export const leaveDays = (startDate, endDate) => {
-  if (!startDate || !endDate) return 0;
-  const start = new Date(`${startDate}T00:00:00`);
-  const end = new Date(`${endDate}T00:00:00`);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0;
-  return Math.floor((end - start) / 86400000) + 1;
+  if (!isValidDate(String(startDate).slice(0, 10)) || !isValidDate(String(endDate).slice(0, 10))) return 0;
+  let days = 0;
+  for (const day of eachDay(startDate, endDate)) if (!isRestDay(day)) days += 1;
+  return days;
 };
 
 export const isValidDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));

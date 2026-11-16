@@ -11,11 +11,50 @@ export const userList = asyncHandler(async (req, res) => {
     order: [["id", "ASC"]]
   });
 
+  const employees = await Employee.findAll({
+    attributes: ["id", "firstName", "lastName", "employeeCode"],
+    order: [["lastName", "ASC"]]
+  });
+  const linked = new Set(users.map((u) => u.employeeId).filter(Boolean));
+
   res.render("users", {
     title: "User Accounts | DJs HRMS",
     users: users.map((u) => u.toJSON()),
-    roles: ROLES
+    roles: ROLES,
+    // Employees without an account yet, for the "Link to employee" control.
+    freeEmployees: employees.filter((e) => !linked.has(e.id)).map((e) => e.toJSON())
   });
+});
+
+// POST /users/:id/employee  employeeId=<id> links, employeeId="" unlinks. Only an admin links accounts.
+export const linkUserEmployee = asyncHandler(async (req, res) => {
+  const user = await User.findByPk(req.params.id);
+  if (!user) {
+    req.flash("error_msg", "Account not found.");
+    return res.redirect("/users");
+  }
+
+  const employeeId = parseId(req.body.employeeId);
+  if (!employeeId) {
+    await user.update({ employeeId: null });
+    req.flash("success_msg", `${user.name}'s account is no longer linked to an employee record.`);
+    return res.redirect("/users");
+  }
+
+  const employee = await Employee.findByPk(employeeId);
+  if (!employee) {
+    req.flash("error_msg", "Employee not found.");
+    return res.redirect("/users");
+  }
+  const other = await User.findOne({ where: { employeeId } });
+  if (other && other.id !== user.id) {
+    req.flash("error_msg", `${employee.firstName} ${employee.lastName} is already linked to ${other.email}.`);
+    return res.redirect("/users");
+  }
+
+  await user.update({ employeeId });
+  req.flash("success_msg", `${user.email} is now linked to ${employee.employeeCode} ${employee.firstName} ${employee.lastName}.`);
+  res.redirect("/users");
 });
 
 export const createUser = asyncHandler(async (req, res) => {
@@ -38,8 +77,10 @@ export const createUser = asyncHandler(async (req, res) => {
     return res.redirect("/users");
   }
 
-  // Link the new account to a matching employee record when one exists.
-  const employee = await Employee.findOne({ where: { email }, order: [["id", "ASC"]] });
+  // The admin is creating this account, so a matching employee email is trusted here,
+  // as long as that employee has no account yet.
+  const match = await Employee.findOne({ where: { email }, order: [["id", "ASC"]] });
+  const employee = match && !(await User.findOne({ where: { employeeId: match.id } })) ? match : null;
 
   await User.create({
     name,
