@@ -120,6 +120,16 @@ export const registerHelpers = (hbs) => {
     return can(user, capability) ? options.fn(this) : options.inverse(this);
   });
 
+  hbs.registerHelper('referenceHead', value => {
+    const text = String(value || '');
+    const index = text.lastIndexOf('-');
+    return index > 0 ? text.slice(0, index) : text;
+  });
+  hbs.registerHelper('referenceTail', value => {
+    const text = String(value || '');
+    const index = text.lastIndexOf('-');
+    return index > 0 ? '-' + text.slice(index + 1) : '';
+  });
   hbs.registerHelper("checked", (value) => (value ? "checked" : ""));
   hbs.registerHelper("selected", (a, b) =>
     String(a) === String(b) ? "selected" : ""

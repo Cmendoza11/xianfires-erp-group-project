@@ -5,8 +5,7 @@
     <div class="card space-y-3 p-4">
       <div class="flex flex-wrap items-center gap-3">
         <div class="relative min-w-[200px] flex-1">
-          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">🔍</span>
-          <input id="product-search" type="search" class="input pl-9" placeholder="Search the menu…" autocomplete="off" />
+          <input id="product-search" type="search" class="input" placeholder="Search the menu…" autocomplete="off" />
         </div>
         <select id="category-filter" class="select max-w-[220px]">
           <option value="">All categories</option>
@@ -15,12 +14,6 @@
           {{/each}}
         </select>
         <span id="product-count" class="rounded-lg bg-stone-100 px-3 py-1.5 text-xs font-semibold text-stone-600">{{catalog.length}} items</span>
-      </div>
-      <div class="flex flex-wrap gap-2" id="category-chips">
-        <button type="button" data-category="" class="category-chip rounded-full bg-charcoal px-3.5 py-1.5 text-xs font-semibold text-white">All</button>
-        {{#each categories}}
-          <button type="button" data-category="{{this.id}}" class="category-chip rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-stone-600">{{this.name}}</button>
-        {{/each}}
       </div>
     </div>
 
@@ -58,6 +51,9 @@
         <div class="flex justify-between border-t border-dashed border-stone-200 pt-2 text-base"><dt class="font-bold text-charcoal">Total</dt><dd id="cart-total" class="font-extrabold text-ember">{{posSettings.currency}}0.00</dd></div>
       </dl>
 
+      <label class="label mt-4" for="order-payment">Payment method</label>
+      <select id="order-payment" name="paymentMethod" form="order-form" class="select"><option value="Cash">Cash</option><option value="GCash">GCash</option></select>
+      <p class="mt-1 text-xs text-stone-500">GCash requires a reference number and confirmation of payment at checkout.</p>
       <label class="label mt-4" for="order-note">Order note (optional)</label>
       <textarea id="order-note" rows="2" class="textarea" placeholder="e.g. no onions, extra rice…" maxlength="500"></textarea>
 
@@ -120,7 +116,7 @@
     grid.innerHTML = list.map((product) => {
       const inCart = state.cart.get(product.id) || 0;
       const available = product.stock - inCart;
-      const soldOut = product.stock <= 0;
+      const soldOut = available <= 0;
       return `
         <button type="button" data-product="${product.id}" ${soldOut ? "disabled" : ""}
           class="group relative flex flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white text-left transition ${soldOut ? "opacity-60" : "hover:-translate-y-0.5 hover:border-ember/50 hover:shadow-md"}">
@@ -128,13 +124,14 @@
             ${product.image
               ? `<img src="${product.image}" alt="${product.name}" class="h-full w-full object-cover" />`
               : `<div class="flex h-full w-full items-center justify-center text-3xl">🍽️</div>`}
-            <span class="absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${soldOut ? "bg-red-100 text-red-700" : available <= 5 ? "bg-amber-100 text-amber-800" : "bg-white/90 text-stone-700"}">
-              ${soldOut ? "Out of stock" : `${available} ${product.unit}`}
+            <span class="product-stock-badge absolute right-2 top-2 rounded-full px-2.5 py-1 text-[11px] font-bold ${soldOut ? "stock-empty" : available <= 5 ? "stock-low" : "stock-available"}">
+              ${product.stock <= 0 ? "Out of stock" : `Available: ${available} ${product.unit}`}
             </span>
           </div>
           <div class="flex flex-1 flex-col p-3">
             <p class="line-clamp-2 text-sm font-bold leading-snug text-charcoal">${product.name}</p>
-            <p class="mt-0.5 text-[11px] text-stone-400">${product.category}</p>
+            <p class="mt-2 text-[10px] font-semibold uppercase tracking-wider text-stone-500">Category</p>
+            <p class="mt-1 text-xs font-medium text-ember">${product.category || "Uncategorized"}</p>
             <div class="mt-2 flex items-center justify-between">
               <span class="text-sm font-extrabold text-ember">${money(product.price)}</span>
               ${inCart ? `<span class="rounded-full bg-charcoal px-2 py-0.5 text-[10px] font-bold text-white">${inCart} in cart</span>` : ""}
@@ -144,7 +141,33 @@
     }).join("");
   }
 
+  const draftKey = 'djyum-cart-{{currentUser.id}}';
+  function saveDraft() {
+    try { sessionStorage.setItem(draftKey, JSON.stringify({
+      cart: [...state.cart], orderType: state.orderType,
+      note: document.getElementById('order-note').value, paymentMethod: document.getElementById('order-payment').value
+    })); } catch { /* Cart remains usable if storage is unavailable. */ }
+  }
+  try {
+    const draft = JSON.parse(sessionStorage.getItem(draftKey) || 'null');
+    if (draft && Array.isArray(draft.cart)) {
+      for (const [id, qty] of draft.cart) {
+        const product = productById.get(Number(id));
+        if (product && Number.isInteger(qty) && qty > 0) {
+          const available = Math.min(qty, product.stock, 999);
+          if (available > 0) state.cart.set(product.id, available);
+        }
+      }
+      state.orderType = draft.orderType === 'Take-Out' ? 'Take-Out' : 'Dine-In';
+      document.getElementById('order-note').value = String(draft.note || '').slice(0, 500);
+      document.getElementById('order-payment').value = draft.paymentMethod === 'GCash' ? 'GCash' : 'Cash';
+    }
+  } catch { /* Ignore damaged drafts. */ }
+  document.getElementById('order-note').addEventListener('input', saveDraft);
+  document.getElementById('order-payment').addEventListener('change', saveDraft);
+
   function renderCart() {
+    saveDraft();
     const container = document.getElementById("cart-items");
     const lines = [...state.cart.entries()];
 
@@ -167,7 +190,7 @@
             </div>
             <div class="flex items-center gap-1 rounded-lg border border-stone-200 p-0.5">
               <button type="button" data-decrease="${id}" class="h-6 w-6 rounded text-sm font-bold text-stone-500 hover:bg-stone-100">−</button>
-              <span class="w-6 text-center text-xs font-bold">${quantity}</span>
+              <input type="number" inputmode="numeric" min="1" max="${Math.min(product.stock, 999)}" step="1" value="${quantity}" data-quantity="${id}" aria-label="Quantity" class="cart-quantity text-center text-xs font-bold" />
               <button type="button" data-increase="${id}" class="h-6 w-6 rounded text-sm font-bold text-stone-500 hover:bg-stone-100" ${quantity >= product.stock ? "disabled" : ""}>+</button>
             </div>
             <button type="button" data-remove="${id}" class="h-7 w-7 rounded text-xs text-stone-400 hover:bg-red-50 hover:text-red-600" title="Remove">✕</button>
@@ -201,7 +224,7 @@
     const product = productById.get(Number(id));
     if (!product) return;
     const current = state.cart.get(product.id) || 0;
-    if (current + 1 > product.stock) {
+    if (current + 1 > Math.min(product.stock, 999)) {
       window.alert(`Only ${product.stock} ${product.unit} of ${product.name} available.`);
       return;
     }
@@ -212,6 +235,35 @@
   document.getElementById("product-grid").addEventListener("click", (event) => {
     const button = event.target.closest("[data-product]");
     if (button) addToCart(button.dataset.product);
+  });
+
+  function commitQuantity(input) {
+    const id = Number(input.dataset.quantity);
+    const product = productById.get(id);
+    if (!product) return;
+    const quantity = Number(input.value);
+    const max = Math.min(product.stock, 999);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > max) {
+      input.setCustomValidity('Enter a whole number from 1 to ' + max + '.');
+      input.reportValidity();
+      input.value = state.cart.get(id) || 1;
+      return;
+    }
+    input.setCustomValidity('');
+    state.cart.set(id, quantity);
+    renderCart();
+  }
+  document.getElementById('cart-items').addEventListener('input', (event) => {
+    if (event.target.matches('[data-quantity]')) event.target.setCustomValidity('');
+  });
+  document.getElementById('cart-items').addEventListener('change', (event) => {
+    if (event.target.matches('[data-quantity]')) commitQuantity(event.target);
+  });
+  document.getElementById('cart-items').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && event.target.matches('[data-quantity]')) {
+      event.preventDefault();
+      commitQuantity(event.target);
+    }
   });
 
   document.getElementById("cart-items").addEventListener("click", (event) => {
@@ -239,32 +291,12 @@
 
   document.getElementById("category-filter").addEventListener("change", (event) => {
     state.category = event.target.value;
-    document.querySelectorAll(".category-chip").forEach((chip) => {
-      chip.dataset.category === state.category ? activateChip(chip) : deactivateChip(chip);
-    });
-    renderProducts();
-  });
-
-  function activateChip(chip) {
-    chip.className = "category-chip rounded-full bg-charcoal px-3.5 py-1.5 text-xs font-semibold text-white";
-  }
-  function deactivateChip(chip) {
-    chip.className = "category-chip rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-stone-600";
-  }
-
-  document.getElementById("category-chips").addEventListener("click", (event) => {
-    const chip = event.target.closest(".category-chip");
-    if (!chip) return;
-    state.category = chip.dataset.category;
-    document.getElementById("category-filter").value = state.category;
-    document.querySelectorAll(".category-chip").forEach((item) =>
-      item === chip ? activateChip(item) : deactivateChip(item)
-    );
     renderProducts();
   });
 
   function setOrderType(type) {
     state.orderType = type;
+    saveDraft();
     document.getElementById("order-type-input").value = type;
     document.querySelectorAll(".order-type").forEach((button) => {
       const active = button.dataset.orderType === type;
@@ -294,7 +326,7 @@
     document.getElementById("note-input").value = document.getElementById("order-note").value;
   });
 
-  setOrderType("Dine-In");
+  setOrderType(state.orderType);
   renderCart();
 </script>
 

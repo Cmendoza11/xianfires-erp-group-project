@@ -1,5 +1,7 @@
 {{> app-head title=title active="inventory" subtitle="Validated stock movement — every change is recorded"}}
 
+{{> stock-tabs}}
+
 <div class="flex items-center gap-2 text-xs font-semibold text-stone-500">
   <a href="/pos/inventory" class="hover:text-ember">Inventory</a><span>/</span><span class="text-stone-700">{{title}}</span>
 </div>
@@ -12,9 +14,9 @@
 
     <div class="mt-4 space-y-4">
       <div>
-        <label class="label" for="productId">Product *</label>
+        <label class="label" for="productId">Ingredient / Raw Material *</label>
         <select id="productId" name="productId" required class="select">
-          <option value="">Select a product…</option>
+          <option value="">Select an ingredient…</option>
           {{#each products}}
             <option value="{{this.id}}" data-stock="{{this.inventory.currentStock}}" data-unit="{{this.inventory.unit}}" data-min="{{this.inventory.minStockLevel}}" {{selected this.id ../selected}}>
               {{this.name}} — {{this.inventory.currentStock}} {{this.inventory.unit}} on hand
@@ -36,33 +38,22 @@
           <p class="mt-1 text-[11px] text-stone-400">Enter the physical count. The difference is recorded as an Adjustment.</p>
         </div>
       {{else}}
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="grid gap-4">
           <div>
             <label class="label" for="quantity">Quantity *</label>
             <input id="quantity" name="quantity" type="number" min="1" step="1" required class="input" placeholder="0" />
           </div>
-          <div>
-            <label class="label" for="referenceNumber">Reference number</label>
-            <input id="referenceNumber" name="referenceNumber" maxlength="64" class="input" placeholder="Delivery slip / supplier invoice" />
-          </div>
         </div>
       {{/if}}
-
-      <div>
-        <label class="label" for="reason">Reason {{#if (eq mode "in")}}(optional){{else}}*{{/if}}</label>
-        <textarea id="reason" name="reason" rows="3" maxlength="500" class="textarea"
-          placeholder="{{#if (eq mode 'in')}}Received delivery, return to stock…{{else}}{{#if (eq mode 'out')}}Spoilage, staff meal, transfer, waste…{{else}}Physical count correction, damaged goods…{{/if}}{{/if}}"
-          {{#unless (eq mode "in")}}required{{/unless}}></textarea>
-      </div>
 
       <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
         {{#if (eq mode "in")}}
           Stock In increases the quantity on hand and records the movement with your name and the timestamp.
         {{else}}
           {{#if (eq mode "out")}}
-            Stock Out decreases the quantity on hand. You cannot remove more than the current stock, and a reason is required.
+            Stock Out decreases the quantity on hand. You cannot remove more than the current stock.
           {{else}}
-            Adjustments set the counted quantity. A reason of at least 5 characters is required for the audit trail.
+            Adjustments set the counted quantity. The change is recorded with your account and timestamp.
           {{/if}}
         {{/if}}
       </div>

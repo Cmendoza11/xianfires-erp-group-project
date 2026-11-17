@@ -16,6 +16,8 @@ import * as transactions from "../controllers/posTransactionController.js";
 import * as reports from "../controllers/posReportController.js";
 import * as settings from "../controllers/posSettingsController.js";
 
+import * as stockSetup from '../controllers/stockSetupController.js';
+
 const router = express.Router();
 router.use(requireAuth);
 
@@ -64,9 +66,14 @@ router.post("/categories/:id/archive", allow("admin"), categories.categoryArchiv
 router.post("/categories/:id/restore", allow("admin"), categories.categoryRestore);
 
 /* Inventory ------------------------------------------------------------ */
+router.get('/inventory/setup', allow('admin', 'inventory'), stockSetup.setupPage);
+router.post('/inventory/ingredients', allow('admin', 'inventory'), stockSetup.addIngredient);
+router.post('/inventory/recipes', allow('admin'), stockSetup.saveRecipe);
 router.get("/inventory", allow("admin", "inventory"), inventory.inventoryOverview);
 router.get("/inventory/low-stock", allow("admin", "inventory"), inventory.lowStockPage);
 router.get("/inventory/out-of-stock", allow("admin", "inventory"), inventory.outOfStockPage);
+router.get('/inventory/movements/new', allow('admin', 'inventory'), inventory.productMovementPage);
+router.post('/inventory/movements', allow('admin', 'inventory'), inventory.recordProductMovement);
 router.get("/inventory/movements", allow("admin", "inventory"), inventory.movementList);
 router.get("/inventory/stock-in", allow("admin", "inventory"), inventory.stockInPage);
 router.post("/inventory/stock-in", allow("admin", "inventory"), inventory.stockIn);

@@ -2,6 +2,7 @@
   DJYum — product management. Products are archived, never deleted, so
   historical order items keep pointing at a real product row.
 */
+import { recipeStock } from '../utils/recipes.js';
 import { Op } from "sequelize";
 import {
   sequelize,
@@ -35,7 +36,7 @@ export const productList = async (req, res, next) => {
     const stock = String(req.query.stock || "").trim();
     const status = String(req.query.status || "").trim();
 
-    const where = {};
+    const where = { type: { [Op.ne]: "Supply" } };
     if (q) {
       where[Op.or] = [
         { name: { [Op.like]: `%${q}%` } },
@@ -58,9 +59,11 @@ export const productList = async (req, res, next) => {
       limit: 300,
     });
 
+    const preparedStock = await recipeStock(products.map(product => product.id));
     const rows = products.map((product) => {
       const data = product.toJSON();
-      const currentStock = Number(data.inventory?.currentStock ?? 0);
+      const currentStock = preparedStock.get(data.id)?.available ?? Number(data.inventory?.currentStock ?? 0);
+      if (preparedStock.has(data.id)) data.inventory = { ...(data.inventory || {}), unit: "servings" };
       const minStock = Number(data.inventory?.minStockLevel ?? 0);
       const stockStatus =
         currentStock <= 0

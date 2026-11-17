@@ -8,6 +8,8 @@
     "xian": "./bin/xian.js"
   },
   "scripts": {
+    "test": "node tests/access.test.js",
+    "test:checkout": "node tests/checkout.integration.js",
     "start": "node index.js",
     "xian": "nodemon index.js",
     "migrate": "node migrate.js",

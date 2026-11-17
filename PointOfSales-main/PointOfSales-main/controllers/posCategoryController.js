@@ -29,7 +29,10 @@ export const categoryList = async (req, res, next) => {
     });
     const countMap = new Map(counts.map((row) => [row.categoryId, Number(row.total)]));
 
+    const categoryDraft = req.session.categoryDraft || {};
+    delete req.session.categoryDraft;
     return res.render("pos/categories", {
+      categoryDraft, openCategory: req.query.add === "category",
       title: "Categories",
       active: "categories",
       categories: categories.map((category) => ({
@@ -52,16 +55,20 @@ export const categoryCreate = async (req, res, next) => {
   const name = String(req.body.name || "").trim();
   const description = String(req.body.description || "").trim();
 
+  const retry = () => {
+    req.session.categoryDraft = { name: name.slice(0, 120), description: description.slice(0, 1000) };
+    return res.redirect('/pos/categories?add=category');
+  };
   if (name.length < 2 || name.length > 120) {
     flashError(req, "Category name must be between 2 and 120 characters.");
-    return res.redirect("/pos/categories");
+    return retry();
   }
 
   try {
     const existing = await Category.findOne({ where: { name } });
     if (existing) {
       flashError(req, `Category "${name}" already exists.`);
-      return res.redirect("/pos/categories");
+      return retry();
     }
     await Category.create({ name, description: description || null, status: "active" });
     flashSuccess(req, `Category "${name}" created.`);

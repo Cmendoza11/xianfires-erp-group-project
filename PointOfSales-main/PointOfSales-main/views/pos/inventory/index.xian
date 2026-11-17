@@ -1,8 +1,9 @@
-{{> app-head title="Inventory Overview" active="inventory" subtitle="Live stock levels for every active product"}}
+{{> app-head title="Stock Management" active="inventory" subtitle="Ingredients and raw materials used to prepare your menu products"}}
 
-<section class="grid grid-cols-2 gap-3 lg:grid-cols-5">
-  <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Products</p><p class="stat-value mt-1 text-xl">{{int summary.totalProducts}}</p></div>
-  <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Units On Hand</p><p class="stat-value mt-1 text-xl">{{int summary.totalUnits}}</p></div>
+{{> stock-tabs}}
+
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Ingredients</p><p class="stat-value mt-1 text-xl">{{int summary.totalProducts}}</p></div>
   <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Stock Value</p><p class="stat-value mt-1 text-xl">{{money summary.stockValue}}</p></div>
   <a href="/pos/inventory/low-stock" class="card p-4 transition hover:shadow-md"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Low Stock</p><p class="stat-value mt-1 text-xl {{#if summary.lowStock}}text-amber-600{{/if}}">{{int summary.lowStock}}</p></a>
   <a href="/pos/inventory/out-of-stock" class="card p-4 transition hover:shadow-md"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Out of Stock</p><p class="stat-value mt-1 text-xl {{#if summary.outOfStock}}text-red-600{{/if}}">{{int summary.outOfStock}}</p></a>
@@ -11,7 +12,7 @@
 <section class="card p-4">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <form method="GET" action="/pos/inventory" class="flex flex-1 flex-wrap gap-3">
-      <input type="search" name="q" value="{{filters.q}}" class="input min-w-[180px] flex-1" placeholder="Search product or category…" />
+      <input type="search" name="q" value="{{filters.q}}" class="input min-w-[180px] flex-1" placeholder="Search ingredient or category…" />
       <select name="category" class="select max-w-[180px]">
         <option value="">All categories</option>
         {{#each categories}}
@@ -40,7 +41,7 @@
   <div class="table-wrap">
     <table class="data-table">
       <thead>
-        <tr><th>Product</th><th>Category</th><th>On hand</th><th>Minimum</th><th>Status</th><th>Last updated</th><th class="text-right">Min level</th></tr>
+        <tr><th>Ingredient / Raw Material</th><th>Category</th><th>On hand</th><th>Minimum</th><th>Status</th><th>Last updated</th><th class="text-right">Min level</th></tr>
       </thead>
       <tbody>
         {{#each rows}}
@@ -48,7 +49,7 @@
             <td>
               <div class="flex items-center gap-3">
                 <div class="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-stone-100">
-                  {{#if this.image}}<img src="{{this.image}}" alt="" class="h-full w-full object-cover" />{{else}}<div class="flex h-full w-full items-center justify-center text-sm">📦</div>{{/if}}
+                  {{#if this.image}}<img src="{{this.image}}" alt="" class="h-full w-full object-cover" />{{else}}<div class="flex h-full w-full items-center justify-center text-sm"></div>{{/if}}
                 </div>
                 <a href="/pos/inventory/{{this.productId}}" class="font-bold text-charcoal hover:text-ember">{{this.name}}</a>
               </div>

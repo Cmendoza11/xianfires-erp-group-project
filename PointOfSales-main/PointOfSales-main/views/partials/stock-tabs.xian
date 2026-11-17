@@ -1,0 +1,10 @@
+<nav class="card flex flex-wrap gap-2 p-3" aria-label="Stock Management">
+  <a href="/pos/inventory" class="btn {{#if (eq currentPath '/pos/inventory')}}btn-primary{{else}}btn-light{{/if}}">Ingredients Overview</a>
+  <a href="/pos/inventory/low-stock" class="btn {{#if (eq currentPath '/pos/inventory/low-stock')}}btn-primary{{else}}btn-light{{/if}}">Low Stock</a>
+  <a href="/pos/inventory/out-of-stock" class="btn {{#if (eq currentPath '/pos/inventory/out-of-stock')}}btn-primary{{else}}btn-light{{/if}}">Out of Stock</a>
+  <a href="/pos/reports/inventory" class="btn {{#if (eq currentPath '/pos/inventory/movements')}}btn-primary{{else}}btn-light{{/if}}">Inventory Reports</a>
+  <a href="/pos/inventory/stock-in" class="btn {{#if (eq currentPath '/pos/inventory/stock-in')}}btn-primary{{else}}btn-light{{/if}}">Stock In</a>
+  <a href="/pos/inventory/stock-out" class="btn {{#if (eq currentPath '/pos/inventory/stock-out')}}btn-primary{{else}}btn-light{{/if}}">Stock Out</a>
+  <a href="/pos/inventory/adjustment" class="btn {{#if (eq currentPath '/pos/inventory/adjustment')}}btn-primary{{else}}btn-light{{/if}}">Stock Adjustment</a>
+  <a href="/pos/inventory/setup" class="btn {{#if (eq currentPath '/pos/inventory/setup')}}btn-primary{{else}}btn-light{{/if}}">Ingredients &amp; Recipes</a>
+</nav>

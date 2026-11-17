@@ -33,7 +33,7 @@ const MOVEMENT_TYPES = [
 
 const loadProductOptions = () =>
   Product.findAll({
-    where: { status: "active" },
+    where: { status: "active", type: "Supply" },
     include: [
       { model: Inventory, as: "inventory", required: false },
       { model: Category, as: "category", attributes: ["id", "name"] },
@@ -49,7 +49,7 @@ const stockRows = async () => {
      FROM pos_products p
      LEFT JOIN pos_categories c ON c.id = p.categoryId
      LEFT JOIN pos_inventory i ON i.productId = p.id
-     WHERE p.status = 'active'
+     WHERE p.status = 'active' AND p.type = 'Supply'
      ORDER BY p.name ASC`,
     { type: QueryTypes.SELECT }
   );
@@ -112,7 +112,7 @@ export const inventoryOverview = async (req, res, next) => {
     const rows = allRows.filter((row) => matchesFilters(row, filters));
 
     return res.render("pos/inventory/index", {
-      title: "Inventory Overview",
+      title: "Stock Management",
       active: "inventory",
       rows,
       summary: summarize(allRows),
@@ -133,7 +133,7 @@ export const lowStockPage = async (req, res, next) => {
       (row) => row.stockStatus === "Low Stock"
     );
     return res.render("pos/inventory/alert", {
-      title: "Low Stock Products",
+      title: "Low Stock Ingredients",
       active: "inventory",
       rows,
       mode: "low",
@@ -150,7 +150,7 @@ export const outOfStockPage = async (req, res, next) => {
       (row) => row.stockStatus === "Out of Stock"
     );
     return res.render("pos/inventory/alert", {
-      title: "Out of Stock Products",
+      title: "Out of Stock Ingredients",
       active: "inventory",
       rows,
       mode: "out",
@@ -170,7 +170,7 @@ export const inventoryDetail = async (req, res, next) => {
         { model: Inventory, as: "inventory", required: false },
       ],
     });
-    if (!product) {
+    if (!product || product.type !== "Supply") {
       flashError(req, "Product not found.");
       return res.redirect("/pos/inventory");
     }
@@ -231,7 +231,7 @@ export const adjustmentPage = (req, res, next) =>
 
 const requireProduct = async (productId, transaction) => {
   const product = await Product.findByPk(productId, { transaction });
-  if (!product) throw new PosError("Product not found.");
+  if (!product || product.type !== "Supply") throw new PosError("Select an ingredient or raw material.");
   if (product.status !== "active") {
     throw new PosError("Archived products cannot receive stock movements.");
   }
@@ -240,7 +240,7 @@ const requireProduct = async (productId, transaction) => {
 
 export const stockIn = async (req, res, next) => {
   const productId = toInt(req.body.productId);
-  const quantity = toInt(req.body.quantity);
+  const quantity = Number(req.body.quantity);
   const reason = String(req.body.reason || "").trim();
   const reference = String(req.body.referenceNumber || "").trim();
 
@@ -248,7 +248,7 @@ export const stockIn = async (req, res, next) => {
     flashError(req, "Select a product.");
     return res.redirect("/pos/inventory/stock-in");
   }
-  if (!Number.isFinite(quantity) || quantity <= 0) {
+  if (!Number.isSafeInteger(quantity) || quantity <= 0) {
     flashError(req, "Quantity must be a positive whole number.");
     return res.redirect(`/pos/inventory/stock-in?product=${productId}`);
   }
@@ -304,7 +304,7 @@ export const stockIn = async (req, res, next) => {
       flashError(req, error.message);
       return res.redirect(`/pos/inventory/stock-in?product=${productId}`);
     }
-    throw error;
+    return next(error);
   }
 };
 
@@ -320,10 +320,6 @@ export const stockOut = async (req, res, next) => {
   }
   if (!Number.isFinite(quantity) || quantity <= 0) {
     flashError(req, "Quantity must be a positive whole number.");
-    return res.redirect(`/pos/inventory/stock-out?product=${productId}`);
-  }
-  if (reason.length < 3) {
-    flashError(req, "A reason is required for Stock Out (spoilage, transfer, waste).");
     return res.redirect(`/pos/inventory/stock-out?product=${productId}`);
   }
 
@@ -369,25 +365,21 @@ export const stockOut = async (req, res, next) => {
       flashError(req, error.message);
       return res.redirect(`/pos/inventory/stock-out?product=${productId}`);
     }
-    throw error;
+    return next(error);
   }
 };
 
 export const adjustment = async (req, res, next) => {
   const productId = toInt(req.body.productId);
-  const newStock = toInt(req.body.newStock);
+  const newStock = Number(req.body.newStock);
   const reason = String(req.body.reason || "").trim();
 
   if (!Number.isFinite(productId) || productId <= 0) {
     flashError(req, "Select a product.");
     return res.redirect("/pos/inventory/adjustment");
   }
-  if (!Number.isFinite(newStock) || newStock < 0) {
+  if (!Number.isSafeInteger(newStock) || newStock < 0) {
     flashError(req, "Counted stock must be zero or a positive whole number.");
-    return res.redirect(`/pos/inventory/adjustment?product=${productId}`);
-  }
-  if (reason.length < 5) {
-    flashError(req, "A detailed reason is required for stock adjustments.");
     return res.redirect(`/pos/inventory/adjustment?product=${productId}`);
   }
 
@@ -430,19 +422,21 @@ export const adjustment = async (req, res, next) => {
       flashError(req, error.message);
       return res.redirect(`/pos/inventory/adjustment?product=${productId}`);
     }
-    throw error;
+    return next(error);
   }
 };
 
 export const updateMinLevel = async (req, res, next) => {
   const productId = toInt(req.params.productId);
-  const minStockLevel = toInt(req.body.minStockLevel);
-  if (!Number.isFinite(minStockLevel) || minStockLevel < 0) {
+  const minStockLevel = Number(req.body.minStockLevel);
+  if (!Number.isSafeInteger(minStockLevel) || minStockLevel < 0) {
     flashError(req, "Minimum stock level must be zero or a positive number.");
     return res.redirect("/pos/inventory");
   }
 
   try {
+    const item = await Product.findByPk(productId);
+    if (!item || item.type !== "Supply") throw new PosError("Select an ingredient.");
     const inventory = await Inventory.findOne({ where: { productId } });
     if (!inventory) {
       flashError(req, "This product has no inventory record.");
@@ -461,64 +455,75 @@ export const updateMinLevel = async (req, res, next) => {
 
 export const movementList = async (req, res, next) => {
   try {
-    const q = String(req.query.q || "").trim();
-    const type = String(req.query.type || "").trim();
-    const productId = toInt(req.query.product) || null;
-    const from = String(req.query.from || "").trim();
-    const to = String(req.query.to || "").trim();
-
-    const where = {};
-    if (MOVEMENT_TYPES.includes(type)) where.type = type;
-    if (productId) where.productId = productId;
-    if (q) {
-      where[Op.or] = [
-        { productName: { [Op.like]: `%${q}%` } },
-        { referenceNumber: { [Op.like]: `%${q}%` } },
-        { reason: { [Op.like]: `%${q}%` } },
-        { performedByName: { [Op.like]: `%${q}%` } },
-      ];
-    }
-    if (from || to) {
-      where.createdAt = {};
-      if (from) where.createdAt[Op.gte] = new Date(`${from}T00:00:00`);
-      if (to) where.createdAt[Op.lte] = new Date(`${to}T23:59:59.999`);
-    }
-
-    const [movements, summaryRows, products] = await Promise.all([
-      InventoryMovement.findAll({
-        where,
-        order: [["createdAt", "DESC"]],
-        limit: 300,
-      }),
-      sequelize.query(
-        `SELECT type, COUNT(*) AS count, COALESCE(SUM(quantity),0) AS units
-         FROM pos_inventory_movements GROUP BY type`,
-        { type: QueryTypes.SELECT }
-      ),
-      Product.findAll({
-        where: { status: "active" },
-        attributes: ["id", "name"],
-        order: [["name", "ASC"]],
-      }),
-    ]);
-
-    const summary = Object.fromEntries(
-      MOVEMENT_TYPES.map((movementType) => {
-        const row = summaryRows.find((item) => item.type === movementType);
-        return [movementType, { count: Number(row?.count ?? 0), units: Number(row?.units ?? 0) }];
-      })
-    );
-
-    return res.render("pos/inventory/movements", {
-      title: "Inventory Movements",
-      active: "inventory",
-      movements,
-      summary,
-      types: MOVEMENT_TYPES,
-      products,
-      filters: { q, type, product: productId || "", from, to },
+    const q = String(req.query.q || '').trim();
+    const type = String(req.query.type || '').trim();
+    const scope = ['all', 'ingredients'].includes(req.query.scope) ? req.query.scope : 'products';
+    const productId = Number(req.query.product) || null;
+    const from = String(req.query.from || '').trim();
+    const to = String(req.query.to || '').trim();
+    const products = await Product.findAll({
+      where: scope === 'all' ? {} : { type: scope === 'ingredients' ? 'Supply' : { [Op.ne]: 'Supply' } },
+      attributes: ['id', 'name'], order: [['name', 'ASC']],
     });
+    const ids = products.filter(row => !productId || row.id === productId).map(row => row.id);
+    const where = { productId: { [Op.in]: ids } };
+    if (MOVEMENT_TYPES.includes(type)) where.type = type;
+    if (type === 'Inbound') where[Op.and] = sequelize.where(sequelize.col('newStock'), Op.gt, sequelize.col('previousStock'));
+    if (type === 'Outbound') where[Op.and] = sequelize.where(sequelize.col('newStock'), Op.lt, sequelize.col('previousStock'));
+    if (q) where[Op.or] = ['productName', 'performedByName'].map(field => ({ [field]: { [Op.like]: '%' + q + '%' } }));
+    if (from || to) {
+      const start = from ? new Date(from + 'T00:00:00') : null;
+      const end = to ? new Date(to + 'T23:59:59.999') : null;
+      if ((start && !Number.isFinite(start.getTime())) || (end && !Number.isFinite(end.getTime())) || (start && end && start > end)) {
+        flashError(req, 'Choose a valid start and end date.');
+        return res.redirect('/pos/reports/inventory');
+      }
+      where.createdAt = {};
+      if (start) where.createdAt[Op.gte] = start;
+      if (end) where.createdAt[Op.lte] = end;
+    }
+    const [rows, total] = await Promise.all([
+      InventoryMovement.findAll({ where, include: [{ model: Product, as: 'product', include: [{ model: Inventory, as: 'inventory' }] }], order: [['createdAt', 'DESC'], ['id', 'DESC']], limit: 300 }),
+      InventoryMovement.count({ where }),
+    ]);
+    const movements = rows.map(row => {
+      const item = row.toJSON();
+      const delta = Number(item.newStock) - Number(item.previousStock);
+      return { ...item, direction: delta > 0 ? 'Inbound' : delta < 0 ? 'Outbound' : 'No Change', inbound: delta > 0, signedQuantity: Math.abs(delta), unit: item.product?.inventory?.unit || 'pcs' };
+    });
+    const movementProducts = await Product.findAll({ where: { type: { [Op.ne]: 'Supply' }, status: 'active' }, include: [{ model: Inventory, as: 'inventory' }], order: [['name', 'ASC']] });
+    const movementDraft = req.session.movementDraft || {};
+    delete req.session.movementDraft;
+    return res.render('pos/inventory/movements', { title: 'Inventory Reports', active: 'reports-inventory', movementProducts, movementDraft, openMovement: req.query.add === '1', movements, total, shown: movements.length, types: ['Inbound', 'Outbound', ...MOVEMENT_TYPES], products, filters: { q, type, scope, product: productId || '', from, to } });
+  } catch (error) { return next(error); }
+};
+
+export const productMovementPage = (req, res) => res.redirect('/pos/reports/inventory?add=1');
+
+export const recordProductMovement = async (req, res, next) => {
+  try {
+    const id = Number(req.body.productId);
+    const quantity = Number(req.body.quantity);
+    const direction = req.body.direction;
+    const reason = String(req.body.reason || '').trim().slice(0, 500);
+    if (!Number.isSafeInteger(id) || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100000 || !['Inbound', 'Outbound'].includes(direction)) throw new PosError('Select a product, direction, positive whole quantity.');
+    await sequelize.transaction(async t => {
+      const product = await Product.findByPk(id, { transaction: t, lock: t.LOCK.UPDATE });
+      if (!product || product.type === 'Supply' || product.status !== 'active') throw new PosError('Select an active menu product.');
+      const { Recipe } = await import('../models/index.js');
+      if (await Recipe.count({ where: { productId: id }, transaction: t })) throw new PosError('This product uses ingredient-based stock. Record ingredient stock changes instead.');
+      const inventory = await findInventoryForUpdate(id, t);
+      if (!inventory) throw new PosError('No inventory record exists for this product.');
+      const previousStock = Number(inventory.currentStock);
+      const newStock = previousStock + (direction === 'Inbound' ? quantity : -quantity);
+      if (newStock < 0) throw new PosError('Insufficient product stock for this outbound movement.');
+      await inventory.update({ currentStock: newStock, lastUpdated: new Date() }, { transaction: t });
+      await InventoryMovement.create({ productId: id, productName: product.name, type: direction === 'Inbound' ? 'Stock In' : 'Stock Out', quantity, previousStock, newStock, referenceNumber: String(req.body.referenceNumber || '').trim().slice(0, 64) || generateNumber('MOV'), reason, performedBy: req.user.id, performedByName: req.user.name }, { transaction: t });
+    });
+    flashSuccess(req, 'Product movement recorded with balances, user and timestamp.');
+    return res.redirect('/pos/reports/inventory');
   } catch (error) {
+    if (error instanceof PosError) { req.session.movementDraft = { productId: String(req.body.productId || ''), direction: req.body.direction === 'Outbound' ? 'Outbound' : 'Inbound', quantity: String(req.body.quantity || '').slice(0, 12) }; flashError(req, error.message); return res.redirect('/pos/reports/inventory?add=1'); }
     return next(error);
   }
 };

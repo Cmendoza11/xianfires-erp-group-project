@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign In · DJYum</title>
+  <title>Sign In · DJs POS &amp; Inventory</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            charcoal: { DEFAULT: "#1F1B16", 800: "#2A241D" },
-            cream: "#FAF6EF",
-            ember: { DEFAULT: "#F97316", 600: "#EA580C", 50: "#FFF3E6" }
+            charcoal: { DEFAULT: "#171717", 800: "#202020" },
+            cream: "#101010",
+            ember: { DEFAULT: "#F9DF36", 600: "#E5CB24", 50: "#302C16" }
           },
           fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] }
         }
@@ -21,15 +21,16 @@
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>body{font-family:Inter,ui-sans-serif,system-ui,sans-serif}</style>
+<link rel="stylesheet" href="/theme.css" />
 </head>
 <body class="min-h-screen bg-cream text-stone-800">
   <div class="grid min-h-screen lg:grid-cols-2">
     <div class="relative hidden flex-col justify-between overflow-hidden bg-charcoal p-12 text-white lg:flex">
       <div>
         <div class="flex items-center gap-3">
-          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-ember text-2xl">🍽️</div>
+          <img src="/foodhub-logo.png" alt="DJs FoodHub logo" width="48" height="48" class="h-12 w-12 shrink-0 rounded-lg object-contain" />
           <div>
-            <p class="text-xl font-extrabold">DJYum</p>
+            <p class="text-xl font-extrabold">DJs POS &amp; Inventory</p>
             <p class="text-[11px] uppercase tracking-[0.2em] text-stone-500">POS &amp; Inventory</p>
           </div>
         </div>
@@ -52,9 +53,9 @@
     <div class="flex items-center justify-center p-6 sm:p-12">
       <div class="w-full max-w-md">
         <div class="mb-8 flex items-center gap-3 lg:hidden">
-          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-ember text-xl">🍽️</div>
+          <img src="/foodhub-logo.png" alt="DJs FoodHub logo" width="48" height="48" class="h-12 w-12 shrink-0 rounded-lg object-contain" />
           <div>
-            <p class="text-lg font-extrabold text-charcoal">DJYum</p>
+            <p class="text-lg font-extrabold text-charcoal">DJs POS &amp; Inventory</p>
             <p class="text-[10px] uppercase tracking-[0.2em] text-stone-500">POS &amp; Inventory</p>
           </div>
         </div>
@@ -84,7 +85,7 @@
           </div>
         </form>
 
-        <p class="mt-6 text-center text-[11px] text-stone-400">DJYum · POS &amp; Inventory Management System</p>
+        <p class="mt-6 text-center text-[11px] text-stone-400">DJs POS &amp; Inventory · POS &amp; Inventory Management System</p>
       </div>
     </div>
   </div>

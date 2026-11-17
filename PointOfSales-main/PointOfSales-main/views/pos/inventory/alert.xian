@@ -1,18 +1,19 @@
 {{> app-head title=title active="inventory" subtitle="Stock alerts that need action"}}
 
+{{> stock-tabs}}
+
 <div class="flex flex-wrap items-center justify-between gap-3">
   <div class="flex gap-2">
-    <a href="/pos/inventory/low-stock" class="btn {{#if (eq mode 'low')}}btn-dark{{else}}btn-light{{/if}}">⚠️ Low Stock</a>
-    <a href="/pos/inventory/out-of-stock" class="btn {{#if (eq mode 'out')}}btn-dark{{else}}btn-light{{/if}}">⛔ Out of Stock</a>
+    <a href="/pos/inventory/low-stock" class="btn {{#if (eq mode 'low')}}btn-dark{{else}}btn-light{{/if}}"> Low Stock</a>
+    <a href="/pos/inventory/out-of-stock" class="btn {{#if (eq mode 'out')}}btn-dark{{else}}btn-light{{/if}}"> Out of Stock</a>
   </div>
   {{#can "inventory.manage"}}
     <a href="/pos/inventory/stock-in" class="btn btn-primary">+ Record Stock In</a>
   {{/can}}
 </div>
 
-<section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-  <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Products listed</p><p class="stat-value mt-1 text-xl">{{int summary.totalProducts}}</p></div>
-  <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Units on hand</p><p class="stat-value mt-1 text-xl">{{int summary.totalUnits}}</p></div>
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-3">
+  <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Ingredients listed</p><p class="stat-value mt-1 text-xl">{{int summary.totalProducts}}</p></div>
   <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Low stock</p><p class="stat-value mt-1 text-xl text-amber-600">{{int summary.lowStock}}</p></div>
   <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Out of stock</p><p class="stat-value mt-1 text-xl text-red-600">{{int summary.outOfStock}}</p></div>
 </section>
@@ -20,13 +21,13 @@
 <section class="card overflow-hidden">
   <div class="table-wrap">
     <table class="data-table">
-      <thead><tr><th>Product</th><th>Category</th><th>On hand</th><th>Minimum</th><th>Status</th><th>Last updated</th><th class="text-right">Action</th></tr></thead>
+      <thead><tr><th>Ingredient / Raw Material</th><th>Category</th><th>On hand</th><th>Minimum</th><th>Status</th><th>Last updated</th><th class="text-right">Action</th></tr></thead>
       <tbody>
         {{#each rows}}
           <tr>
             <td>
               <div class="flex items-center gap-3">
-                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-stone-100 text-sm">🍽️</div>
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-stone-100 text-sm"></div>
                 <a href="/pos/inventory/{{this.productId}}" class="font-bold text-charcoal hover:text-ember">{{this.name}}</a>
               </div>
             </td>
@@ -46,7 +47,7 @@
         {{else}}
           <tr>
             <td colspan="7" class="py-12 text-center">
-              <p class="text-3xl">{{#if (eq mode "low")}}✅{{else}}🎉{{/if}}</p>
+              <p class="text-3xl">{{#if (eq mode "low")}}{{else}}{{/if}}</p>
               <p class="mt-2 text-sm font-semibold text-stone-700">
                 {{#if (eq mode "low")}}No products are low on stock.{{else}}Nothing is out of stock right now.{{/if}}
               </p>

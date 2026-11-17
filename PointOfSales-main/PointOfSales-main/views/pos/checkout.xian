@@ -78,7 +78,7 @@
         {{/if}}
 
         <div class="mt-4 flex flex-wrap gap-2">
-          <button type="submit" formaction="/pos/checkout/{{order.id}}/details" class="btn btn-light">Update order details</button>
+          <button type="submit" formnovalidate formaction="/pos/checkout/{{order.id}}/details" class="btn btn-light">Update order details</button>
           <p class="self-center text-[11px] text-stone-400">Table and discount are re-validated on the server.</p>
         </div>
       </div>
@@ -121,10 +121,10 @@
           <span class="label">Payment method *</span>
           <div class="grid grid-cols-2 gap-2">
             <label class="payment-option cursor-pointer rounded-xl border border-stone-200 px-3 py-2.5 text-center text-xs font-bold text-stone-600">
-              <input type="radio" name="paymentMethod" value="Cash" class="sr-only" checked /> 💵 Cash
+              <input type="radio" name="paymentMethod" value="Cash" class="sr-only" {{#if (eq selectedPaymentMethod "Cash")}}checked{{/if}} /> 💵 Cash
             </label>
             <label class="payment-option cursor-pointer rounded-xl border border-stone-200 px-3 py-2.5 text-center text-xs font-bold text-stone-600">
-              <input type="radio" name="paymentMethod" value="GCash" class="sr-only" /> 📱 GCash
+              <input type="radio" name="paymentMethod" value="GCash" class="sr-only" {{#if (eq selectedPaymentMethod "GCash")}}checked{{/if}} /> 📱 GCash
             </label>
             <label class="payment-option cursor-pointer rounded-xl border border-stone-200 px-3 py-2.5 text-center text-xs font-bold text-stone-600">
               <input type="radio" name="paymentMethod" value="Maya" class="sr-only" /> 💳 Maya
@@ -181,6 +181,7 @@
 </form>
 
 <script>
+  try { sessionStorage.removeItem("djyum-cart-{{currentUser.id}}"); } catch {}
   const CURRENCY = {{{json posSettings.currency}}};
   const SUBTOTAL = Number("{{totals.subtotal}}") || 0;
   const SERVICE_RATE = Number("{{posSettings.serviceChargeRate}}") || 0;

@@ -5,6 +5,8 @@
   deducted and the order stays payable.
 */
 import { Op } from "sequelize";
+import { stockRequirements } from '../utils/recipes.js';
+import { ownsOrder } from "../utils/access.js";
 import {
   sequelize,
   Order,
@@ -137,6 +139,10 @@ export const checkoutPage = async (req, res, next) => {
       flashError(req, `Order ${order.orderNumber} is ${order.status.toLowerCase()} and cannot be checked out.`);
       return res.redirect(`/pos/orders/${order.id}`);
     }
+    if (!ownsOrder(req.user, order)) {
+      flashError(req, "You can only check out your own orders.");
+      return res.redirect("/pos/orders");
+    }
     if (!order.items?.length) {
       flashError(req, "This order has no items.");
       return res.redirect("/pos/terminal");
@@ -161,6 +167,7 @@ export const checkoutPage = async (req, res, next) => {
       discounts: context.discounts,
       posSettings: context.settings,
       paymentMethods: PAYMENT_METHODS,
+      selectedPaymentMethod: req.session.orderPaymentMethods?.[order.id] || 'Cash',
       customersEnabled: await customersInstalled(),
     });
   } catch (error) {
@@ -175,6 +182,7 @@ export const saveOrderDetails = async (req, res, next) => {
     const customer = await customerFromForm(req.body);
     const preview = await loadOrderForCheckout(orderId, null);
     if (!preview) throw new PosError("Order not found.");
+    if (!ownsOrder(req.user, preview)) throw new PosError("You can only check out your own orders.");
     const previewSubtotal = round2(
       (preview.items || []).reduce((sum, item) => sum + num(item.subtotal), 0)
     );
@@ -187,6 +195,7 @@ export const saveOrderDetails = async (req, res, next) => {
       const settings = await getSettings();
       const order = await loadOrderForCheckout(orderId, t);
       if (!order) throw new PosError("Order not found.");
+      if (!ownsOrder(req.user, order)) throw new PosError("You can only check out your own orders.");
       if (order.status !== "Pending") {
         throw new PosError("Only pending orders can be updated.");
       }
@@ -281,6 +290,7 @@ export const processPayment = async (req, res, next) => {
     const customer = await customerFromForm(req.body);
     const preview = await loadOrderForCheckout(orderId, null);
     if (!preview) throw new PosError("Order not found.");
+    if (!ownsOrder(req.user, preview)) throw new PosError("You can only pay your own orders.");
     const previewSubtotal = round2(
       (preview.items || []).reduce((sum, item) => sum + num(item.subtotal), 0)
     );
@@ -293,6 +303,7 @@ export const processPayment = async (req, res, next) => {
       /* 1. Lock the order and make sure it can be paid exactly once. */
       const order = await loadOrderForCheckout(orderId, t);
       if (!order) throw new PosError("Order not found.");
+      if (!ownsOrder(req.user, order)) throw new PosError("You can only pay your own orders.");
       if (order.status === "Cancelled") {
         throw new PosError("This order was cancelled and cannot be paid.");
       }
@@ -364,7 +375,7 @@ export const processPayment = async (req, res, next) => {
 
       const amountReceived = req.body.amountReceived === "" || req.body.amountReceived == null
         ? null
-        : num(req.body.amountReceived, NaN);
+        : Number(req.body.amountReceived);
 
       let changeDue = 0;
       let referenceNumber = null;
@@ -397,7 +408,8 @@ export const processPayment = async (req, res, next) => {
       }
 
       /* 5. Deduct stock once per line, with a row lock and movement record. */
-      for (const item of order.items) {
+      const requirements = await stockRequirements(order.items, t);
+      for (const item of requirements) {
         if (Number(item.quantity) <= 0) {
           throw new PosError("Order quantities must be greater than zero.");
         }

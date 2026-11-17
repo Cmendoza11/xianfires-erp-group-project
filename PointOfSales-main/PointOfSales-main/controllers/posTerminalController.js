@@ -3,6 +3,8 @@
   price, stock check and total is recomputed from the database on submit.
 */
 import { Op } from "sequelize";
+import { recipeStock, stockRequirements } from '../utils/recipes.js';
+import { validQuantity } from "../utils/access.js";
 import {
   sequelize,
   Product,
@@ -44,6 +46,7 @@ export const terminalPage = async (req, res, next) => {
       getSettings(),
     ]);
 
+    const preparedStock = await recipeStock(products.map(product => product.id));
     const catalog = products.map((product) => {
       const record = product.toJSON();
       return {
@@ -53,8 +56,8 @@ export const terminalPage = async (req, res, next) => {
         image: record.image || null,
         categoryId: record.categoryId,
         category: record.category?.name || "Uncategorized",
-        stock: Number(record.inventory?.currentStock ?? 0),
-        unit: record.inventory?.unit || "pcs",
+        stock: preparedStock.get(record.id)?.available ?? Number(record.inventory?.currentStock ?? 0),
+        unit: preparedStock.get(record.id)?.unit || record.inventory?.unit || "pcs",
         type: record.type,
       };
     });
@@ -96,13 +99,13 @@ const parseCart = (raw) => {
 
   const merged = new Map();
   for (const line of parsed) {
-    const productId = toInt(line?.productId);
-    const quantity = toInt(line?.quantity);
-    if (!Number.isFinite(productId) || productId <= 0) {
+    const productId = Number(line?.productId);
+    const quantity = Number(line?.quantity);
+    if (!Number.isSafeInteger(productId) || productId <= 0) {
       throw new PosError("The cart contains an invalid product.");
     }
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      throw new PosError("Every order quantity must be greater than zero.");
+    if (!validQuantity(quantity)) {
+      throw new PosError("Every order quantity must be a whole number between 1 and 999.");
     }
     merged.set(productId, (merged.get(productId) || 0) + quantity);
   }
@@ -127,6 +130,7 @@ export const resolveCart = async ({ rawItems, transaction }) => {
     include: [{ model: Inventory, as: "inventory", required: false }],
     transaction,
   });
+  const preparedStock = await recipeStock(ids, transaction);
   const byId = new Map(products.map((product) => [product.id, product]));
 
   const items = lines.map((line) => {
@@ -140,13 +144,13 @@ export const resolveCart = async ({ rawItems, transaction }) => {
     }
 
     const inventory = product.inventory;
-    const stock = Number(inventory?.currentStock ?? 0);
-    if (!inventory) {
+    const stock = preparedStock.get(product.id)?.available ?? Number(inventory?.currentStock ?? 0);
+    if (!inventory && !preparedStock.has(product.id)) {
       throw new PosError(`No inventory record exists for "${product.name}".`);
     }
     if (stock < line.quantity) {
       throw new PosError(
-        `Insufficient stock for "${product.name}". Only ${stock} ${inventory.unit || "pcs"} left.`
+        `Insufficient stock for "${product.name}". Only ${stock} ${preparedStock.get(product.id)?.unit || inventory?.unit || "pcs"} left.`
       );
     }
 
@@ -160,6 +164,11 @@ export const resolveCart = async ({ rawItems, transaction }) => {
     };
   });
 
+  const requirements = await stockRequirements(items, transaction);
+  for (const item of requirements) {
+    const inventory = await Inventory.findOne({ where: { productId: item.productId }, transaction });
+    if (!inventory || Number(inventory.currentStock) < item.quantity) throw new PosError('Insufficient combined ingredient stock for ' + item.productName + '.');
+  }
   return { items, lines };
 };
 
@@ -203,6 +212,9 @@ export const createOrder = async (req, res, next) => {
       orderId = order.id;
     });
 
+    const preferences = req.session.orderPaymentMethods || {};
+    preferences[orderId] = req.body.paymentMethod === 'GCash' ? 'GCash' : 'Cash';
+    req.session.orderPaymentMethods = Object.fromEntries(Object.entries(preferences).slice(-32));
     flashSuccess(req, "Order created. Assign a table (for dine-in) and process payment.");
     return res.redirect(`/pos/checkout/${orderId}`);
   } catch (error) {

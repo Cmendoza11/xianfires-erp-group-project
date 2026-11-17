@@ -1,3 +1,4 @@
+import { movementList } from './posInventoryController.js';
 /*
   DJYum — sales and inventory reports. All figures come from live rows.
 */
@@ -119,7 +120,7 @@ const stockRows = () =>
      FROM pos_products p
      LEFT JOIN pos_categories c ON c.id = p.categoryId
      LEFT JOIN pos_inventory i ON i.productId = p.id
-     WHERE p.status = 'active'
+     WHERE p.status = 'active' AND p.type = 'Supply'
      ORDER BY p.name ASC`,
     { type: QueryTypes.SELECT }
   );
@@ -166,6 +167,7 @@ export const salesReport = async (req, res, next) => {
 };
 
 export const inventoryReport = async (req, res, next) => {
+  if (req.query.view !== "stock") return movementList(req, res, next);
   try {
     const range = resolvePeriod(req.query);
     const rows = mapStockRows(await stockRows());

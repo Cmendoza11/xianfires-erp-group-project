@@ -5,11 +5,12 @@
 import bcrypt from "bcrypt";
 import { User } from "../models/index.js";
 import { flashError, flashSuccess } from "../utils/pos.js";
+import { landingPage } from "../utils/access.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const loginPage = (req, res) => {
-  if (req.session?.userId) return res.redirect("/dashboard");
+  if (req.session?.userId) return res.redirect(landingPage(req.session.role));
   return res.render("login", { title: "Sign In" });
 };
 
@@ -52,7 +53,7 @@ export const loginUser = async (req, res, next) => {
       if (error) return next(error);
       req.session.userId = user.id;
       req.session.role = user.role;
-      req.session.save(() => res.redirect("/dashboard"));
+      req.session.save(() => res.redirect(landingPage(user.role)));
     });
   } catch (error) {
     return next(error);
@@ -104,7 +105,7 @@ export const registerUser = async (req, res, next) => {
             ? "Administrator account created. Welcome to DJYum!"
             : "Account created. You are signed in as a cashier."
         );
-        res.redirect("/dashboard");
+        res.redirect(landingPage(user.role));
       });
     });
   } catch (error) {

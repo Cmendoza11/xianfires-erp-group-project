@@ -138,7 +138,7 @@ app.use((err, req, res, next) => {
     title: "Something Went Wrong",
     status: 500,
     message:
-      err.message || "An unexpected error occurred. Please try again or contact the administrator.",
+      "An unexpected error occurred. Please try again or contact the administrator.",
   });
 });
 

@@ -3,6 +3,7 @@
   All associations live here so every controller sees the same relationship graph.
 */
 import { sequelize } from "./db.js";
+import { Recipe } from './recipeModel.js';
 import { User } from "./userModel.js";
 import { Category } from "./categoryModel.js";
 import { Product } from "./productModel.js";
@@ -73,6 +74,7 @@ Transaction.hasMany(IntegrationOutbox, { foreignKey: "transactionId", as: "outbo
 IntegrationOutbox.belongsTo(Transaction, { foreignKey: "transactionId", as: "transaction", constraints: false });
 
 export {
+  Recipe,
   sequelize,
   User,
   Category,

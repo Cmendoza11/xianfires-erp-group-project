@@ -1,6 +1,6 @@
     </main>
     <footer class="border-t border-stone-200/70 px-6 py-4 text-xs text-stone-400">
-      DJYum · POS &amp; Inventory Management System for DJ's Restaurant
+      DJs POS &amp; Inventory · POS &amp; Inventory Management System for DJ's Restaurant
     </footer>
   </div>
 </div>
@@ -23,7 +23,8 @@
 
   // Prevent double submissions (duplicate orders / payments).
   document.querySelectorAll("form[data-submit-once]").forEach((form) => {
-    form.addEventListener("submit", () => {
+    form.addEventListener("submit", (event) => {
+      if (event.defaultPrevented) return;
       form.querySelectorAll("button[type=submit]").forEach((button) => {
         button.disabled = true;
         button.classList.add("opacity-60", "cursor-not-allowed");

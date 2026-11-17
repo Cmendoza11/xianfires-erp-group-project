@@ -1,0 +1,28 @@
+{{> app-head title="Ingredients & Recipes" active="inventory" subtitle="Manage raw materials and quantities used per product serving"}}
+{{> stock-tabs}}
+<section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+  <form method="POST" action="/pos/inventory/ingredients" class="card space-y-4 p-5">
+    <h2 class="text-lg font-bold">Add Ingredient / Raw Material</h2>
+    <div><label class="label" for="ingredient-name">Name</label><input id="ingredient-name" name="name" required minlength="2" maxlength="160" class="input" placeholder="e.g. Pita Bread" /></div>
+    <div><label class="label" for="ingredient-unit">Base unit</label><select id="ingredient-unit" name="unit" class="select"><option value="pcs">pcs</option><option value="grams">grams</option><option value="ml">ml</option></select></div>
+    <div><label class="label" for="ingredient-min">Low stock threshold</label><input id="ingredient-min" name="minStockLevel" type="number" min="0" step="1" value="0" class="input" required /></div>
+    <p class="text-xs text-stone-500">New ingredients start at zero. Use Stock In to record your actual supply. Convert kg to grams (1 kg = 1000 grams) and liters to ml.</p>
+    <button class="btn btn-primary" type="submit">Add Ingredient</button>
+  </form>
+  <div class="card space-y-4 p-5">
+    <h2 class="text-lg font-bold">Product Ingredients / Recipe</h2>
+    <form method="GET" action="/pos/inventory/setup" class="flex flex-wrap gap-2">
+      <select name="product" class="select flex-1" aria-label="Select product">{{#each products}}<option value="{{this.id}}" {{selected this.id ../selectedProduct.id}}>{{this.name}}</option>{{/each}}</select><button class="btn btn-light">Select Product</button>
+    </form>
+    {{#if selectedProduct}}
+    <p class="text-sm text-stone-500">Enter the quantity used for <strong class="text-ember">one {{selectedProduct.name}}</strong>. Leave unused ingredients blank.</p>
+    {{#unless hasRecipe}}<p class="rounded-lg bg-amber-50 p-3 text-xs text-amber-700">Recipe not configured. This product still uses its existing per-product stock until you save a recipe. No ingredient quantities have been assumed.</p>{{/unless}}
+    <form method="POST" action="/pos/inventory/recipes" class="space-y-4">
+      <input type="hidden" name="productId" value="{{selectedProduct.id}}" />
+      <div class="space-y-3">{{#each ingredients}}<div class="grid grid-cols-[minmax(0,1fr)_100px_100px] items-center gap-3"><label for="recipe-{{this.id}}" class="text-sm">{{this.name}}</label><span class="text-xs text-stone-500">{{this.inventory.unit}}</span><input id="recipe-{{this.id}}" name="ingredient_{{this.id}}" value="{{this.recipeQuantity}}" type="number" min="0" max="100000" step="1" class="input" aria-label="{{this.name}} per serving" /></div>{{else}}<p class="text-sm text-stone-500">Add ingredients first.</p>{{/each}}</div>
+      {{#can "menu"}}<button type="submit" class="btn btn-primary">Save Recipe</button>{{else}}<p class="text-xs text-stone-500">Only administrators can save product recipes.</p>{{/can}}
+    </form>
+    {{else}}<p class="text-sm text-stone-500">Create a menu product before setting up its recipe.</p>{{/if}}
+  </div>
+</section>
+{{> app-foot}}

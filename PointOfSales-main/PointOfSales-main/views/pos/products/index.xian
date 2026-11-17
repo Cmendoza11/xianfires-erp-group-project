@@ -1,12 +1,6 @@
 {{> app-head title="Products" active="products" subtitle="Menu items, pricing and availability"}}
 
-<section class="flex flex-wrap items-center justify-between gap-3">
-  <div class="flex flex-wrap gap-2 text-xs font-semibold">
-    <span class="rounded-full bg-white px-3 py-1.5 text-stone-600 ring-1 ring-stone-200">Active: {{int totals.total}}</span>
-    <span class="rounded-full bg-white px-3 py-1.5 text-stone-600 ring-1 ring-stone-200">Archived: {{int totals.archived}}</span>
-    <span class="rounded-full bg-amber-50 px-3 py-1.5 text-amber-700 ring-1 ring-amber-200">Low stock: {{int totals.low}}</span>
-    <span class="rounded-full bg-red-50 px-3 py-1.5 text-red-700 ring-1 ring-red-200">Out of stock: {{int totals.out}}</span>
-  </div>
+<section class="flex flex-wrap items-center justify-end gap-3">
   <a href="/pos/products/new" class="btn btn-primary">+ Add Product</a>
 </section>
 
@@ -39,10 +33,10 @@
 
 <section class="card overflow-hidden">
   <div class="table-wrap">
-    <table class="data-table">
+    <table class="data-table products-table">
       <thead>
         <tr>
-          <th>Product</th><th>Category</th><th>Type</th><th>Price</th><th>Stock</th><th>Availability</th><th>Status</th><th class="text-right">Actions</th>
+          <th>Product</th><th>Category</th><th>Type</th><th>Price</th><th>Stock</th><th>Availability</th><th>Status</th><th class="text-center">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -63,29 +57,29 @@
                 </div>
               </div>
             </td>
-            <td class="text-stone-600">{{this.category.name}}</td>
-            <td><span class="badge bg-stone-100 text-stone-600">{{this.type}}</span></td>
-            <td class="font-bold">{{money this.price}}</td>
-            <td>
+            <td data-label="Category" class="text-stone-600">{{this.category.name}}</td>
+            <td data-label="Type"><span class="badge bg-stone-100 text-stone-600">{{this.type}}</span></td>
+            <td data-label="Price" class="font-bold">{{money this.price}}</td>
+            <td data-label="Stock">
               <p class="font-semibold text-stone-800">{{int this.currentStock}} {{this.inventory.unit}}</p>
               <p class="text-[11px] text-stone-400">min {{int this.minStock}}</p>
             </td>
-            <td>
+            <td data-label="Availability">
               {{#if this.availability}}
-                <span class="badge bg-emerald-100 text-emerald-700">Available</span>
+                <span class="badge badge-available">Available</span>
               {{else}}
                 <span class="badge bg-stone-100 text-stone-500">Unavailable</span>
               {{/if}}
             </td>
-            <td>
+            <td data-label="Status">
               {{#if (eq this.status "active")}}
                 <span class="badge bg-sky-100 text-sky-700">Active</span>
               {{else}}
                 <span class="badge bg-stone-200 text-stone-600">Archived</span>
               {{/if}}
             </td>
-            <td>
-              <div class="flex justify-end gap-1.5">
+            <td data-label="Actions">
+              <div class="flex justify-center items-center gap-1.5">
                 <a href="/pos/products/{{this.id}}/edit" class="btn btn-light px-2.5 py-1 text-[11px]">Edit</a>
                 {{#if (eq this.status "active")}}
                   <form method="POST" action="/pos/products/{{this.id}}/archive" data-confirm="Archive {{this.name}}? It will be removed from the POS but its sales history stays intact.">
