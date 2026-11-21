@@ -1,5 +1,5 @@
 import { fn, col, Op } from "sequelize";
-import { Employee, Department, Attendance, Leave, Payroll } from "../models/index.js";
+import { Employee, Department, Attendance, Leave, Payroll, PasswordRequest, User } from "../models/index.js";
 import { asyncHandler, findEmployeeForUser } from "../utils/helpers.js";
 import { localDateISO, startOfMonthISO, formatMoney, formatDate } from "../utils/format.js";
 
@@ -157,6 +157,14 @@ export const dashboard = asyncHandler(async (req, res) => {
       Payroll.count({ where: { status: "Paid", accountingSyncStatus: "Pending" } }),
       Payroll.count({ where: { status: "Paid", accountingSyncStatus: "Failed" } })
     ]);
+    const resetRequests = await PasswordRequest.findAll({
+      where: { status: "Pending" },
+      include: [{ model: User, as: "user", attributes: ["name", "email"] }],
+      order: [["createdAt", "ASC"]]
+    });
+    for (const r of resetRequests.filter((x) => x.user)) {
+      notifications.push({ icon: "i-user", tone: "orange", title: `${r.user.name} forgot their password`, detail: `${r.user.email} · reset it in User Accounts`, href: "/users#password-requests" });
+    }
     if (draftPayroll) notifications.push({ icon: "i-wallet", tone: "blue", title: `${draftPayroll} payroll draft(s) to review`, detail: "Check the amounts, then set them to Processed or Paid", href: `/payroll?status=Draft&month=${monthStart.slice(0, 7)}` });
     if (failed) notifications.push({ icon: "i-alert", tone: "red", title: `${failed} paid payroll could not be posted to Accounting`, detail: "Open the payslip and use Retry posting", href: "/payroll?status=Paid" });
     if (unposted) notifications.push({ icon: "i-alert", tone: "orange", title: `${unposted} paid payroll waiting for Accounting`, detail: "Accounting is not reachable yet; HR retries every minute", href: "/payroll?status=Paid" });

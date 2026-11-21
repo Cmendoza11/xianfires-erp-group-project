@@ -111,7 +111,7 @@ hbs.registerHelper("json", (value) => JSON.stringify(value));
 // What kind of change a POST made, so the success banner can be coloured:
 // add = green, edit = blue, delete = red (views/partials/flash.xian).
 const actionKind = (path) => {
-  if (/\/(delete|reject)$/.test(path)) return "delete";
+  if (/\/(delete|reject|dismiss)$/.test(path)) return "delete";
   if (/\/(create|approve|check-in)$/.test(path) || ["/departments", "/users", "/login", "/register"].includes(path)) return "add";
   return "edit";
 };

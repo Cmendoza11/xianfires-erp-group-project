@@ -3,11 +3,27 @@
     node check-connection.js        (or: npm run check:lan)
   It changes nothing in the database. It stops at the first ✗ and says how to fix it.
 */
-import { hrEnvLoaded, HR_ENV_FILE } from "./config/env.js";
+import { hrEnvLoaded, HR_ENV_FILE, HR_ROOT, parseEnv } from "./config/env.js";
+import fs from "node:fs";
+import path from "node:path";
 import net from "node:net";
 import { Sequelize } from "sequelize";
 
 const env = process.env;
+
+// Group repo (one folder, 5 modules): the settings live in the root .env (member.env from the host),
+// which `npm run dev -- --only=hr` uses. Read it the same way when HR has no own .env.
+const ROOT_ENV_FILE = path.join(HR_ROOT, "..", ".env");
+let envSource = hrEnvLoaded ? HR_ENV_FILE : null;
+if (!hrEnvLoaded && fs.existsSync(ROOT_ENV_FILE)) {
+  const root = parseEnv(fs.readFileSync(ROOT_ENV_FILE, "utf8"));
+  for (const [key, value] of Object.entries(root)) if (env[key] === undefined) env[key] = value;
+  env.PORT ??= env.PORT_HR || "3002";
+  env.DB_NAME ??= `${env.DB_NAME_HR || "djs_hr"}${env.DB_SUFFIX || ""}`;
+  if (!env.ERP_URL_ERP) env.ERP_URL_ERP = `http://localhost:${env.PORT_ERP || 3000}`; // same default as npm run dev
+  if (env.DB_PASSWORD === undefined && env.DB_PASS === undefined) env.DB_PASSWORD = "";
+  envSource = ROOT_ENV_FILE;
+}
 const ok = (msg) => console.log(`  ✓ ${msg}`);
 const fail = (msg, fix) => {
   console.log(`  ✗ ${msg}`);
@@ -27,7 +43,8 @@ console.log("DJ's HRMS - LAN connection check");
 
 // 1 ---------------------------------------------------------------
 step(1, ".env");
-if (!hrEnvLoaded) fail(`${HR_ENV_FILE} not found`, "copy .env.example to .env in the HR folder and fill it in");
+if (!envSource) fail(`no .env found (${HR_ENV_FILE} or ${ROOT_ENV_FILE})`, "group repo: copy member.env from the host to the repo root as .env; HR alone: copy .env.example to .env in the HR folder");
+console.log(`  using ${envSource}`);
 for (const key of ["PORT", "DB_HOST", "DB_NAME", "DB_USER", "ERP_URL_ERP", "ERP_API_KEY_HR", "ERP_INTERNAL_KEY", "SESSION_SECRET"]) {
   if (!env[key]) fail(`${key} is empty`, `set ${key} in .env (see .env.example)`);
 }

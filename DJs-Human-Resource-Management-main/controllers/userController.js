@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { User, Employee } from "../models/index.js";
+import { User, Employee, PasswordRequest } from "../models/index.js";
 import { asyncHandler, parseId, paginate } from "../utils/helpers.js";
 
 const ROLES = ["admin", "staff", "employee"];
@@ -18,10 +18,18 @@ export const userList = asyncHandler(async (req, res) => {
   const linked = new Set(users.map((u) => u.employeeId).filter(Boolean));
   const { rows, pagination } = paginate(req, users.map((u) => u.toJSON()));
 
+  // "Forgot password" requests waiting for the administrator (oldest first).
+  const passwordRequests = (await PasswordRequest.findAll({
+    where: { status: "Pending" },
+    include: [{ model: User, as: "user", attributes: ["id", "name", "email", "role"] }],
+    order: [["createdAt", "ASC"]]
+  })).map((r) => r.toJSON()).filter((r) => r.user);
+
   res.render("users", {
     title: "User Accounts | DJs HRMS",
     users: rows,
     pagination,
+    passwordRequests,
     roles: ROLES,
     // Employees without an account yet, for the "Link to employee" control.
     freeEmployees: employees.filter((e) => !linked.has(e.id)).map((e) => e.toJSON())
@@ -114,7 +122,29 @@ export const resetUserPassword = asyncHandler(async (req, res) => {
   }
 
   await user.update({ password: await bcrypt.hash(password, 10) });
-  req.flash("success_msg", `Password reset for ${user.email}.`);
+  // A reset answers any "forgot password" request from this account.
+  const answered = await PasswordRequest.update(
+    { status: "Done", handledBy: req.user.id, handledAt: new Date() },
+    { where: { userId: user.id, status: "Pending" } }
+  );
+  req.flash(
+    "success_msg",
+    `Password reset for ${user.email}.${answered[0] ? " The reset request is marked done." : ""} Give the temporary password to the user privately; they can change it in My Profile.`
+  );
+  res.redirect("/users");
+});
+
+// POST /password-requests/:id/dismiss: a request the admin will not act on (e.g. the identity could not be verified).
+export const dismissPasswordRequest = asyncHandler(async (req, res) => {
+  const request = await PasswordRequest.findByPk(parseId(req.params.id) || 0, {
+    include: [{ model: User, as: "user", attributes: ["email"] }]
+  });
+  if (!request || request.status !== "Pending") {
+    req.flash("error_msg", "That reset request is no longer pending.");
+    return res.redirect("/users");
+  }
+  await request.update({ status: "Dismissed", handledBy: req.user.id, handledAt: new Date() });
+  req.flash("success_msg", `Reset request from ${request.user?.email || "an account"} dismissed.`);
   res.redirect("/users");
 });
 
