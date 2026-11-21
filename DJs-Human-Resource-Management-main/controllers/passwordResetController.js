@@ -80,30 +80,27 @@ export const CLEAR_RESET = { tokenHash: null, expiresAt: null, approvedAt: null 
 // ---------------------------------------------------------------- user side
 export const forgotPasswordPage = (req, res) => {
   if (req.session.userId) return res.redirect("/profile#password");
+  // While this browser has a request, the page quietly checks for an approval and opens
+  // "Set a new password" by itself; otherwise HR gives a reset link or a temporary password.
   const waiting = readResetCookie(req);
-  res.render("forgotpassword", {
-    title: "Forgot Password | DJs HRMS",
-    waiting: waiting ? { email: waiting.email, until: timeOf(waiting.until) } : null
-  });
+  res.render("forgotpassword", { title: "Forgot Password | DJs HRMS", waiting: !!waiting });
 };
 
 export const forgotPasswordSubmit = asyncHandler(async (req, res) => {
   const email = cleanEmail(req.body.email);
-  const name = cleanText(req.body.name).slice(0, 120);
   const note = cleanText(req.body.note).slice(0, 255) || null;
 
-  const errors = [];
-  if (!isEmail(email)) errors.push("Enter the email address you use to sign in.");
-  if (name.length < 2) errors.push("Enter your full name so HR can verify your identity.");
-  if (errors.length) {
-    req.flash("error_msg", errors.join(" "));
+  if (!isEmail(email)) {
+    req.flash("error_msg", "Enter the email address you use to sign in.");
     return res.redirect("/forgot-password");
   }
 
   const claim = newSecret();
-  let id = 0; // unknown email: same waiting page, it is simply never approved
+  let id = 0; // unknown email: the same reply, it is simply never approved
   const user = await User.findOne({ where: { email }, order: [["id", "ASC"]] });
   if (user) {
+    // The form asks only for the email; the request shows the account's name to HR.
+    const name = (cleanText(req.body.name) || user.name).slice(0, 120);
     const fresh = { name, note, claimHash: sha256(claim), ...CLEAR_RESET };
     let request = await PasswordRequest.findOne({ where: { userId: user.id, status: "Pending" } });
     if (request) await request.update(fresh); // one pending request per account; a new send restarts it
@@ -112,6 +109,7 @@ export const forgotPasswordSubmit = asyncHandler(async (req, res) => {
   }
 
   setResetCookie(res, { id, claim, email, until: Date.now() + TTL_MS });
+  req.flash("success_msg", "Request sent. If the email belongs to an account, the HR administrator will give you a reset link.");
   res.redirect("/forgot-password");
 });
 

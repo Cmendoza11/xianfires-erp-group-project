@@ -42,7 +42,7 @@
         <div class="flex items-center justify-between gap-3 border-b border-orange-500/20 px-5 py-4">
           <div>
             <h3 class="font-bold">Password reset requests</h3>
-            <p class="text-xs text-gray-500">From the "Forgot password" page. Check that the name matches the account, then approve: their waiting page opens "Set a new password" by itself.</p>
+            <p class="text-xs text-gray-500">From the "Forgot password" page. Confirm with the person first, then use Send link (copy it to them) or set a temporary password. If their page is still open, Approve opens "Set a new password" on it by itself.</p>
           </div>
           <span class="whitespace-nowrap rounded-full bg-orange-500/10 px-2.5 py-1 text-[11px] font-semibold text-orange-400">{{passwordRequests.length}} pending</span>
         </div>
@@ -52,7 +52,7 @@
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div class="min-w-[14rem] flex-1">
                 <p class="font-medium">{{user.name}} <span class="text-xs text-gray-500">· {{user.email}} · {{user.role}}</span></p>
-                <p class="mt-0.5 text-xs text-gray-400">Name given: <span class="text-gray-200">{{name}}</span>{{#if note}} · “{{note}}”{{/if}} · {{formatDateTime createdAt}}</p>
+                <p class="mt-0.5 text-xs text-gray-400">Requested {{formatDateTime createdAt}}{{#if note}} · “{{note}}”{{/if}}</p>
               </div>
               <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold
                 {{#if (eq state "waiting")}}bg-yellow-400/10 text-yellow-400{{else}}{{#if (eq state "approved")}}bg-green-500/10 text-green-400{{else}}{{#if (eq state "link")}}bg-blue-500/10 text-blue-400{{else}}{{#if (eq state "expired")}}bg-red-500/10 text-red-400{{else}}bg-white/5 text-gray-400{{/if}}{{/if}}{{/if}}{{/if}}">{{label}}</span>
@@ -60,7 +60,7 @@
             <div class="flex flex-wrap items-center gap-2">
               {{#if canApprove}}
               <form method="POST" action="/password-requests/{{id}}/approve"
-                    data-confirm-title="Approve password reset?" data-confirm="Make sure the request is really from {{name}} ({{user.email}}). Their waiting page will open Set a new password right away." data-confirm-ok="Approve" data-confirm-tone="success">
+                    data-confirm-title="Approve password reset?" data-confirm="Make sure the request is really from {{user.name}} ({{user.email}}). If their Forgot password page is still open, it opens Set a new password right away." data-confirm-ok="Approve" data-confirm-tone="success">
                 <button type="submit" class="whitespace-nowrap rounded-lg bg-green-500 px-3 py-2 text-xs font-bold text-black hover:bg-green-400">Approve</button>
               </form>
               {{/if}}
