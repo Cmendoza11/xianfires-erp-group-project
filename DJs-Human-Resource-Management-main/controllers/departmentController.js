@@ -1,6 +1,6 @@
 import { fn, col, Op } from "sequelize";
 import { Department, Employee } from "../models/index.js";
-import { asyncHandler, parseId, paginate } from "../utils/helpers.js";
+import { asyncHandler, parseId, paginate } from "../utils/helpers.js"; // paginate: 9 per page
 
 const nameTaken = async (name, ignoreId = null) => {
   const where = { name };
@@ -26,12 +26,16 @@ export const departmentList = asyncHandler(async (req, res) => {
     order: [["lastName", "ASC"]]
   });
 
+  // 9 department cards per page, like every other list.
+  const { rows, pagination } = paginate(req, departments.map((d) => ({
+    ...d.toJSON(),
+    employeeCount: countMap.get(d.name) || 0
+  })));
+
   res.render("departments", {
     title: "Departments | DJs HRMS",
-    departments: departments.map((d) => ({
-      ...d.toJSON(),
-      employeeCount: countMap.get(d.name) || 0
-    })),
+    departments: rows,
+    pagination,
     employees: employees.map((e) => e.toJSON())
   });
 });

@@ -146,11 +146,45 @@
   </script>
 
   <script>
-    // The HRMS is dark only (the light/dark toggle was removed). Closes the user menu on outside click / Esc.
+    // Light/dark mode toggle ([data-theme-toggle] buttons; the choice is kept in localStorage "hrms-theme",
+    // applied early in partials/head.xian). Also closes the user menu / bell on outside click and Esc.
     (function () {
-      try { localStorage.removeItem("hrms-theme"); } catch (error) { /* storage blocked */ }
+      var root = document.documentElement;
+      var KEY = "hrms-theme";
+
+      function apply(theme) {
+        var light = theme === "light";
+        root.classList.toggle("light", light);
+        root.classList.toggle("dark", !light);
+        root.style.colorScheme = light ? "light" : "dark";
+
+        document.querySelectorAll("[data-theme-toggle]").forEach(function (button) {
+          button.setAttribute("aria-pressed", String(light));
+          button.setAttribute("aria-label", light ? "Switch to dark mode" : "Switch to light mode");
+          button.title = light ? "Switch to dark mode" : "Switch to light mode";
+
+          button.querySelectorAll("[data-theme-icon]").forEach(function (icon) {
+            var name = icon.getAttribute("data-theme-icon");
+            icon.classList.toggle("hidden", name !== (light ? "sun" : "moon"));
+          });
+
+          var label = button.querySelector("[data-theme-label]");
+          if (label) label.textContent = light ? "Light mode" : "Dark mode";
+        });
+      }
+
+      apply(root.classList.contains("light") ? "light" : "dark");
 
       document.addEventListener("click", function (event) {
+        var toggle = event.target.closest("[data-theme-toggle]");
+        if (toggle) {
+          event.preventDefault();
+          var next = root.classList.contains("light") ? "dark" : "light";
+          apply(next);
+          try { localStorage.setItem(KEY, next); } catch (error) { /* storage blocked */ }
+          return;
+        }
+
         document.querySelectorAll("details[data-user-menu][open]").forEach(function (menu) {
           if (!menu.contains(event.target)) menu.open = false;
         });

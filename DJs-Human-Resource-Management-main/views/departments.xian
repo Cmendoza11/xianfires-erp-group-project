@@ -82,6 +82,12 @@
         {{/each}}
       </div>
 
+      {{#if pagination.count}}
+      <div class="rounded-2xl border border-white/5 bg-[#171717] overflow-hidden [&>div]:border-t-0">
+        {{> pagination pagination=pagination label="department(s)"}}
+      </div>
+      {{/if}}
+
     </section>
     {{> page-footer}}
   </main>
