@@ -13,7 +13,15 @@ const PasswordRequest = sequelize.define("PasswordRequest", {
     defaultValue: "Pending"
   },
   handledBy: { type: DataTypes.INTEGER, allowNull: true },
-  handledAt: { type: DataTypes.DATE, allowNull: true }
+  handledAt: { type: DataTypes.DATE, allowNull: true },
+  // Approve flow (controllers/passwordResetController.js). Only SHA-256 hashes are stored, never secrets.
+  // claimHash: the requesting browser's secret (cookie) — only that browser receives the approval.
+  // approvedAt: the admin approved; expiresAt: approval / link deadline (30 min); tokenHash: the one-time
+  // /reset-password/<token> link. Status stays "Pending" until the new password is saved.
+  tokenHash: { type: DataTypes.STRING(64), allowNull: true },
+  expiresAt: { type: DataTypes.DATE, allowNull: true },
+  claimHash: { type: DataTypes.STRING(64), allowNull: true },
+  approvedAt: { type: DataTypes.DATE, allowNull: true }
 }, { tableName: "hr_password_requests" });
 
 export default PasswordRequest;

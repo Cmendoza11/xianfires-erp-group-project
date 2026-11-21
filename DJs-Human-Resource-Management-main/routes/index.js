@@ -3,8 +3,6 @@ import { homePage } from "../controllers/homeController.js";
 import {
   loginPage,
   registerPage,
-  forgotPasswordPage,
-  forgotPasswordSubmit,
   loginUser,
   registerUser,
   logoutUser,
@@ -66,6 +64,16 @@ import {
   dismissPasswordRequest,
   deleteUser
 } from "../controllers/userController.js";
+import {
+  forgotPasswordPage,
+  forgotPasswordSubmit,
+  forgotPasswordStatus,
+  forgotPasswordCancel,
+  approvePasswordRequest,
+  issueResetLink,
+  resetPasswordPage,
+  resetPasswordSubmit
+} from "../controllers/passwordResetController.js";
 import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -80,6 +88,10 @@ router.get("/register", registerPage);
 router.post("/register", registerUser);
 router.get("/forgot-password", forgotPasswordPage);
 router.post("/forgot-password", forgotPasswordSubmit);
+router.get("/forgot-password/status", forgotPasswordStatus);
+router.post("/forgot-password/cancel", forgotPasswordCancel);
+router.get("/reset-password/:token", resetPasswordPage);
+router.post("/reset-password/:token", resetPasswordSubmit);
 // No requireAuth: it would save /logout as the page to return to, and the next login would log out at once.
 router.get("/logout", logoutUser);
 
@@ -146,6 +158,8 @@ router.post("/users/:id/password", requireRole("admin"), resetUserPassword);
 router.post("/users/:id/role", requireRole("admin"), updateUserRole);
 router.post("/users/:id/employee", requireRole("admin"), linkUserEmployee);
 router.post("/password-requests/:id/dismiss", requireRole("admin"), dismissPasswordRequest);
+router.post("/password-requests/:id/approve", requireRole("admin"), approvePasswordRequest);
+router.post("/password-requests/:id/link", requireRole("admin"), issueResetLink);
 router.post("/users/:id/delete", requireRole("admin"), deleteUser);
 
 export default router;

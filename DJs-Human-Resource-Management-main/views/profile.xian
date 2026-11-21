@@ -62,8 +62,7 @@
           {{else}}
             {{#if isLimited}}
             <p class="text-sm text-gray-400">
-              No employee record is linked yet. Ask HR to add or update your record using
-              <span class="text-yellow-400">{{currentUser.email}}</span>; the link is created automatically.
+              No employee record is linked yet. Ask HR to link your account to your employee record.
             </p>
             {{else}}
             <p class="text-sm text-gray-400">This staff account is not linked to an employee record.</p>

@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { User, PasswordRequest } from "../models/index.js";
+import { User } from "../models/index.js";
 import { asyncHandler } from "../utils/helpers.js";
 
 const cleanEmail = (value) => String(value || "").trim().toLowerCase();
@@ -26,36 +26,7 @@ export const registerPage = (req, res) => {
   res.render("register", { title: "Register | DJs HRMS" });
 };
 
-export const forgotPasswordPage = (req, res) => {
-  if (req.session.userId) return res.redirect("/profile#password");
-  res.render("forgotpassword", { title: "Forgot Password | DJs HRMS", sent: req.query.sent === "1" });
-};
-
-// POST /forgot-password: there is no mail server, so this files a request that the HR administrator
-// sees (notification bell + User Accounts) and resolves by setting a temporary password.
-// The reply is the same whether or not the email has an account, so accounts cannot be discovered.
-export const forgotPasswordSubmit = asyncHandler(async (req, res) => {
-  const email = cleanEmail(req.body.email);
-  const name = cleanText(req.body.name).slice(0, 120);
-  const note = cleanText(req.body.note).slice(0, 255) || null;
-
-  const errors = [];
-  if (!isEmail(email)) errors.push("Enter the email address you use to sign in.");
-  if (name.length < 2) errors.push("Enter your full name so HR can verify your identity.");
-  if (errors.length) {
-    req.flash("error_msg", errors.join(" "));
-    return res.redirect("/forgot-password");
-  }
-
-  const user = await User.findOne({ where: { email }, order: [["id", "ASC"]] });
-  if (user) {
-    const pending = await PasswordRequest.findOne({ where: { userId: user.id, status: "Pending" } });
-    if (pending) await pending.update({ name, note }); // keep one pending request per account
-    else await PasswordRequest.create({ userId: user.id, name, note });
-  }
-
-  res.redirect("/forgot-password?sent=1");
-});
+// Forgot password lives in controllers/passwordResetController.js.
 
 export const loginUser = asyncHandler(async (req, res) => {
   const email = cleanEmail(req.body.email);

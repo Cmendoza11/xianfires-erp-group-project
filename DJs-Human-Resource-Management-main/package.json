@@ -20,6 +20,10 @@
     "route:list": "node list-routes.js",
     "route:cache": "node route-cache.js"
   },
+  "nodemonConfig": {
+    "ext": "js,json,xian",
+    "ignore": ["node_modules/*", "public/*"]
+  },
   "dependencies": {
     "express": "^4.19.2",
     "inquirer": "^9.2.15",

@@ -55,9 +55,12 @@
 
         <div>
           <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Password</label>
-          <input id="password" type="password" name="password" required autocomplete="current-password"
-                 placeholder="••••••••"
-                 class="w-full rounded-xl border border-white/10 bg-[#171717] px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+          <div class="relative">
+            <input id="password" type="password" name="password" required autocomplete="current-password"
+                   placeholder="••••••••"
+                   class="w-full rounded-xl border border-white/10 bg-[#171717] py-3 pl-4 pr-12 text-sm text-white placeholder-gray-600 outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+            {{> eye-button}}
+          </div>
         </div>
 
         <button type="submit" class="w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-bold text-black transition hover:bg-yellow-300">
@@ -78,5 +81,6 @@
 
 </div>
 
+{{> password-toggle}}
 </body>
 </html>

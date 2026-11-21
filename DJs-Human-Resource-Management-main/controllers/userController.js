@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { User, Employee, PasswordRequest } from "../models/index.js";
+import { publicRequest, CLEAR_RESET } from "./passwordResetController.js";
 import { asyncHandler, parseId, paginate } from "../utils/helpers.js";
 
 const ROLES = ["admin", "staff", "employee"];
@@ -19,17 +20,23 @@ export const userList = asyncHandler(async (req, res) => {
   const { rows, pagination } = paginate(req, users.map((u) => u.toJSON()));
 
   // "Forgot password" requests waiting for the administrator (oldest first).
+  // publicRequest adds the state badge and strips tokenHash / claimHash before they reach the view.
   const passwordRequests = (await PasswordRequest.findAll({
     where: { status: "Pending" },
     include: [{ model: User, as: "user", attributes: ["id", "name", "email", "role"] }],
     order: [["createdAt", "ASC"]]
-  })).map((r) => r.toJSON()).filter((r) => r.user);
+  })).map(publicRequest).filter((r) => r.user);
+  // A link made with "Send link instead" is shown once, right after it is made, and never stored.
+  const resetLink = req.flash("reset_link")[0] || null;
+  const resetEmail = req.flash("reset_email")[0] || null;
 
   res.render("users", {
     title: "User Accounts | DJs HRMS",
     users: rows,
     pagination,
     passwordRequests,
+    resetLink,
+    resetEmail,
     roles: ROLES,
     // Employees without an account yet, for the "Link to employee" control.
     freeEmployees: employees.filter((e) => !linked.has(e.id)).map((e) => e.toJSON())
@@ -124,7 +131,7 @@ export const resetUserPassword = asyncHandler(async (req, res) => {
   await user.update({ password: await bcrypt.hash(password, 10) });
   // A reset answers any "forgot password" request from this account.
   const answered = await PasswordRequest.update(
-    { status: "Done", handledBy: req.user.id, handledAt: new Date() },
+    { status: "Done", handledBy: req.user.id, handledAt: new Date(), ...CLEAR_RESET },
     { where: { userId: user.id, status: "Pending" } }
   );
   req.flash(
@@ -143,7 +150,7 @@ export const dismissPasswordRequest = asyncHandler(async (req, res) => {
     req.flash("error_msg", "That reset request is no longer pending.");
     return res.redirect("/users");
   }
-  await request.update({ status: "Dismissed", handledBy: req.user.id, handledAt: new Date() });
+  await request.update({ status: "Dismissed", handledBy: req.user.id, handledAt: new Date(), ...CLEAR_RESET });
   req.flash("success_msg", `Reset request from ${request.user?.email || "an account"} dismissed.`);
   res.redirect("/users");
 });

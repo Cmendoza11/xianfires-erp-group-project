@@ -1,6 +1,7 @@
 import { fn, col, Op } from "sequelize";
 import { Employee, Department, Attendance, Leave, Payroll, PasswordRequest, User } from "../models/index.js";
 import { asyncHandler, findEmployeeForUser } from "../utils/helpers.js";
+import { publicRequest } from "./passwordResetController.js";
 import { localDateISO, startOfMonthISO, formatMoney, formatDate } from "../utils/format.js";
 
 const WEEK_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -157,13 +158,20 @@ export const dashboard = asyncHandler(async (req, res) => {
       Payroll.count({ where: { status: "Paid", accountingSyncStatus: "Pending" } }),
       Payroll.count({ where: { status: "Paid", accountingSyncStatus: "Failed" } })
     ]);
-    const resetRequests = await PasswordRequest.findAll({
+    const resetRequests = (await PasswordRequest.findAll({
       where: { status: "Pending" },
       include: [{ model: User, as: "user", attributes: ["name", "email"] }],
       order: [["createdAt", "ASC"]]
-    });
+    })).map(publicRequest); // no token/claim hashes leave the controller
+    const RESET_TEXT = {
+      waiting: "approve it in User Accounts",
+      approved: "approved, waiting for them",
+      link: "reset link given",
+      expired: "approval expired, act again in User Accounts",
+      closed: "reset it in User Accounts"
+    };
     for (const r of resetRequests.filter((x) => x.user)) {
-      notifications.push({ icon: "i-user", tone: "orange", title: `${r.user.name} forgot their password`, detail: `${r.user.email} · reset it in User Accounts`, href: "/users#password-requests" });
+      notifications.push({ icon: "i-user", tone: "orange", title: `${r.user.name} forgot their password`, detail: `${r.user.email} · ${RESET_TEXT[r.state] || RESET_TEXT.closed}`, href: "/users#password-requests" });
     }
     if (draftPayroll) notifications.push({ icon: "i-wallet", tone: "blue", title: `${draftPayroll} payroll draft(s) to review`, detail: "Check the amounts, then set them to Processed or Paid", href: `/payroll?status=Draft&month=${monthStart.slice(0, 7)}` });
     if (failed) notifications.push({ icon: "i-alert", tone: "red", title: `${failed} paid payroll could not be posted to Accounting`, detail: "Open the payslip and use Retry posting", href: "/payroll?status=Paid" });
