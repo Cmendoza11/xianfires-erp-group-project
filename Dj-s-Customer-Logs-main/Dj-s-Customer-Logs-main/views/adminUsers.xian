@@ -1,0 +1,289 @@
+{{> head}}
+<body class="bg-[#fffdf2] dark:bg-[#0f0f0f] min-h-screen">
+  <div class="min-h-screen md:flex">
+    {{> adminSidebar activeSection="users"}}
+    <main class="flex-1 px-4 py-8 lg:px-8">
+      <header class="mb-8 rounded-2xl bg-[#171717] p-6 text-white shadow-lg">
+        <p class="text-sm font-medium uppercase tracking-widest text-[#f7d83d]">Admin Panel</p>
+        <h1 class="mt-2 text-3xl font-bold">User Management</h1>
+        <p class="mt-2 text-[#f5edbd] opacity-80">Manage staff and admin accounts</p>
+      </header>
+
+      {{#if error_msg}}
+      <div class="mb-6 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+        <p class="text-sm text-red-800 dark:text-red-200">❌ {{error_msg}}</p>
+      </div>
+      {{/if}}
+
+      {{#if success_msg}}
+      <div class="mb-6 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
+        <p class="text-sm text-green-800 dark:text-green-200">✅ {{success_msg}}</p>
+      </div>
+      {{/if}}
+
+      <!-- Stats Cards -->
+      <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
+        <article class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff8d8] dark:bg-[#2a2500] text-[#75651d] dark:text-[#f7d83d]">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </svg>
+            </span>
+            <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">Total</p>
+          </div>
+          <p class="mt-4 text-3xl font-bold text-[#171717] dark:text-white">{{stats.totalUsers}}</p>
+          <p class="mt-1 text-sm text-[#75651d] dark:text-[#f5edbd]">Total Users</p>
+        </article>
+
+        <article class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </span>
+            <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">Active</p>
+          </div>
+          <p class="mt-4 text-3xl font-bold text-[#171717] dark:text-white">{{stats.activeUsers}}</p>
+          <p class="mt-1 text-sm text-[#75651d] dark:text-[#f5edbd]">Active Accounts</p>
+        </article>
+
+        <article class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7d83d] text-[#171717]">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </span>
+            <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">Admins</p>
+          </div>
+          <p class="mt-4 text-3xl font-bold text-[#171717] dark:text-white">{{stats.adminCount}}</p>
+          <p class="mt-1 text-sm text-[#75651d] dark:text-[#f5edbd]">Administrators</p>
+        </article>
+
+        <article class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </span>
+            <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">Staff</p>
+          </div>
+          <p class="mt-4 text-3xl font-bold text-[#171717] dark:text-white">{{stats.staffCount}}</p>
+          <p class="mt-1 text-sm text-[#75651d] dark:text-[#f5edbd]">Staff Members</p>
+        </article>
+      </section>
+
+      <!-- Actions Bar -->
+      <div class="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <!-- Search and Filters -->
+        <form method="GET" action="/admin/users" class="flex gap-2 flex-wrap">
+          <input type="text" name="search" value="{{search}}" placeholder="Search users..." class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          <select name="role" class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]">
+            <option value="">All Roles</option>
+            <option value="admin" {{#ifEquals roleFilter "admin"}}selected{{/ifEquals}}>Admin</option>
+            <option value="staff" {{#ifEquals roleFilter "staff"}}selected{{/ifEquals}}>Staff</option>
+          </select>
+          <select name="status" class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]">
+            <option value="">All Status</option>
+            <option value="active" {{#ifEquals statusFilter "active"}}selected{{/ifEquals}}>Active</option>
+            <option value="pending" {{#ifEquals statusFilter "pending"}}selected{{/ifEquals}}>Pending</option>
+            <option value="inactive" {{#ifEquals statusFilter "inactive"}}selected{{/ifEquals}}>Inactive</option>
+          </select>
+          <button type="submit" class="rounded-xl bg-[#171717] dark:bg-[#f7d83d] px-4 py-2 text-sm font-semibold text-[#f7d83d] dark:text-[#171717] hover:opacity-90">Filter</button>
+        </form>
+
+        <!-- Add User Button -->
+        <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" class="rounded-xl bg-[#f7d83d] px-6 py-2 text-sm font-bold text-[#171717] hover:opacity-90 shadow-md whitespace-nowrap">
+          + Add User
+        </button>
+      </div>
+
+      <!-- Users Table -->
+      <section class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-[#fffdf2] dark:bg-[#111]">
+              <tr class="border-b border-[#ead36a] dark:border-[#2d2d2d]">
+                <th class="p-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Name</th>
+                <th class="p-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Email</th>
+                <th class="p-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Role</th>
+                <th class="p-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</th>
+                <th class="p-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Last Login</th>
+                <th class="p-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each users}}
+              <tr class="border-b border-[#f1e8ae] dark:border-[#1f1f1f] hover:bg-[#fffdf2] dark:hover:bg-[#111] transition-colors">
+                <td class="p-4 font-medium text-[#171717] dark:text-white">
+                  {{name}}
+                  {{#ifEquals id ../currentUserId}}
+                  <span class="ml-2 text-xs text-[#75651d] dark:text-[#f7d83d]">(You)</span>
+                  {{/ifEquals}}
+                </td>
+                <td class="p-4 text-gray-600 dark:text-gray-400">{{email}}</td>
+                <td class="p-4">
+                  {{#ifEquals role "admin"}}
+                  <span class="rounded-full bg-[#f7d83d] px-3 py-1 text-xs font-bold text-[#171717]">Admin</span>
+                  {{else}}
+                  <span class="rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300">Staff</span>
+                  {{/ifEquals}}
+                </td>
+                <td class="p-4">
+                  {{#ifEquals status "active"}}
+                  <span class="rounded-full bg-green-100 dark:bg-green-900/30 px-3 py-1 text-xs font-semibold text-green-700 dark:text-green-300">Active</span>
+                  {{else}}{{#ifEquals status "pending"}}
+                  <span class="rounded-full bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 text-xs font-semibold text-yellow-700 dark:text-yellow-300">Pending</span>
+                  {{else}}
+                  <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1 text-xs font-semibold text-gray-700 dark:text-gray-300">Inactive</span>
+                  {{/ifEquals}}{{/ifEquals}}
+                </td>
+                <td class="p-4 text-gray-600 dark:text-gray-400 text-xs">{{lastLogin}}</td>
+                <td class="p-4">
+                  <div class="flex gap-2">
+                    {{#unlessEquals id ../currentUserId}}
+                    <!-- Change Role -->
+                    <button onclick="openRoleModal({{id}}, '{{name}}', '{{role}}')" class="rounded-lg bg-blue-50 dark:bg-blue-900/20 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40" title="Change Role">
+                      Role
+                    </button>
+                    
+                    <!-- Toggle Status -->
+                    <form method="POST" action="/admin/users/{{id}}/toggle-status" class="inline">
+                      <button type="submit" class="rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40" title="Toggle Status">
+                        {{#ifEquals status "active"}}Deactivate{{else}}Activate{{/ifEquals}}
+                      </button>
+                    </form>
+                    <!-- Reset Password -->
+                    <button onclick="openResetPasswordModal({{id}}, '{{name}}')" class="rounded-lg bg-purple-50 dark:bg-purple-900/20 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40" title="Reset Password">
+                      Reset
+                    </button>
+                    <!-- Delete -->
+                    <button onclick="openDeleteModal({{id}}, '{{name}}')" class="rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-1 text-xs font-semibold text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40" title="Delete User">
+                      Delete
+                    </button>
+                    {{/unlessEquals}}
+                  </div>
+                </td>
+              </tr>
+              {{else}}
+              <tr>
+                <td colspan="6" class="p-8 text-center text-gray-400 dark:text-gray-500">No users found.</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Add User Modal -->
+  <div id="addUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 w-full max-w-md border border-[#ead36a] dark:border-[#2d2d2d]">
+      <h3 class="text-xl font-bold text-[#171717] dark:text-white mb-4">Add New User</h3>
+      <form method="POST" action="/admin/users" class="grid gap-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Full Name</label>
+          <input type="text" name="name" required class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Email Address</label>
+          <input type="email" name="email" required class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Password</label>
+          <input type="password" name="password" required minlength="8" class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Minimum 8 characters</p>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Role</label>
+          <select name="role" required class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]">
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button type="submit" class="flex-1 rounded-xl bg-[#f7d83d] px-4 py-2 text-sm font-bold text-[#171717] hover:opacity-90">Create User</button>
+          <button type="button" onclick="document.getElementById('addUserModal').classList.add('hidden')" class="flex-1 rounded-xl bg-gray-200 dark:bg-gray-700 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:opacity-90">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Change Role Modal -->
+  <div id="roleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 w-full max-w-md border border-[#ead36a] dark:border-[#2d2d2d]">
+      <h3 class="text-xl font-bold text-[#171717] dark:text-white mb-4">Change User Role</h3>
+      <form id="roleForm" method="POST" class="grid gap-4">
+        <p class="text-sm text-gray-600 dark:text-gray-400">Change role for: <span id="roleUserName" class="font-semibold text-[#171717] dark:text-white"></span></p>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">New Role</label>
+          <select name="role" id="roleSelect" required class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]">
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="flex-1 rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:opacity-90">Change Role</button>
+          <button type="button" onclick="document.getElementById('roleModal').classList.add('hidden')" class="flex-1 rounded-xl bg-gray-200 dark:bg-gray-700 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:opacity-90">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div id="resetPasswordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 w-full max-w-md border border-[#ead36a] dark:border-[#2d2d2d]">
+      <h3 class="text-xl font-bold text-[#171717] dark:text-white mb-4">Reset Password</h3>
+      <form id="resetPasswordForm" method="POST" class="grid gap-4">
+        <p class="text-sm text-gray-600 dark:text-gray-400">Reset password for: <span id="resetPasswordUserName" class="font-semibold text-[#171717] dark:text-white"></span></p>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">New Password</label>
+          <input type="password" name="password" required minlength="8" class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Minimum 8 characters</p>
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="flex-1 rounded-xl bg-purple-600 px-4 py-2 text-sm font-bold text-white hover:opacity-90">Reset Password</button>
+          <button type="button" onclick="document.getElementById('resetPasswordModal').classList.add('hidden')" class="flex-1 rounded-xl bg-gray-200 dark:bg-gray-700 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:opacity-90">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 w-full max-w-md border border-[#ead36a] dark:border-[#2d2d2d]">
+      <h3 class="text-xl font-bold text-red-600 dark:text-red-400 mb-4">Delete User</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Are you sure you want to delete: <span id="deleteUserName" class="font-semibold text-[#171717] dark:text-white"></span>?</p>
+      <p class="text-sm text-red-600 dark:text-red-400 mb-4">⚠️ This action cannot be undone!</p>
+      <form id="deleteForm" method="POST" class="flex gap-2">
+        <button type="submit" class="flex-1 rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:opacity-90">Delete User</button>
+        <button type="button" onclick="document.getElementById('deleteModal').classList.add('hidden')" class="flex-1 rounded-xl bg-gray-200 dark:bg-gray-700 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:opacity-90">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openRoleModal(id, name, currentRole) {
+      document.getElementById('roleUserName').textContent = name;
+      document.getElementById('roleSelect').value = currentRole;
+      document.getElementById('roleForm').action = '/admin/users/' + id + '/role';
+      document.getElementById('roleModal').classList.remove('hidden');
+    }
+
+    function openResetPasswordModal(id, name) {
+      document.getElementById('resetPasswordUserName').textContent = name;
+      document.getElementById('resetPasswordForm').action = '/admin/users/' + id + '/reset-password';
+      document.getElementById('resetPasswordModal').classList.remove('hidden');
+    }
+
+    function openDeleteModal(id, name) {
+      document.getElementById('deleteUserName').textContent = name;
+      document.getElementById('deleteForm').action = '/admin/users/' + id + '/delete';
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+  </script>
+{{> footer}}

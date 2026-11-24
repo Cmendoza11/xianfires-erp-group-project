@@ -17,7 +17,6 @@ import { RestaurantTable } from "./restaurantTableModel.js";
 import { Discount } from "./discountModel.js";
 import { TransactionDiscount } from "./transactionDiscountModel.js";
 import { Setting } from "./settingModel.js";
-import { PosSession } from "./sessionModel.js";
 import { IntegrationOutbox } from "./integrationOutboxModel.js";
 
 /* Menu ---------------------------------------------------------------- */
@@ -90,6 +89,5 @@ export {
   Discount,
   TransactionDiscount,
   Setting,
-  PosSession,
   IntegrationOutbox,
 };

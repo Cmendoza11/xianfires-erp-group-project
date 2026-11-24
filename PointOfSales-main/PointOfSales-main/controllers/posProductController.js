@@ -16,17 +16,12 @@ import {
   flashSuccess,
   generateNumber,
   num,
-  productCode,
   toInt,
 } from "../utils/pos.js";
 import { validateImagePayload } from "../utils/image.js";
 
 const PRODUCT_TYPES = ["Food", "Beverage", "Dessert", "Combo", "Other", "Supply"];
-const addOnFields = (product) => ["Yakult", "Nata", "Pearl", "Cheesecake", "Chocolate Chips"].map((name, id) => ({
-  id, name, price: product?.addOns?.find((option) => option.id === id)?.price ?? "",
-}));
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-const PRODUCT_LIST_LIMIT = 300;
 
 const loadCategories = () =>
   Category.findAll({
@@ -39,7 +34,6 @@ export const productList = async (req, res, next) => {
     const q = String(req.query.q || "").trim();
     const categoryId = toInt(req.query.category) || null;
     const stock = String(req.query.stock || "").trim();
-    const filterByStock = ["available", "low", "out"].includes(stock);
     const status = String(req.query.status || "").trim();
 
     const where = { type: { [Op.ne]: "Supply" } };
@@ -48,11 +42,6 @@ export const productList = async (req, res, next) => {
         { name: { [Op.like]: `%${q}%` } },
         { description: { [Op.like]: `%${q}%` } },
       ];
-      const codeMatch = /^POS-(\d+)$/i.exec(q);
-      const codeId = Number(codeMatch?.[1]);
-      if (Number.isSafeInteger(codeId) && codeId > 0 && productCode(codeId) === q.toUpperCase()) {
-        where[Op.or].push({ id: codeId });
-      }
     }
     if (categoryId) where.categoryId = categoryId;
     if (["active", "archived"].includes(status)) where.status = status;
@@ -67,7 +56,7 @@ export const productList = async (req, res, next) => {
         ["status", "ASC"],
         ["name", "ASC"],
       ],
-      ...(filterByStock ? {} : { limit: PRODUCT_LIST_LIMIT }),
+      limit: 300,
     });
 
     const preparedStock = await recipeStock(products.map(product => product.id));
@@ -82,8 +71,7 @@ export const productList = async (req, res, next) => {
           : currentStock <= minStock
           ? "Low Stock"
           : "In Stock";
-      const isAvailable = data.status === "active" && data.availability && currentStock > 0;
-      return { ...data, code: productCode(data.id), currentStock, minStock, stockStatus, isAvailable };
+      return { ...data, currentStock, minStock, stockStatus };
     });
 
     const filtered = rows.filter((row) => {
@@ -96,7 +84,7 @@ export const productList = async (req, res, next) => {
     return res.render("pos/products/index", {
       title: "Products",
       active: "products",
-      products: filtered.slice(0, PRODUCT_LIST_LIMIT),
+      products: filtered,
       categories: await loadCategories(),
       filters: {
         q,
@@ -123,7 +111,6 @@ export const productNewPage = async (req, res, next) => {
       active: "products",
       mode: "create",
       product: null,
-      addOnFields: addOnFields(),
       categories: await loadCategories(),
       productTypes: PRODUCT_TYPES,
     });
@@ -141,17 +128,6 @@ const validateProductPayload = (body) => {
   const unit = String(body.unit || "pcs").trim() || "pcs";
   const minStockLevel = toInt(body.minStockLevel ?? 0);
   const initialStock = toInt(body.initialStock ?? 0);
-
-  let addOns;
-  if (type === "Beverage") {
-    addOns = [];
-    for (const { id, name: optionName } of addOnFields()) {
-      const value = String(body["addOn" + id] ?? "").trim();
-      if (!value) continue;
-      if (!/^\d{1,5}(?:\.\d{1,2})?$/.test(value)) return { error: `Enter a valid price for ${optionName}.` };
-      addOns.push({ id, name: optionName, price: Number(value) });
-    }
-  }
 
   if (name.length < 2 || name.length > 160) {
     return { error: "Product name must be between 2 and 160 characters." };
@@ -177,7 +153,6 @@ const validateProductPayload = (body) => {
     values: {
       name,
       description: description || null,
-      addOns,
       categoryId,
       price: Math.round(price * 100) / 100,
       type,
@@ -213,7 +188,6 @@ export const productCreate = async (req, res, next) => {
         {
           name: values.name,
           description: values.description,
-          addOns: values.addOns,
           categoryId: values.categoryId,
           price: values.price,
           type: values.type,
@@ -278,8 +252,6 @@ export const productEditPage = async (req, res, next) => {
       active: "products",
       mode: "edit",
       product: product.toJSON(),
-      code: productCode(product.id),
-      addOnFields: addOnFields(product),
       categories: await loadCategories(),
       productTypes: PRODUCT_TYPES,
     });
@@ -324,9 +296,7 @@ export const productUpdate = async (req, res, next) => {
         availability:
           req.body.availability === "on" || req.body.availability === "true",
       };
-      if (values.addOns !== undefined) updates.addOns = values.addOns;
       if (image.value !== undefined) updates.image = image.value;
-      const keepMinimum = product.type === "Supply" || values.type === "Supply";
       await product.update(updates, { transaction: t });
 
       const inventory = await Inventory.findOne({
@@ -337,7 +307,7 @@ export const productUpdate = async (req, res, next) => {
         // Stock quantity is intentionally NOT editable here: it may only change
         // through a recorded stock movement (Stock In / Out / Adjustment).
         await inventory.update(
-          { unit: values.unit, ...(keepMinimum ? {} : { minStockLevel: values.minStockLevel }) },
+          { minStockLevel: values.minStockLevel, unit: values.unit },
           { transaction: t }
         );
       }

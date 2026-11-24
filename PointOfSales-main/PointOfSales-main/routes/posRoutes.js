@@ -31,7 +31,6 @@ router.post("/orders/:id/status", allow("admin", "staff"), orders.updateOrderSta
 router.post("/orders/:id/cancel", allow("admin", "cashier"), orders.cancelOrder);
 
 /* Checkout & payment --------------------------------------------------- */
-router.get("/checkout/gcash-qr", allow("admin", "cashier"), checkout.gcashQrImage);
 router.get("/checkout/:orderId", allow("admin", "cashier"), checkout.checkoutPage);
 router.post("/checkout/:orderId/details", allow("admin", "cashier"), checkout.saveOrderDetails);
 router.post("/checkout/:orderId/pay", allow("admin", "cashier"), checkout.processPayment);
@@ -69,7 +68,6 @@ router.post("/categories/:id/restore", allow("admin"), categories.categoryRestor
 /* Inventory ------------------------------------------------------------ */
 router.get('/inventory/setup', allow('admin', 'inventory'), stockSetup.setupPage);
 router.post('/inventory/ingredients', allow('admin', 'inventory'), stockSetup.addIngredient);
-router.post('/inventory/ingredients/:id/archive', allow('admin', 'inventory'), stockSetup.archiveIngredient);
 router.post('/inventory/recipes', allow('admin'), stockSetup.saveRecipe);
 router.get("/inventory", allow("admin", "inventory"), inventory.inventoryOverview);
 router.get("/inventory/low-stock", allow("admin", "inventory"), inventory.lowStockPage);
@@ -83,6 +81,11 @@ router.get("/inventory/stock-out", allow("admin", "inventory"), inventory.stockO
 router.post("/inventory/stock-out", allow("admin", "inventory"), inventory.stockOut);
 router.get("/inventory/adjustment", allow("admin", "inventory"), inventory.adjustmentPage);
 router.post("/inventory/adjustment", allow("admin", "inventory"), inventory.adjustment);
+router.post(
+  "/inventory/:productId/min-level",
+  allow("admin", "inventory"),
+  inventory.updateMinLevel
+);
 router.get("/inventory/:productId", allow("admin", "inventory"), inventory.inventoryDetail);
 
 /* Tables --------------------------------------------------------------- */

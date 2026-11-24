@@ -1,6 +1,6 @@
 import { sequelize, Product, Category, Inventory, Recipe } from '../models/index.js';
 import { Op } from 'sequelize';
-import { flashError, flashSuccess, PosError } from '../utils/pos.js';
+import { flashError, flashSuccess } from '../utils/pos.js';
 
 export const setupPage = async (req, res, next) => {
   try {
@@ -8,18 +8,7 @@ export const setupPage = async (req, res, next) => {
     const ingredients = await Product.findAll({ where: { type: 'Supply', status: 'active' }, include: [{ model: Inventory, as: 'inventory' }], order: [['name', 'ASC']] });
     const selected = products.find(item => item.id === Number(req.query.product)) || products[0];
     const recipe = selected ? await Recipe.findAll({ where: { productId: selected.id } }) : [];
-    const quantities = new Map(recipe.map(row => [row.ingredientId, row.quantity]));
-    const recipeIngredients = [];
-    const availableIngredients = [];
-    for (const row of ingredients) {
-      const ingredient = row.toJSON();
-      if (quantities.has(row.id)) {
-        recipeIngredients.push({ ...ingredient, recipeQuantity: quantities.get(row.id) });
-      } else {
-        availableIngredients.push(ingredient);
-      }
-    }
-    res.render('pos/inventory/setup', { title: 'Ingredients & Recipes', active: 'inventory', products, selectedProduct: selected?.toJSON(), recipeIngredients, availableIngredients, hasRecipe: recipe.length > 0 });
+    res.render('pos/inventory/setup', { title: 'Ingredients & Recipes', active: 'inventory', products, selectedProduct: selected?.toJSON(), ingredients: ingredients.map(row => ({ ...row.toJSON(), recipeQuantity: recipe.find(item => item.ingredientId === row.id)?.quantity || '' })), hasRecipe: recipe.length > 0 });
   } catch (error) { next(error); }
 };
 
@@ -47,33 +36,12 @@ export const addIngredient = async (req, res, next) => {
   }
 };
 
-export const archiveIngredient = async (req, res, next) => {
-  const selectedProductId = Number(req.body.productId) || '';
-  try {
-    await sequelize.transaction(async t => {
-      const ingredient = await Product.findByPk(req.params.id, { transaction: t, lock: t.LOCK.UPDATE });
-      if (!ingredient || ingredient.type !== 'Supply' || ingredient.status !== 'active') {
-        throw new PosError('Select an active ingredient to archive.');
-      }
-      if (await Recipe.count({ where: { ingredientId: ingredient.id }, transaction: t })) {
-        throw new PosError('Remove this ingredient from its saved recipes before archiving it.');
-      }
-      await ingredient.update({ status: 'archived' }, { transaction: t });
-    });
-    flashSuccess(req, 'Ingredient archived.');
-  } catch (error) {
-    if (!(error instanceof PosError)) return next(error);
-    flashError(req, error.message);
-  }
-  return res.redirect(`/pos/inventory/setup?product=${selectedProductId}`);
-};
-
 export const saveRecipe = async (req, res, next) => {
   const productId = Number(req.body.productId);
   try {
     const product = await Product.findByPk(productId);
     if (!product || product.type === 'Supply' || product.status !== 'active') throw new Error('Select an active menu product.');
-    const ingredients = await Product.findAll({ where: { type: 'Supply' } });
+    const ingredients = await Product.findAll({ where: { type: 'Supply', status: 'active' } });
     const rows = [];
     for (const ingredient of ingredients) {
       const value = req.body[`ingredient_${ingredient.id}`];
@@ -85,18 +53,12 @@ export const saveRecipe = async (req, res, next) => {
     if (!rows.length) throw new Error('Enter at least one ingredient quantity per serving.');
     await sequelize.transaction(async t => {
       await Product.findByPk(productId, { transaction: t, lock: t.LOCK.UPDATE });
-      const ingredientIds = rows.map(row => row.ingredientId);
-      const activeIngredients = await Product.findAll({
-        where: { id: ingredientIds, type: 'Supply', status: 'active' },
-        order: [['id', 'ASC']], transaction: t, lock: t.LOCK.UPDATE,
-      });
-      if (activeIngredients.length !== rows.length) throw new PosError('An ingredient was archived. Review the recipe and try again.');
       await Recipe.destroy({ where: { productId }, transaction: t });
       await Recipe.bulkCreate(rows, { transaction: t });
     });
     flashSuccess(req, 'Recipe saved. Availability and sale deductions now use these ingredients.');
   } catch (error) {
-    if (error instanceof PosError || ['Select an active menu product.', 'Recipe quantities must be whole base units from 1 to 100000.', 'Enter at least one ingredient quantity per serving.'].includes(error.message)) flashError(req, error.message);
+    if (['Select an active menu product.', 'Recipe quantities must be whole base units from 1 to 100000.', 'Enter at least one ingredient quantity per serving.'].includes(error.message)) flashError(req, error.message);
     else return next(error);
   }
   res.redirect(`/pos/inventory/setup?product=${productId}`);

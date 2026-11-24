@@ -4,7 +4,7 @@
   <div class="flex flex-wrap items-center gap-3"><span id="dashboard-date" class="text-xs text-stone-400"></span>{{#can "pos"}}<a href="/pos/terminal" class="btn btn-primary">New Sale</a>{{/can}}</div>
 </div>
 <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-  <div class="card dashboard-stat dashboard-stat-sales p-5"><p class="text-[11px] font-bold uppercase tracking-wider text-stone-400">Today's Sales</p><p class="stat-value mt-3">{{money summary.salesToday}}</p><p class="mt-2 text-xs text-stone-500">{{summary.transactionsToday}} completed sales today</p></div>
+  <div class="card dashboard-stat dashboard-stat-sales p-5"><p class="text-[11px] font-bold uppercase tracking-wider text-stone-400">Today?s Sales</p><p class="stat-value mt-3">{{money summary.salesToday}}</p><p class="mt-2 text-xs text-stone-500">{{summary.transactionsToday}} completed sales today</p></div>
   <div class="card dashboard-stat dashboard-stat-transactions p-5"><p class="text-[11px] font-bold uppercase tracking-wider text-stone-400">Total Transactions</p><p class="stat-value mt-3">{{int summary.totalTransactions}}</p><p class="mt-2 text-xs text-stone-500">Completed transactions, all time</p></div>
   <div class="card dashboard-stat dashboard-stat-low p-5"><p class="text-[11px] font-bold uppercase tracking-wider text-stone-400">Low Stock Ingredients</p><p class="stat-value mt-3">{{int summary.lowStock}}</p><p class="mt-2 text-xs text-stone-500">At or below minimum stock level</p></div>
   <div class="card dashboard-stat dashboard-stat-out p-5"><p class="text-[11px] font-bold uppercase tracking-wider text-stone-400">Out of Stock Ingredients</p><p class="stat-value mt-3">{{int summary.outOfStock}}</p><p class="mt-2 text-xs text-stone-500">Restock before selling</p></div>

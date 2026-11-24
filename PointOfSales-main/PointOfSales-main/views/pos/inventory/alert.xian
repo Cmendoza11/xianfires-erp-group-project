@@ -2,11 +2,15 @@
 
 {{> stock-tabs}}
 
-{{#can "inventory.manage"}}
-  <div class="flex justify-end">
-    <a href="/pos/inventory/stock-in" class="btn btn-primary">+ Record Stock In</a>
+<div class="flex flex-wrap items-center justify-between gap-3">
+  <div class="flex gap-2">
+    <a href="/pos/inventory/low-stock" class="btn {{#if (eq mode 'low')}}btn-dark{{else}}btn-light{{/if}}"> Low Stock</a>
+    <a href="/pos/inventory/out-of-stock" class="btn {{#if (eq mode 'out')}}btn-dark{{else}}btn-light{{/if}}"> Out of Stock</a>
   </div>
-{{/can}}
+  {{#can "inventory.manage"}}
+    <a href="/pos/inventory/stock-in" class="btn btn-primary">+ Record Stock In</a>
+  {{/can}}
+</div>
 
 <section class="grid grid-cols-2 gap-3 lg:grid-cols-3">
   <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Ingredients listed</p><p class="stat-value mt-1 text-xl">{{int summary.totalProducts}}</p></div>

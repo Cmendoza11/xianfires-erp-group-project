@@ -6,14 +6,14 @@
 
 <section class="card p-4">
   <form method="GET" action="/pos/products" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_160px_150px_auto]">
-    <input type="search" name="q" value="{{filters.q}}" class="input" placeholder="Search product name or code" />
+    <input type="search" name="q" value="{{filters.q}}" class="input" placeholder="Search product name or description…" />
     <select name="category" class="select">
       <option value="">All categories</option>
       {{#each categories}}
         <option value="{{this.id}}" {{selected this.id ../filters.category}}>{{this.name}}</option>
       {{/each}}
     </select>
-    <select id="product-stock-filter" name="stock" class="select">
+    <select name="stock" class="select">
       <option value="">All stock</option>
       <option value="available" {{selected "available" filters.stock}}>In stock</option>
       <option value="low" {{selected "low" filters.stock}}>Low stock</option>
@@ -24,9 +24,8 @@
       <option value="active" {{selected "active" filters.status}}>Active</option>
       <option value="archived" {{selected "archived" filters.status}}>Archived</option>
     </select>
-    <div class="flex flex-wrap gap-2">
+    <div class="flex gap-2">
       <button type="submit" class="btn btn-dark">Filter</button>
-      <button type="submit" class="btn btn-light">Refresh</button>
       <a href="/pos/products" class="btn btn-light">Reset</a>
     </div>
   </form>
@@ -54,7 +53,6 @@
                 </div>
                 <div class="min-w-0">
                   <p class="font-bold text-charcoal">{{this.name}}</p>
-                  <p class="text-[11px] font-semibold text-stone-500">{{this.code}}</p>
                   <p class="max-w-[240px] truncate text-[11px] text-stone-400">{{#if this.description}}{{this.description}}{{else}}No description{{/if}}</p>
                 </div>
               </div>
@@ -67,10 +65,10 @@
               <p class="text-[11px] text-stone-400">min {{int this.minStock}}</p>
             </td>
             <td data-label="Availability">
-              {{#if this.isAvailable}}
+              {{#if this.availability}}
                 <span class="badge badge-available">Available</span>
               {{else}}
-                <span class="badge badge-unavailable">Not Available</span>
+                <span class="badge bg-stone-100 text-stone-500">Unavailable</span>
               {{/if}}
             </td>
             <td data-label="Status">
@@ -98,14 +96,10 @@
         {{else}}
           <tr>
             <td colspan="8" class="py-12 text-center">
-              {{#if (eq filters.stock "out")}}
-                <p class="text-sm font-semibold text-stone-700">No out-of-stock products found</p>
-              {{else}}
               <p class="text-2xl">🍔</p>
               <p class="mt-2 text-sm font-semibold text-stone-700">No products found</p>
               <p class="text-xs text-stone-500">Adjust the filters or add your first menu item.</p>
               <a href="/pos/products/new" class="btn btn-primary mt-3">Add Product</a>
-              {{/if}}
             </td>
           </tr>
         {{/each}}
@@ -113,11 +107,5 @@
     </table>
   </div>
 </section>
-
-<script>
-  document.getElementById('product-stock-filter').addEventListener('change', function () {
-    this.form.requestSubmit();
-  });
-</script>
 
 {{> app-foot}}

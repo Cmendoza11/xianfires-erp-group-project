@@ -60,7 +60,7 @@
       <tbody>
         {{#each transaction.order.items}}
           <tr class="border-b border-stone-100">
-            <td class="py-1.5 pr-1 font-medium text-stone-800">{{this.productName}}{{#each this.addOns}}<div class="text-xs font-normal">+ {{name}}</div>{{/each}}</td>
+            <td class="py-1.5 pr-1 font-medium text-stone-800">{{this.productName}}</td>
             <td class="py-1.5 text-center">{{int this.quantity}}</td>
             <td class="py-1.5 text-right">{{money this.unitPrice}}</td>
             <td class="py-1.5 text-right font-semibold">{{money this.subtotal}}</td>

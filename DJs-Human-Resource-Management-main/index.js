@@ -18,8 +18,6 @@ import router from "./routes/index.js";
 import erpApi from "./routes/erpApi.js";
 import { syncDatabase } from "./models/index.js";
 import { attachUser } from "./middleware/authMiddleware.js";
-import { attachNotifications } from "./controllers/notificationController.js";
-import { backfillNotifications } from "./services/notify.js";
 import { erpModules } from "./middleware/erpModules.js";
 import { startAccountingSync } from "./services/accountingSync.js";
 import {
@@ -113,7 +111,7 @@ hbs.registerHelper("json", (value) => JSON.stringify(value));
 // What kind of change a POST made, so the success banner can be coloured:
 // add = green, edit = blue, delete = red (views/partials/flash.xian).
 const actionKind = (path) => {
-  if (/\/(delete|reject|dismiss|delete-all)$/.test(path)) return "delete";
+  if (/\/(delete|reject|dismiss)$/.test(path)) return "delete";
   if (/\/(create|approve|check-in)$/.test(path) || ["/departments", "/users", "/login", "/register"].includes(path)) return "add";
   return "edit";
 };
@@ -135,7 +133,6 @@ app.use((req, res, next) => {
 app.use("/api/v1", erpApi);
 app.use(erpModules);
 app.use(attachUser);
-app.use(attachNotifications); // the bell's latest notifications + unread count for every page
 app.use("/", router);
 
 app.use((req, res) => {
@@ -157,8 +154,6 @@ export const startServer = async (port = PORT) => {
   console.log(
     `✅ Connected to MySQL at ${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || 3306} (${process.env.DB_NAME || "djs_hr"})`
   );
-  // First start with notifications: what is already waiting becomes notifications (once).
-  await backfillNotifications();
   // Retries paid payroll that could not reach the Accounting ERP yet.
   startAccountingSync();
 

@@ -1,6 +1,7 @@
 import { fn, col, Op } from "sequelize";
-import { Employee, Department, Attendance, Leave, Payroll } from "../models/index.js";
+import { Employee, Department, Attendance, Leave, Payroll, PasswordRequest, User } from "../models/index.js";
 import { asyncHandler, findEmployeeForUser } from "../utils/helpers.js";
+import { publicRequest } from "./passwordResetController.js";
 import { localDateISO, startOfMonthISO, formatMoney, formatDate } from "../utils/format.js";
 
 const WEEK_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -140,7 +141,42 @@ export const dashboard = asyncHandler(async (req, res) => {
   const presentToday = todayAttendance.filter((a) => ["Present", "Late", "Half Day"].includes(a.status)).length;
   const payrollTotal = monthPayroll.reduce((sum, p) => sum + Number(p.netSalary || 0), 0);
 
-  // The bell (notifications) comes from res.locals, set by attachNotifications for every page.
+  // Bell dropdown: what needs attention. Payroll items are for the admin only (staff cannot open Payroll).
+  const notifications = pendingLeaves.map((l) => ({
+    icon: "i-calendar",
+    tone: "yellow",
+    title: `${l.employee ? `${l.employee.firstName} ${l.employee.lastName}` : "An employee"} filed ${l.type} leave`,
+    detail: `${formatDate(l.startDate)}${l.endDate !== l.startDate ? ` – ${formatDate(l.endDate)}` : ""} · ${l.days} day(s) · waiting for review`,
+    href: "/leaves?status=Pending"
+  }));
+  if (pendingLeaveCount > pendingLeaves.length) {
+    notifications.push({ icon: "i-calendar", tone: "yellow", title: `${pendingLeaveCount - pendingLeaves.length} more pending leave request(s)`, detail: "Open Leave Management to review them", href: "/leaves?status=Pending" });
+  }
+  if (res.locals.isAdmin) {
+    const draftPayroll = monthPayroll.filter((p) => p.status === "Draft").length; // this month, like the link
+    const [unposted, failed] = await Promise.all([
+      Payroll.count({ where: { status: "Paid", accountingSyncStatus: "Pending" } }),
+      Payroll.count({ where: { status: "Paid", accountingSyncStatus: "Failed" } })
+    ]);
+    const resetRequests = (await PasswordRequest.findAll({
+      where: { status: "Pending" },
+      include: [{ model: User, as: "user", attributes: ["name", "email"] }],
+      order: [["createdAt", "ASC"]]
+    })).map(publicRequest); // no token/claim hashes leave the controller
+    const RESET_TEXT = {
+      waiting: "approve it in User Accounts",
+      approved: "approved, waiting for them",
+      link: "reset link given",
+      expired: "approval expired, act again in User Accounts",
+      closed: "reset it in User Accounts"
+    };
+    for (const r of resetRequests.filter((x) => x.user)) {
+      notifications.push({ icon: "i-user", tone: "orange", title: `${r.user.name} forgot their password`, detail: `${r.user.email} · ${RESET_TEXT[r.state] || RESET_TEXT.closed}`, href: "/users#password-requests" });
+    }
+    if (draftPayroll) notifications.push({ icon: "i-wallet", tone: "blue", title: `${draftPayroll} payroll draft(s) to review`, detail: "Check the amounts, then set them to Processed or Paid", href: `/payroll?status=Draft&month=${monthStart.slice(0, 7)}` });
+    if (failed) notifications.push({ icon: "i-alert", tone: "red", title: `${failed} paid payroll could not be posted to Accounting`, detail: "Open the payslip and use Retry posting", href: "/payroll?status=Paid" });
+    if (unposted) notifications.push({ icon: "i-alert", tone: "orange", title: `${unposted} paid payroll waiting for Accounting`, detail: "Accounting is not reachable yet; HR retries every minute", href: "/payroll?status=Paid" });
+  }
 
   res.render("dashboard", {
     title: "Dashboard | DJs HRMS",
@@ -159,6 +195,7 @@ export const dashboard = asyncHandler(async (req, res) => {
     departmentStats,
     recentEmployees: recentEmployees.map((e) => e.toJSON()),
     recentLeaves: pendingLeaves.map((l) => l.toJSON()),
+    notifications,
     today,
     monthLabel: formatDate(monthStart)
   });

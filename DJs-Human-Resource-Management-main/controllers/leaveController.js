@@ -1,8 +1,6 @@
 import { Op } from "sequelize";
 import { Leave, Employee } from "../models/index.js";
 import { asyncHandler, parseId, findEmployeeForUser, paginate, pageInfo } from "../utils/helpers.js";
-import { formatDate } from "../utils/format.js";
-import { notifyRoles, notifyEmployee } from "../services/notify.js";
 import {
   LEAVE_TYPES,
   LEAVE_ALLOCATION,
@@ -206,14 +204,6 @@ export const leaveCreate = asyncHandler(async (req, res) => {
     status: "Pending"
   });
 
-  const filer = await Employee.findByPk(employeeId, { attributes: ["firstName", "lastName"] });
-  await notifyRoles(["admin", "staff"], {
-    type: "leave", icon: "i-calendar", tone: "yellow",
-    title: `${employeeName(filer)} filed ${type} leave`,
-    detail: `${formatDate(startDate)}${endDate !== startDate ? ` – ${formatDate(endDate)}` : ""} · ${days} day(s) · waiting for review`,
-    href: "/leaves?status=Pending"
-  }, { except: req.user.id });
-
   req.flash("success_msg", `Leave request submitted for ${days} day(s).`);
   res.redirect("/leaves");
 });
@@ -246,12 +236,6 @@ export const leaveApprove = asyncHandler(async (req, res) => {
     reviewedAt: new Date(),
     remarks: String(req.body.remarks || "").trim() || leave.remarks
   });
-  await notifyEmployee(leave.employeeId, {
-    type: "leave", icon: "i-check", tone: "green",
-    title: `Your ${leave.type} leave was approved`,
-    detail: `${formatDate(leave.startDate)}${leave.endDate !== leave.startDate ? ` – ${formatDate(leave.endDate)}` : ""} · ${leave.days} day(s)${leave.remarks ? ` · “${leave.remarks}”` : ""}`,
-    href: "/leaves"
-  });
 
   req.flash("success_msg", `Approved ${employeeName(leave.employee)}'s ${leave.type} leave.`);
   res.redirect("/leaves");
@@ -277,12 +261,6 @@ export const leaveReject = asyncHandler(async (req, res) => {
     reviewedBy: req.user.id,
     reviewedAt: new Date(),
     remarks: String(req.body.remarks || "").trim() || null
-  });
-  await notifyEmployee(leave.employeeId, {
-    type: "leave", icon: "i-alert", tone: "red",
-    title: `Your ${leave.type} leave was rejected`,
-    detail: `${formatDate(leave.startDate)}${leave.endDate !== leave.startDate ? ` – ${formatDate(leave.endDate)}` : ""}${leave.remarks ? ` · “${leave.remarks}”` : " · contact HR for details"}`,
-    href: "/leaves"
   });
 
   req.flash("success_msg", `Rejected ${employeeName(leave.employee)}'s ${leave.type} leave.`);

@@ -17,7 +17,6 @@ import {
   pageInfo
 } from "../utils/helpers.js";
 import { EMPLOYMENT_STATUSES, isValidDate } from "../utils/hr.js";
-import { notifyRoles } from "../services/notify.js";
 import { dailyRateOf, hourlyRateOf } from "../services/payrollCalc.js";
 
 const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -141,12 +140,6 @@ export const employeeCreate = asyncHandler(async (req, res) => {
   }
 
   const employee = await Employee.create(data);
-  await notifyRoles(["admin", "staff"], {
-    type: "employee", icon: "i-user-plus", tone: "green",
-    title: `New employee: ${employee.firstName} ${employee.lastName}`,
-    detail: `${employee.employeeCode} · ${employee.position}, ${employee.department}`,
-    href: `/employees/${employee.id}`
-  }, { except: req.user.id });
 
   req.flash("success_msg", `Employee ${employee.firstName} ${employee.lastName} was added.`);
   res.redirect(`/employees/${employee.id}`);

@@ -17,7 +17,6 @@ import { Op } from "sequelize";
 import { sequelize, Product, Category, Inventory, InventoryMovement } from "../models/index.js";
 import { requireErpKey } from "../middleware/erpKey.js";
 import { ensureSupplyItem } from "../utils/bootstrap.js";
-import { productCode } from "../utils/pos.js";
 
 const router = express.Router();
 router.use(requireErpKey);
@@ -46,7 +45,7 @@ const toCatalogItem = (product) => {
   return {
     id: product.id,
     name: product.name,
-    sku: productCode(product.id),
+    sku: `POS-${String(product.id).padStart(4, "0")}`,
     type: product.type,
     status: product.status,
     category: product.category?.name || null,

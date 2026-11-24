@@ -8,7 +8,6 @@ export const OrderItem = sequelize.define(
     orderId: { type: DataTypes.INTEGER, allowNull: false },
     productId: { type: DataTypes.INTEGER, allowNull: false },
     productName: { type: DataTypes.STRING(160), allowNull: false },
-    addOns: { type: DataTypes.JSON },
     unitPrice: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     quantity: {
       type: DataTypes.INTEGER,

@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
 import { User, Employee, PasswordRequest } from "../models/index.js";
 import { publicRequest, CLEAR_RESET } from "./passwordResetController.js";
-import { notifyUsers } from "../services/notify.js";
 import { asyncHandler, parseId, paginate } from "../utils/helpers.js";
 
 const ROLES = ["admin", "staff", "employee"];
@@ -71,12 +70,6 @@ export const linkUserEmployee = asyncHandler(async (req, res) => {
   }
 
   await user.update({ employeeId });
-  await notifyUsers([user.id], {
-    type: "account", icon: "i-check", tone: "green",
-    title: "Your account is linked to your employee record",
-    detail: `${employee.employeeCode} · you can now see your attendance, leaves and payslips`,
-    href: "/profile"
-  });
   req.flash("success_msg", `${user.email} is now linked to ${employee.employeeCode} ${employee.firstName} ${employee.lastName}.`);
   res.redirect("/users");
 });
@@ -184,21 +177,12 @@ export const updateUserRole = asyncHandler(async (req, res) => {
   if (user.role === "admin" && role !== "admin") {
     const admins = await User.count({ where: { role: "admin" } });
     if (admins <= 1) {
-      req.flash("error_msg", "At least one administrator account is -.");
+      req.flash("error_msg", "At least one administrator account is required.");
       return res.redirect("/users");
     }
   }
 
-  const previousRole = user.role;
   await user.update({ role });
-  if (role !== previousRole) {
-    await notifyUsers([user.id], {
-      type: "account", icon: "i-settings", tone: "blue",
-      title: `Your role is now ${role}`,
-      detail: `Changed from ${previousRole} by an administrator · some pages may look different`,
-      href: "/dashboard"
-    });
-  }
   req.flash("success_msg", `${user.name}'s role is now ${role}.`);
   res.redirect("/users");
 });
@@ -220,7 +204,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
   if (user.role === "admin") {
     const admins = await User.count({ where: { role: "admin" } });
     if (admins <= 1) {
-      req.flash("error_msg", "At least one administrator account is -.");
+      req.flash("error_msg", "At least one administrator account is required.");
       return res.redirect("/users");
     }
   }

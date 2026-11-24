@@ -2,23 +2,13 @@ import { Op } from "sequelize";
 import { Payroll, Employee } from "../models/index.js";
 import { asyncHandler, parseId, parseMoney, findEmployeeForUser, paginate } from "../utils/helpers.js";
 import { isValidDate } from "../utils/hr.js";
-import { startOfMonthISO, endOfMonthISO, monthEndISO, localDateISO, formatDate, formatMoney } from "../utils/format.js";
-import { notifyEmployee } from "../services/notify.js";
+import { startOfMonthISO, endOfMonthISO, monthEndISO, localDateISO } from "../utils/format.js";
 import { isLockedByAccounting, postPayroll, queuePayroll } from "../services/accountingSync.js";
 import { computePayroll, dailyRateOf, hourlyRateOf } from "../services/payrollCalc.js";
 
 const PAYROLL_STATUSES = ["Draft", "Processed", "Paid"];
 const BREAKDOWN = ["sssDeduction", "philhealthDeduction", "pagibigDeduction", "cashAdvance"];
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
-
-// The employee hears about a payslip once it is no longer a Draft (Processed = ready, Paid = paid out).
-const notifyPayslip = (payroll, status) =>
-  notifyEmployee(payroll.employeeId, {
-    type: "payroll", icon: "i-wallet", tone: status === "Paid" ? "green" : "blue",
-    title: status === "Paid" ? "Your salary was paid" : "Your payslip is ready",
-    detail: `${formatDate(payroll.periodStart)} – ${formatDate(payroll.periodEnd)} · net ${formatMoney(payroll.netSalary)}`,
-    href: `/my-payslips/${payroll.id}`
-  });
 
 export const payrollList = asyncHandler(async (req, res) => {
   const status = PAYROLL_STATUSES.includes(req.query.status) ? req.query.status : "";
@@ -96,8 +86,7 @@ export const payrollCreate = asyncHandler(async (req, res) => {
   const employee = employeeId ? await Employee.findByPk(employeeId) : null;
   const periodStart = String(body.periodStart || "").trim();
   const periodEnd = String(body.periodEnd || "").trim();
-  // A new payroll can be Draft or Processed (approved); only Accounting's salary release makes it Paid.
-  const status = ["Draft", "Processed"].includes(body.status) ? body.status : "Draft";
+  const status = PAYROLL_STATUSES.includes(body.status) ? body.status : "Draft";
 
   const errors = [];
   if (!employee) errors.push("Select a valid employee.");
@@ -176,7 +165,6 @@ export const payrollCreate = asyncHandler(async (req, res) => {
   });
   // Paid payroll is booked in the Accounting ERP (salaries expense, deductions payable, cash).
   await queuePayroll(payroll);
-  if (status !== "Draft") await notifyPayslip(payroll, status);
 
   req.flash("success_msg", status === "Paid" ? "Payroll record created and sent to Accounting." : "Payroll record created.");
   res.redirect(`/payroll/${payroll.id}`);
@@ -200,8 +188,6 @@ export const payrollShow = asyncHandler(async (req, res) => {
   }
 
   const data = payroll.toJSON();
-  // Gross pay for the summary (basic already has any late deduction taken out).
-  data.grossPay = round2(Number(data.basicSalary) + Number(data.allowances) + Number(data.overtime));
   res.render("payslip", {
     title: "Payslip | DJs HRMS",
     payroll: data,
@@ -226,18 +212,12 @@ export const payrollUpdateStatus = asyncHandler(async (req, res) => {
     req.flash("error_msg", "Invalid payroll status.");
     return res.redirect(`/payroll/${payroll.id}`);
   }
-  // Salaries are released by Accounting (Payroll > Release salary), which then marks the payroll Paid here.
-  if (status === "Paid" && payroll.status !== "Paid") {
-    req.flash("error_msg", "Approve the payroll (Processed). Accounting releases the salary and marks it Paid.");
-    return res.redirect(`/payroll/${payroll.id}`);
-  }
   if (status !== "Paid" && isLockedByAccounting(payroll)) {
     const entry = payroll.accountingEntryNumber ? ` (${payroll.accountingEntryNumber})` : "";
     req.flash("error_msg", `This payroll is already booked in Accounting${entry}, so Paid is final. Correct it in Accounting with a reversing entry.`);
     return res.redirect(`/payroll/${payroll.id}`);
   }
 
-  const previous = payroll.status;
   await payroll.update({
     status,
     processedBy: req.user.id,
@@ -246,7 +226,6 @@ export const payrollUpdateStatus = asyncHandler(async (req, res) => {
     ...(status !== "Paid" ? { accountingSyncStatus: null, accountingSyncError: null } : {})
   });
   await queuePayroll(payroll);
-  if (status !== previous && status !== "Draft") await notifyPayslip(payroll, status);
 
   req.flash("success_msg", status === "Paid" ? "Payroll marked as Paid and sent to Accounting." : `Payroll marked as ${status}.`);
   res.redirect(`/payroll/${payroll.id}`);

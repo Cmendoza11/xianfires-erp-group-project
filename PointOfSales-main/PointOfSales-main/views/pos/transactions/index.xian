@@ -53,14 +53,7 @@
               {{/each}}
             </td>
             <td data-label="Subtotal" class="text-stone-600">{{money this.subtotal}}</td>
-            <td data-label="Discount" class="text-stone-600">
-              <div>
-                <span>−{{money this.discountAmount}}</span>
-                {{#if this.promoCode}}
-                  <small class="transaction-promo">Promo {{this.promoCode}}<br>−{{money this.promoDiscountAmount}}</small>
-                {{/if}}
-              </div>
-            </td>
+            <td data-label="Discount" class="text-stone-600">−{{money this.discountAmount}}</td>
             <td data-label="Total" class="font-bold">{{money this.totalAmount}}</td>
             <td data-label="Payment"><span class="badge {{statusBadge this.paymentStatus}}">{{this.paymentStatus}}</span></td>
             <td data-label="Status"><span class="badge {{statusBadge this.status}}">{{this.status}}</span></td>

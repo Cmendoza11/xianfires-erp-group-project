@@ -72,16 +72,6 @@
   </aside>
 </div>
 
-<dialog id="add-on-dialog" class="rounded-2xl bg-white p-5 text-stone-900 shadow-xl backdrop:bg-black/50">
-  <form method="dialog" class="min-w-64 space-y-4">
-    <h2 id="add-on-title" class="text-lg font-bold"></h2>
-    <fieldset id="add-on-options" class="space-y-2"><legend class="font-semibold">Add-ons</legend></fieldset>
-    <div class="flex justify-end gap-3">
-      <button value="cancel" class="rounded-lg border px-3 py-2">Cancel</button>
-      <button value="add" class="rounded-lg bg-amber-400 px-3 py-2 font-semibold">Add to Order</button>
-    </div>
-  </form>
-</dialog>
 <script>
   const PRODUCTS = {{{json catalog}}};
   const SETTINGS = {
@@ -105,13 +95,6 @@
 
   const productById = new Map(PRODUCTS.map((product) => [Number(product.id), product]));
 
-  const productIdOf = (key) => Number(String(key).split(":")[0]);
-  const addOnIdsOf = (key) => String(key).split(":").slice(1).map(Number);
-  const selectedOptions = (product, key) => product.addOns.filter((option) => addOnIdsOf(key).includes(option.id));
-  const unitPrice = (product, key) => product.price + selectedOptions(product, key).reduce((sum, option) => sum + option.price, 0);
-  const quantityFor = (id) => [...state.cart].reduce((sum, [key, quantity]) => sum + (productIdOf(key) === id ? quantity : 0), 0);
-  const maxQuantity = (product, key) => Math.min(999, product.stock - quantityFor(product.id) + (state.cart.get(key) || 0));
-
   function visibleProducts() {
     return PRODUCTS.filter((product) => {
       const matchesSearch = !state.search ||
@@ -131,7 +114,7 @@
     empty.classList.toggle("hidden", list.length > 0);
 
     grid.innerHTML = list.map((product) => {
-      const inCart = quantityFor(product.id);
+      const inCart = state.cart.get(product.id) || 0;
       const available = product.stock - inCart;
       const soldOut = available <= 0;
       return `
@@ -169,12 +152,10 @@
     const draft = JSON.parse(sessionStorage.getItem(draftKey) || 'null');
     if (draft && Array.isArray(draft.cart)) {
       for (const [id, qty] of draft.cart) {
-        if (!/^\d+(?::\d+)*$/.test(String(id))) continue;
-        const key = String(id);
-        const product = productById.get(productIdOf(key));
-        if (product && Number.isInteger(qty) && qty > 0 && selectedOptions(product, key).length === addOnIdsOf(key).length) {
-          const available = Math.min(qty, maxQuantity(product, key));
-          if (available > 0) state.cart.set(key, available);
+        const product = productById.get(Number(id));
+        if (product && Number.isInteger(qty) && qty > 0) {
+          const available = Math.min(qty, product.stock, 999);
+          if (available > 0) state.cart.set(product.id, available);
         }
       }
       state.orderType = draft.orderType === 'Take-Out' ? 'Take-Out' : 'Dine-In';
@@ -199,19 +180,18 @@
         </div>`;
     } else {
       container.innerHTML = lines.map(([id, quantity]) => {
-        const product = productById.get(productIdOf(id));
+        const product = productById.get(Number(id));
         if (!product) return "";
         return `
           <div class="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-stone-50">
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-semibold text-stone-800">${product.name}</p>
-              ${selectedOptions(product, id).map((option) => `<p class="text-xs text-stone-500">+ ${option.name}</p>`).join("")}
-              <p class="text-[11px] text-stone-500">${money(unitPrice(product, id))} × ${quantity} = <span class="font-semibold text-stone-700">${money(unitPrice(product, id) * quantity)}</span></p>
+              <p class="text-[11px] text-stone-500">${money(product.price)} × ${quantity} = <span class="font-semibold text-stone-700">${money(product.price * quantity)}</span></p>
             </div>
             <div class="flex items-center gap-1 rounded-lg border border-stone-200 p-0.5">
               <button type="button" data-decrease="${id}" class="h-6 w-6 rounded text-sm font-bold text-stone-500 hover:bg-stone-100">−</button>
-              <input type="number" inputmode="numeric" min="1" max="${maxQuantity(product, id)}" step="1" value="${quantity}" data-quantity="${id}" aria-label="Quantity" class="cart-quantity text-center text-xs font-bold" />
-              <button type="button" data-increase="${id}" class="h-6 w-6 rounded text-sm font-bold text-stone-500 hover:bg-stone-100" ${quantity >= maxQuantity(product, id) ? "disabled" : ""}>+</button>
+              <input type="number" inputmode="numeric" min="1" max="${Math.min(product.stock, 999)}" step="1" value="${quantity}" data-quantity="${id}" aria-label="Quantity" class="cart-quantity text-center text-xs font-bold" />
+              <button type="button" data-increase="${id}" class="h-6 w-6 rounded text-sm font-bold text-stone-500 hover:bg-stone-100" ${quantity >= product.stock ? "disabled" : ""}>+</button>
             </div>
             <button type="button" data-remove="${id}" class="h-7 w-7 rounded text-xs text-stone-400 hover:bg-red-50 hover:text-red-600" title="Remove">✕</button>
           </div>`;
@@ -219,8 +199,8 @@
     }
 
     const subtotal = lines.reduce((sum, [id, quantity]) => {
-      const product = productById.get(productIdOf(id));
-      return sum + (product ? unitPrice(product, id) * quantity : 0);
+      const product = productById.get(Number(id));
+      return sum + (product ? product.price * quantity : 0);
     }, 0);
     const service = subtotal * (SETTINGS.serviceChargeRate / 100);
     const tax = (subtotal + service) * (SETTINGS.taxRate / 100);
@@ -241,56 +221,28 @@
   }
 
   function addToCart(id) {
-    const product = productById.get(productIdOf(id));
+    const product = productById.get(Number(id));
     if (!product) return;
-    const current = state.cart.get(id) || 0;
-    if (current + 1 > maxQuantity(product, id)) {
+    const current = state.cart.get(product.id) || 0;
+    if (current + 1 > Math.min(product.stock, 999)) {
       window.alert(`Only ${product.stock} ${product.unit} of ${product.name} available.`);
       return;
     }
-    state.cart.set(id, current + 1);
+    state.cart.set(product.id, current + 1);
     renderCart();
   }
 
   document.getElementById("product-grid").addEventListener("click", (event) => {
     const button = event.target.closest("[data-product]");
-    if (!button) return;
-    const product = productById.get(Number(button.dataset.product));
-    if (!product.addOns.length) {
-      addToCart(button.dataset.product);
-      return;
-    }
-    const dialog = document.getElementById("add-on-dialog");
-    dialog.dataset.product = button.dataset.product;
-    dialog.returnValue = "";
-    document.getElementById("add-on-title").textContent = product.name;
-    const options = document.getElementById("add-on-options");
-    options.querySelectorAll("label").forEach((label) => label.remove());
-    for (const option of product.addOns) {
-      const label = document.createElement("label");
-      label.className = "flex items-center gap-2";
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.value = option.id;
-      label.append(input, option.name + " (+ " + money(option.price) + ")");
-      options.append(label);
-    }
-    dialog.showModal();
-  });
-
-  document.getElementById("add-on-dialog").addEventListener("close", (event) => {
-    const dialog = event.currentTarget;
-    if (dialog.returnValue !== "add") return;
-    const ids = [...dialog.querySelectorAll("input:checked")].map((input) => Number(input.value)).sort((a, b) => a - b);
-    addToCart([dialog.dataset.product, ...ids].join(":"));
+    if (button) addToCart(button.dataset.product);
   });
 
   function commitQuantity(input) {
-    const id = input.dataset.quantity;
-    const product = productById.get(productIdOf(id));
+    const id = Number(input.dataset.quantity);
+    const product = productById.get(id);
     if (!product) return;
     const quantity = Number(input.value);
-    const max = maxQuantity(product, id);
+    const max = Math.min(product.stock, 999);
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > max) {
       input.setCustomValidity('Enter a whole number from 1 to ' + max + '.');
       input.reportValidity();
@@ -321,13 +273,13 @@
 
     if (increase) addToCart(increase.dataset.increase);
     if (decrease) {
-      const id = decrease.dataset.decrease;
+      const id = Number(decrease.dataset.decrease);
       const next = (state.cart.get(id) || 0) - 1;
       if (next <= 0) state.cart.delete(id); else state.cart.set(id, next);
       renderCart();
     }
     if (remove) {
-      state.cart.delete(remove.dataset.remove);
+      state.cart.delete(Number(remove.dataset.remove));
       renderCart();
     }
   });
@@ -369,7 +321,7 @@
       return;
     }
     document.getElementById("items-input").value = JSON.stringify(
-      [...state.cart.entries()].map(([key, quantity]) => ({ productId: productIdOf(key), addOnIds: addOnIdsOf(key), quantity }))
+      [...state.cart.entries()].map(([productId, quantity]) => ({ productId, quantity }))
     );
     document.getElementById("note-input").value = document.getElementById("order-note").value;
   });

@@ -1,0 +1,43 @@
+{{> head}}
+<body class="bg-[#fffdf2] dark:bg-[#0f0f0f] min-h-screen">
+  <div class="flex min-h-screen items-center justify-center px-4 py-8">
+    <div class="w-full max-w-md rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-8 shadow-xl">
+      <div class="text-center mb-6">
+        <img src="/foodhub-logo.png" alt="FoodHuB logo" class="mx-auto mb-4 h-24 w-24 rounded-2xl object-contain shadow-md" />
+        <h1 class="text-2xl font-bold text-[#171717] dark:text-white">Customer Logs</h1>
+        <p class="mt-1 text-sm text-[#75651d] dark:text-[#f5edbd]">Administrator Access</p>
+        <div class="mt-3 inline-block px-3 py-1 rounded-full bg-[#f7d83d] text-[#171717] text-xs font-bold">
+          🔒 ADMIN ONLY
+        </div>
+      </div>
+
+      {{#if error_msg}}
+      <div class="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3">
+        <p class="text-sm text-red-800 dark:text-red-200">{{error_msg}}</p>
+      </div>
+      {{/if}}
+
+      {{#if success_msg}}
+      <div class="mb-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3">
+        <p class="text-sm text-green-800 dark:text-green-200">{{success_msg}}</p>
+      </div>
+      {{/if}}
+
+      <form class="grid gap-4" method="POST" action="/admin/login">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Admin Email Address</label>
+          <input type="email" name="email" placeholder="admin@foodhub.com" class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Password</label>
+          <input type="password" name="password" placeholder="••••••••" class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" required />
+        </div>
+        <button type="submit" class="mt-2 w-full rounded-xl bg-[#171717] dark:bg-[#f7d83d] p-3 text-sm font-bold text-[#f7d83d] dark:text-[#171717] hover:opacity-90 transition-all shadow-md">Admin Sign In</button>
+      </form>
+
+      <div class="mt-6 border-t border-[#f1e8ae] dark:border-[#2d2d2d] pt-4 text-center">
+        <a href="/login" class="text-sm font-semibold text-[#75651d] dark:text-[#f7d83d] hover:underline">Staff Login →</a>
+      </div>
+    </div>
+  </div>
+{{> footer}}

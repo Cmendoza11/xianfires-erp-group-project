@@ -12,37 +12,17 @@
   <div class="card space-y-4 p-5">
     <h2 class="text-lg font-bold">Product Ingredients / Recipe</h2>
     <form method="GET" action="/pos/inventory/setup" class="flex flex-wrap gap-2">
-      <select id="recipe-product" name="product" class="select flex-1" aria-label="Select product">{{#each products}}<option value="{{this.id}}" {{selected this.id ../selectedProduct.id}}>{{this.name}}</option>{{/each}}</select><button class="btn btn-light">Select Product</button>
+      <select name="product" class="select flex-1" aria-label="Select product">{{#each products}}<option value="{{this.id}}" {{selected this.id ../selectedProduct.id}}>{{this.name}}</option>{{/each}}</select><button class="btn btn-light">Select Product</button>
     </form>
     {{#if selectedProduct}}
-    <p class="text-sm text-stone-500">Enter the quantity used for <strong class="text-ember">one {{selectedProduct.name}}</strong>. Clear a quantity to remove it from the recipe.</p>
+    <p class="text-sm text-stone-500">Enter the quantity used for <strong class="text-ember">one {{selectedProduct.name}}</strong>. Leave unused ingredients blank.</p>
     {{#unless hasRecipe}}<p class="rounded-lg bg-amber-50 p-3 text-xs text-amber-700">Recipe not configured. This product still uses its existing per-product stock until you save a recipe. No ingredient quantities have been assumed.</p>{{/unless}}
     <form method="POST" action="/pos/inventory/recipes" class="space-y-4">
       <input type="hidden" name="productId" value="{{selectedProduct.id}}" />
-      {{#if recipeIngredients.length}}
-        <div class="space-y-3">{{#each recipeIngredients}}{{> recipe-ingredient this}}{{/each}}</div>
-      {{/if}}
-      {{#if availableIngredients.length}}
-        <details {{#unless recipeIngredients.length}}open{{/unless}}>
-          <summary class="cursor-pointer text-sm font-semibold text-ember">Add ingredients to this recipe</summary>
-          <div class="mt-3 space-y-3">{{#each availableIngredients}}{{> recipe-ingredient this canArchive=true}}{{/each}}</div>
-        </details>
-      {{else}}
-        {{#unless recipeIngredients.length}}<p class="text-sm text-stone-500">Add ingredients first.</p>{{/unless}}
-      {{/if}}
+      <div class="space-y-3">{{#each ingredients}}<div class="grid grid-cols-[minmax(0,1fr)_100px_100px] items-center gap-3"><label for="recipe-{{this.id}}" class="text-sm">{{this.name}}</label><span class="text-xs text-stone-500">{{this.inventory.unit}}</span><input id="recipe-{{this.id}}" name="ingredient_{{this.id}}" value="{{this.recipeQuantity}}" type="number" min="0" max="100000" step="1" class="input" aria-label="{{this.name}} per serving" /></div>{{else}}<p class="text-sm text-stone-500">Add ingredients first.</p>{{/each}}</div>
       {{#can "menu"}}<button type="submit" class="btn btn-primary">Save Recipe</button>{{else}}<p class="text-xs text-stone-500">Only administrators can save product recipes.</p>{{/can}}
     </form>
-    {{#can "inventory.manage"}}
-      <form id="archive-recipe-ingredient" method="POST" data-confirm="Archive this raw material from inventory? Any unsaved recipe changes will be lost.">
-        <input type="hidden" name="productId" value="{{selectedProduct.id}}" />
-      </form>
-    {{/can}}
     {{else}}<p class="text-sm text-stone-500">Create a menu product before setting up its recipe.</p>{{/if}}
   </div>
 </section>
-<script>
-  document.getElementById('recipe-product').addEventListener('change', function () {
-    this.form.requestSubmit();
-  });
-</script>
 {{> app-foot}}

@@ -33,11 +33,11 @@
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Status</label>
             <select name="status" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60">
-              {{#each statuses}}{{#unless (eq this "Paid")}}
-              <option value="{{this}}">{{#if (eq this "Processed")}}Processed (approved){{else}}{{this}}{{/if}}</option>
-              {{/unless}}{{/each}}
+              {{#each statuses}}
+              <option value="{{this}}">{{this}}</option>
+              {{/each}}
             </select>
-            <p class="mt-1 text-[11px] text-gray-500">Draft → Processed (approved) → Paid. Accounting releases the salary, and the payroll then becomes Paid.</p>
+            <p class="mt-1 text-[11px] text-gray-500">Draft → Processed (approved) → Paid. Paid payroll is posted to Accounting automatically.</p>
           </div>
 
           <div>

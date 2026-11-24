@@ -4,77 +4,506 @@
     {{> adminSidebar activeSection="promo-management"}}
     <main class="flex-1 px-4 py-8 lg:px-8">
       <header class="mb-6 rounded-2xl bg-[#171717] p-6 text-white shadow-lg">
-        <p class="text-xs uppercase tracking-widest text-[#f7d83d] font-semibold">Admin workspace</p>
+        <p class="text-xs uppercase tracking-widest text-[#f7d83d] font-semibold">Admin Panel</p>
         <h1 class="mt-2 text-3xl font-bold">Promo Management</h1>
-        <p class="mt-2 text-[#f5edbd] opacity-80">Create promos and vouchers. With a code, the cashier applies them in the POS checkout; the discount, validity, minimum spend and points cost are checked here.</p>
+        <p class="mt-2 text-[#f5edbd] opacity-80">Manage promotional offers and vouchers</p>
       </header>
 
-      <section class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm mb-6">
-        <h2 class="text-lg font-bold text-[#171717] dark:text-white mb-4">Create New Promo</h2>
-        <form class="grid gap-3 md:grid-cols-2 lg:grid-cols-5" method="POST" action="/admin/promos">
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Promo name<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="name" value="" placeholder="10% Off Weekend" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Promo code<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="code" value="" placeholder="DJ-YUM10" maxlength="30" style="text-transform:uppercase" /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Discount type
-            <select class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="discountType">
-              <option value="percent" >Percent (%)</option>
-              <option value="fixed" >Fixed amount (₱)</option>
-            </select>
-          </label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Discount value<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="discountValue" type="number" min="0" step="0.01" value="10" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Minimum spend (₱)<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="minimumSpend" type="number" min="0" step="0.01" value="0" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Points cost<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="pointsCost" type="number" min="0" step="1" value="0" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Min. earlier purchases<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="minimumPurchases" type="number" min="0" step="1" value="0" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Valid from<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="startDate" type="date" value="" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Valid until<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="endDate" type="date" value="" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Mechanics<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="mechanics" value="" placeholder="10% off orders over ₱500" required /></label>
-          <button class="rounded-xl bg-[#171717] dark:bg-[#f7d83d] px-4 py-2.5 font-semibold text-[#f7d83d] dark:text-[#171717] hover:opacity-90 transition-all lg:col-span-5 shadow-sm" type="submit">Create Promo</button>
-        </form>
-      </section>
+      {{#if error_msg}}
+      <div class="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+        <p class="text-sm text-red-800 dark:text-red-200">{{error_msg}}</p>
+      </div>
+      {{/if}}
 
-      <section class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm">
-        <h2 class="text-lg font-bold text-[#171717] dark:text-white mb-4">Available Promotions</h2>
-        <div class="grid gap-4 md:grid-cols-2">
-          {{#each promos}}
-          <article class="rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] bg-[#fffdf2] dark:bg-[#111] p-5 shadow-sm">
-            <div class="flex items-start justify-between mb-1">
-              <h3 class="font-bold text-[#171717] dark:text-white">{{name}}</h3>
-              <span class="rounded-full px-3 py-1 text-xs font-semibold {{#ifEquals status "active"}}bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400{{else}}bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400{{/ifEquals}}">{{status}}</span>
+      {{#if success_msg}}
+      <div class="mb-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
+        <p class="text-sm text-green-800 dark:text-green-200">{{success_msg}}</p>
+      </div>
+      {{/if}}
+
+      <!-- Stats Cards -->
+      <div class="grid gap-4 md:grid-cols-4 mb-6">
+        <div class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Total Promos</p>
+              <p class="mt-2 text-3xl font-bold text-[#171717] dark:text-white">{{stats.total}}</p>
             </div>
-            <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
-              {{#if code}}<span class="font-mono font-bold text-[#75651d] dark:text-[#f7d83d]">{{code}}</span> · {{/if}}{{summary}} · {{redeemed}} use(s)
-            </p>
-            <form class="grid gap-2 sm:grid-cols-2" method="POST" action="/admin/promos/{{promoId}}">
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Promo name<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="name" value="{{name}}" placeholder="10% Off Weekend" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Promo code<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="code" value="{{code}}" placeholder="DJ-YUM10" maxlength="30" style="text-transform:uppercase" /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Discount type
-            <select class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="discountType">
-              <option value="percent" {{#ifEquals discountType "percent"}}selected{{/ifEquals}}>Percent (%)</option>
-              <option value="fixed" {{#ifEquals discountType "fixed"}}selected{{/ifEquals}}>Fixed amount (₱)</option>
-            </select>
-          </label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Discount value<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="discountValue" type="number" min="0" step="0.01" value="{{discountValue}}" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Minimum spend (₱)<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="minimumSpend" type="number" min="0" step="0.01" value="{{minimumSpend}}" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Points cost<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="pointsCost" type="number" min="0" step="1" value="{{pointsCost}}" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Min. earlier purchases<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="minimumPurchases" type="number" min="0" step="1" value="{{minimumPurchases}}" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Valid from<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="startDate" type="date" value="{{startDate}}" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Valid until<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="endDate" type="date" value="{{endDate}}" required /></label>
-          <label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Mechanics<input class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" name="mechanics" value="{{mechanics}}" placeholder="10% off orders over ₱500" required /></label>
-              <button class="rounded-xl bg-[#171717] dark:bg-[#f7d83d] px-3 py-2 text-xs font-semibold text-[#f7d83d] dark:text-[#171717] hover:opacity-90 transition-all sm:col-span-2" type="submit">Save Changes</button>
-            </form>
-            <div class="mt-3 flex gap-2">
-              <form method="POST" action="/admin/promos/{{promoId}}/toggle">
-                <button class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] px-3 py-2 text-xs font-semibold text-[#75651d] dark:text-[#f7d83d] hover:bg-[#f7d83d] hover:text-[#171717] transition-all" type="submit">Activate / Deactivate</button>
-              </form>
-              <form method="POST" action="/admin/promos/{{promoId}}/delete" onsubmit="return confirm('Delete this promo? This cannot be undone.')">
-                <button class="rounded-xl border border-red-300 dark:border-red-800 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white transition-all" type="submit">Delete</button>
-              </form>
+            <div class="rounded-xl bg-[#f7d83d]/10 p-3">
+              <svg class="h-6 w-6 text-[#f7d83d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+              </svg>
             </div>
-          </article>
-          {{else}}
-          <p class="text-sm text-gray-400 dark:text-gray-500 col-span-2 py-4 text-center">No promotions created yet.</p>
-          {{/each}}
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Active</p>
+              <p class="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">{{stats.active}}</p>
+            </div>
+            <div class="rounded-xl bg-green-100 dark:bg-green-900/30 p-3">
+              <svg class="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Inactive</p>
+              <p class="mt-2 text-3xl font-bold text-gray-600 dark:text-gray-400">{{stats.inactive}}</p>
+            </div>
+            <div class="rounded-xl bg-gray-100 dark:bg-gray-800 p-3">
+              <svg class="h-6 w-6 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Total Redemptions</p>
+              <p class="mt-2 text-3xl font-bold text-[#75651d] dark:text-[#f7d83d]">{{stats.totalRedemptions}}</p>
+            </div>
+            <div class="rounded-xl bg-[#f7d83d]/10 p-3">
+              <svg class="h-6 w-6 text-[#f7d83d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Promos Table -->
+      <section class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#1a1a1a] p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-[#171717] dark:text-white">Active Promotions</h2>
+          <button onclick="openCreateModal()" class="rounded-xl bg-[#f7d83d] px-4 py-2.5 text-sm font-bold text-[#171717] hover:bg-[#e5c62a] transition-all shadow-md">
+            + Create Promo
+          </button>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-6">
+          <div class="flex-1">
+            <input type="text" id="searchPromo" placeholder="Search promos..." class="w-full rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </div>
+          <select id="filterStatus" class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="border-b-2 border-[#ead36a] dark:border-[#2d2d2d]">
+              <tr class="text-left">
+                <th class="pb-3 px-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Promo Name</th>
+                <th class="pb-3 px-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Code</th>
+                <th class="pb-3 px-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Discount</th>
+                <th class="pb-3 px-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Min Spend</th>
+                <th class="pb-3 px-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Validity</th>
+                <th class="pb-3 px-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Status</th>
+                <th class="pb-3 px-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="promoTableBody" class="divide-y divide-[#ead36a] dark:divide-[#2d2d2d]">
+              {{#each promos}}
+              <tr class="promo-row hover:bg-[#fffdf2] dark:hover:bg-[#111] transition-colors" 
+                  data-status="{{status}}" 
+                  data-name="{{name}}" 
+                  data-code="{{code}}"
+                  data-promo-id="{{promoId}}"
+                  data-discount-type="{{discountType}}"
+                  data-discount-value="{{discountValue}}"
+                  data-minimum-spend="{{minimumSpend}}"
+                  data-points-cost="{{pointsCost}}"
+                  data-minimum-purchases="{{minimumPurchases}}"
+                  data-start-date="{{startDate}}"
+                  data-end-date="{{endDate}}"
+                  data-mechanics="{{mechanics}}"
+                  data-redeemed="{{redeemed}}">
+                <td class="py-4 px-2">
+                  <p class="font-semibold text-[#171717] dark:text-white">{{name}}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{{redeemed}} redemptions</p>
+                </td>
+                <td class="py-4 px-2">
+                  {{#if code}}
+                  <span class="font-mono text-xs font-bold text-[#75651d] dark:text-[#f7d83d] bg-[#f7d83d]/10 px-2 py-1 rounded">{{code}}</span>
+                  {{else}}
+                  <span class="text-xs text-gray-400">No code</span>
+                  {{/if}}
+                </td>
+                <td class="py-4 px-2 text-[#171717] dark:text-white">
+                  {{#ifEquals discountType "percent"}}{{discountValue}}%{{else}}₱{{discountValue}}{{/ifEquals}}
+                </td>
+                <td class="py-4 px-2 text-[#171717] dark:text-white">₱{{minimumSpend}}</td>
+                <td class="py-4 px-2 text-xs text-gray-600 dark:text-gray-400">
+                  {{startDate}} to {{endDate}}
+                </td>
+                <td class="py-4 px-2">
+                  <span class="rounded-full px-3 py-1 text-xs font-semibold {{#ifEquals status "active"}}bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400{{else}}bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400{{/ifEquals}}">
+                    {{status}}
+                  </span>
+                </td>
+                <td class="py-4 px-2">
+                  <div class="flex items-center justify-end gap-2">
+                    <button onclick="viewPromo(this)" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">View</button>
+                    <button onclick="editPromo(this)" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-[#75651d] dark:text-[#f7d83d] hover:bg-[#f7d83d]/10 transition-colors">Edit</button>
+                    <button onclick="deletePromo(this)" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">Delete</button>
+                  </div>
+                </td>
+              </tr>
+              {{else}}
+              <tr>
+                <td colspan="7" class="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+                  No promotions created yet. Click "+ Create Promo" to get started.
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
         </div>
       </section>
     </main>
   </div>
+
+  <!-- Create Promo Modal -->
+  <div id="createModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="sticky top-0 bg-[#171717] p-6 rounded-t-2xl">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-bold text-white">Create New Promo</h3>
+          <button onclick="closeCreateModal()" class="text-gray-400 hover:text-white transition-colors">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <form method="POST" action="/admin/promos" class="p-6 grid gap-4">
+        <div class="grid grid-cols-2 gap-4">
+          <label class="col-span-2 grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Promo Name *</span>
+            <input name="name" type="text" placeholder="10% Off Weekend" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="col-span-2 grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Promo Code (Optional)</span>
+            <input name="code" type="text" placeholder="WEEKEND10" maxlength="30" style="text-transform:uppercase" class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Discount Type *</span>
+            <select name="discountType" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]">
+              <option value="percent">Percent (%)</option>
+              <option value="fixed">Fixed Amount (₱)</option>
+            </select>
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Discount Value *</span>
+            <input name="discountValue" type="number" min="0" step="0.01" value="10" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Minimum Spend (₱) *</span>
+            <input name="minimumSpend" type="number" min="0" step="0.01" value="0" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Points Cost *</span>
+            <input name="pointsCost" type="number" min="0" step="1" value="0" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Min. Earlier Purchases *</span>
+            <input name="minimumPurchases" type="number" min="0" step="1" value="0" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Valid From *</span>
+            <input name="startDate" type="date" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="col-span-2 grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Valid Until *</span>
+            <input name="endDate" type="date" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="col-span-2 grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Mechanics *</span>
+            <input name="mechanics" type="text" placeholder="10% off on orders over ₱500" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+        </div>
+        <div class="flex gap-3 pt-4">
+          <button type="button" onclick="closeCreateModal()" class="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
+          <button type="submit" class="flex-1 rounded-xl bg-[#f7d83d] px-4 py-2.5 text-sm font-bold text-[#171717] hover:bg-[#e5c62a] transition-all shadow-md">Create Promo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Modal -->
+  <div id="viewModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="sticky top-0 bg-[#171717] p-6 rounded-t-2xl">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-bold text-white">Promo Details</h3>
+          <button onclick="closeViewModal()" class="text-gray-400 hover:text-white transition-colors">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="p-6 grid gap-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Promo Name</p>
+            <p id="viewPromoName" class="text-lg font-bold text-[#171717] dark:text-white"></p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Promo Code</p>
+            <p id="viewPromoCode" class="font-mono text-sm font-bold text-[#75651d] dark:text-[#f7d83d]"></p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Discount</p>
+            <p id="viewDiscount" class="text-sm text-[#171717] dark:text-white"></p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Minimum Spend</p>
+            <p id="viewMinSpend" class="text-sm text-[#171717] dark:text-white"></p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Points Cost</p>
+            <p id="viewPointsCost" class="text-sm text-[#171717] dark:text-white"></p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Min. Purchases</p>
+            <p id="viewMinPurchases" class="text-sm text-[#171717] dark:text-white"></p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Validity Period</p>
+            <p id="viewValidity" class="text-sm text-[#171717] dark:text-white"></p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Mechanics</p>
+            <p id="viewMechanics" class="text-sm text-[#171717] dark:text-white"></p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Status</p>
+            <p id="viewStatus" class="text-sm"></p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Redemptions</p>
+            <p id="viewRedemptions" class="text-sm text-[#171717] dark:text-white"></p>
+          </div>
+        </div>
+        <div class="flex gap-3 pt-4 border-t border-[#ead36a] dark:border-[#2d2d2d]">
+          <button type="button" onclick="closeViewModal()" class="flex-1 rounded-xl bg-gray-200 dark:bg-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:opacity-90 transition-colors">Close</button>
+          <button type="button" onclick="openEditFromView()" class="flex-1 rounded-xl bg-[#f7d83d] px-4 py-2.5 text-sm font-bold text-[#171717] hover:bg-[#e5c62a] transition-all shadow-md">Edit Promo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-[#ead36a] dark:border-[#2d2d2d] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="sticky top-0 bg-[#171717] p-6 rounded-t-2xl">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-bold text-white">Edit Promo</h3>
+          <button onclick="closeEditModal()" class="text-gray-400 hover:text-white transition-colors">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <form id="editPromoForm" method="POST" class="p-6 grid gap-4">
+        <div class="grid grid-cols-2 gap-4">
+          <label class="col-span-2 grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Promo Name *</span>
+            <input id="editPromoName" name="name" type="text" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="col-span-2 grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Promo Code (Optional)</span>
+            <input id="editPromoCode" name="code" type="text" maxlength="30" style="text-transform:uppercase" class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Discount Type *</span>
+            <select id="editDiscountType" name="discountType" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]">
+              <option value="percent">Percent (%)</option>
+              <option value="fixed">Fixed Amount (₱)</option>
+            </select>
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Discount Value *</span>
+            <input id="editDiscountValue" name="discountValue" type="number" min="0" step="0.01" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Minimum Spend (₱) *</span>
+            <input id="editMinimumSpend" name="minimumSpend" type="number" min="0" step="0.01" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Points Cost *</span>
+            <input id="editPointsCost" name="pointsCost" type="number" min="0" step="1" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Min. Earlier Purchases *</span>
+            <input id="editMinimumPurchases" name="minimumPurchases" type="number" min="0" step="1" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Valid From *</span>
+            <input id="editStartDate" name="startDate" type="date" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="col-span-2 grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Valid Until *</span>
+            <input id="editEndDate" name="endDate" type="date" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+          <label class="col-span-2 grid gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Mechanics *</span>
+            <input id="editMechanics" name="mechanics" type="text" required class="rounded-xl border border-[#ead36a] dark:border-[#2d2d2d] bg-white dark:bg-[#111] dark:text-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f7d83d]" />
+          </label>
+        </div>
+        <div class="flex gap-3 pt-4">
+          <button type="button" onclick="closeEditModal()" class="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancel</button>
+          <button type="submit" class="flex-1 rounded-xl bg-[#f7d83d] px-4 py-2.5 text-sm font-bold text-[#171717] hover:bg-[#e5c62a] transition-all shadow-md">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Store current promo data for modal operations
+    let currentPromoData = null;
+
+    // Helper function to get promo data from row
+    function getPromoData(button) {
+      const row = button.closest('tr');
+      return {
+        promoId: row.dataset.promoId,
+        name: row.dataset.name,
+        code: row.dataset.code,
+        discountType: row.dataset.discountType,
+        discountValue: row.dataset.discountValue,
+        minimumSpend: row.dataset.minimumSpend,
+        pointsCost: row.dataset.pointsCost,
+        minimumPurchases: row.dataset.minimumPurchases,
+        startDate: row.dataset.startDate,
+        endDate: row.dataset.endDate,
+        mechanics: row.dataset.mechanics,
+        status: row.dataset.status,
+        redeemed: row.dataset.redeemed
+      };
+    }
+
+    // Create Modal
+    function openCreateModal() {
+      document.getElementById('createModal').classList.remove('hidden');
+    }
+    function closeCreateModal() {
+      document.getElementById('createModal').classList.add('hidden');
+    }
+    
+    // View Modal
+    function viewPromo(button) {
+      const promo = getPromoData(button);
+      currentPromoData = promo;
+      
+      // Populate view modal
+      document.getElementById('viewPromoName').textContent = promo.name;
+      document.getElementById('viewPromoCode').textContent = promo.code || 'No code';
+      document.getElementById('viewDiscount').textContent = promo.discountType === 'percent' ? `${promo.discountValue}%` : `₱${promo.discountValue}`;
+      document.getElementById('viewMinSpend').textContent = `₱${promo.minimumSpend}`;
+      document.getElementById('viewPointsCost').textContent = promo.pointsCost;
+      document.getElementById('viewMinPurchases').textContent = promo.minimumPurchases;
+      document.getElementById('viewValidity').textContent = `${promo.startDate} to ${promo.endDate}`;
+      document.getElementById('viewMechanics').textContent = promo.mechanics;
+      
+      // Status badge
+      const statusEl = document.getElementById('viewStatus');
+      if (promo.status === 'active') {
+        statusEl.innerHTML = '<span class="rounded-full bg-green-100 dark:bg-green-900/30 px-3 py-1 text-xs font-semibold text-green-700 dark:text-green-300">Active</span>';
+      } else {
+        statusEl.innerHTML = '<span class="rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1 text-xs font-semibold text-gray-700 dark:text-gray-300">Inactive</span>';
+      }
+      
+      document.getElementById('viewRedemptions').textContent = `${promo.redeemed} times`;
+      
+      document.getElementById('viewModal').classList.remove('hidden');
+    }
+    
+    function closeViewModal() {
+      document.getElementById('viewModal').classList.add('hidden');
+    }
+    
+    function openEditFromView() {
+      closeViewModal();
+      populateEditModal(currentPromoData);
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+    
+    // Edit Modal
+    function editPromo(button) {
+      const promo = getPromoData(button);
+      currentPromoData = promo;
+      populateEditModal(promo);
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+    
+    function populateEditModal(promo) {
+      document.getElementById('editPromoName').value = promo.name;
+      document.getElementById('editPromoCode').value = promo.code || '';
+      document.getElementById('editDiscountType').value = promo.discountType;
+      document.getElementById('editDiscountValue').value = promo.discountValue;
+      document.getElementById('editMinimumSpend').value = promo.minimumSpend;
+      document.getElementById('editPointsCost').value = promo.pointsCost;
+      document.getElementById('editMinimumPurchases').value = promo.minimumPurchases;
+      document.getElementById('editStartDate').value = promo.startDate;
+      document.getElementById('editEndDate').value = promo.endDate;
+      document.getElementById('editMechanics').value = promo.mechanics;
+      
+      // Set form action
+      document.getElementById('editPromoForm').action = `/admin/promos/${promo.promoId}`;
+    }
+    
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+    }
+    
+    // Delete
+    function deletePromo(button) {
+      const promo = getPromoData(button);
+      if (confirm(`Delete "${promo.name}"?\n\nThis promo has been redeemed ${promo.redeemed} time(s). This action cannot be undone.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/promos/${promo.promoId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+
+    // Search and filter
+    document.getElementById('searchPromo')?.addEventListener('input', filterPromos);
+    document.getElementById('filterStatus')?.addEventListener('change', filterPromos);
+
+    function filterPromos() {
+      const search = document.getElementById('searchPromo').value.toLowerCase();
+      const status = document.getElementById('filterStatus').value;
+      const rows = document.querySelectorAll('.promo-row');
+
+      rows.forEach(row => {
+        const name = row.dataset.name.toLowerCase();
+        const code = (row.dataset.code || '').toLowerCase();
+        const rowStatus = row.dataset.status;
+        
+        const matchesSearch = name.includes(search) || code.includes(search);
+        const matchesStatus = !status || rowStatus === status;
+        
+        row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+      });
+    }
+  </script>
+
 {{> footer}}

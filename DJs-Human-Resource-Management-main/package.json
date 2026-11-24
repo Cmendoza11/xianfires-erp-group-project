@@ -10,7 +10,6 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "dev:solo": "nodemon index.js --solo",
     "xian": "nodemon index.js",
     "migrate": "node migrate.js",
     "check:lan": "node check-connection.js",

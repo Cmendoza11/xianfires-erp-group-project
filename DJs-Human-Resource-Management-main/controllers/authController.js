@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import { User } from "../models/index.js";
-import { notifyRoles } from "../services/notify.js";
 import { asyncHandler } from "../utils/helpers.js";
 
 const cleanEmail = (value) => String(value || "").trim().toLowerCase();
@@ -82,12 +81,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     password: hashed,
     role: "employee",
     employeeId: null
-  });
-  await notifyRoles(["admin"], {
-    type: "account", icon: "i-user", tone: "blue",
-    title: `New account: ${name}`,
-    detail: `${email} registered · link it to an employee record in User Accounts`,
-    href: "/users"
   });
 
   await startSession(req, user);

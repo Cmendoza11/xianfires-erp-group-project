@@ -20,7 +20,7 @@ export class CustomerLogError extends Error {
   }
 }
 
-export const tierFor = (netPurchases) => (netPurchases >= 10 ? "Gold" : netPurchases >= 5 ? "Silver" : "Regular");
+export const tierFor = (netPurchases) => (netPurchases > 50 ? "Gold" : netPurchases >= 5 ? "Silver" : "Regular");
 
 // Purchases minus refunds: the basis for loyalty points, tiers and promo eligibility.
 export async function netPurchaseCount(customerId, transaction) {

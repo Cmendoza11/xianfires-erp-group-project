@@ -7,10 +7,7 @@
   GET  /api/v1/payrolls?status=     payroll for Accounting's Payroll page (status: Processed, Paid, Draft;
                                     comma-separated; default Processed,Paid)
   GET  /api/v1/payrolls/:id         one payroll with its amounts
-  POST /api/v1/payrolls/:id/pay     Accounting released the salary: marks a Processed payroll Paid
-                                    (body: paid_at YYYY-MM-DD, entry_number). Accounting already
-                                    posted the journal entry, so HR does not post it again.
-  HR approves payroll (Processed); Accounting releases it ("Release salary") and calls /pay.
+  HR marks payroll Paid itself; services/accountingSync.js then posts it to Accounting.
 */
 import express from "express";
 import { Op } from "sequelize";
@@ -102,32 +99,6 @@ router.get("/payrolls", wrap(async (req, res) => {
 router.get("/payrolls/:id", wrap(async (req, res) => {
   const payroll = await Payroll.findByPk(parseInt(req.params.id, 10) || 0, { include: [withEmployee] });
   if (!payroll) return res.status(404).json({ error: { status: 404, message: "Payroll not found in HR" } });
-  res.json({ payroll: toPayroll(payroll) });
-}));
-
-// Accounting calls this after it posted the salary release. Safe to repeat: a payroll already Paid
-// with the same entry number answers 200 again.
-router.post("/payrolls/:id/pay", wrap(async (req, res) => {
-  const payroll = await Payroll.findByPk(parseInt(req.params.id, 10) || 0, { include: [withEmployee] });
-  if (!payroll) return res.status(404).json({ error: { status: 404, message: "Payroll not found in HR" } });
-  const entryNumber = String(req.body?.entry_number || "").trim().slice(0, 50);
-  if (!entryNumber) return res.status(400).json({ error: { status: 400, message: "entry_number is required" } });
-  if (payroll.status === "Paid") {
-    if (payroll.accountingEntryNumber === entryNumber) return res.json({ payroll: toPayroll(payroll) });
-    return res.status(409).json({ error: { status: 409, message: `Payroll #${payroll.id} is already paid${payroll.accountingEntryNumber ? ` (${payroll.accountingEntryNumber})` : ""}` } });
-  }
-  if (payroll.status !== "Processed") {
-    return res.status(409).json({ error: { status: 409, message: `Payroll #${payroll.id} is ${payroll.status}; HR must approve it (Processed) first` } });
-  }
-  const paidAt = /^\d{4}-\d{2}-\d{2}$/.test(String(req.body?.paid_at || "")) ? new Date(`${req.body.paid_at}T12:00:00`) : new Date();
-  await payroll.update({
-    status: "Paid",
-    paidAt,
-    accountingSyncStatus: "Synced",
-    accountingEntryNumber: entryNumber,
-    accountingSyncError: null,
-    accountingNextAttemptAt: null
-  });
   res.json({ payroll: toPayroll(payroll) });
 }));
 

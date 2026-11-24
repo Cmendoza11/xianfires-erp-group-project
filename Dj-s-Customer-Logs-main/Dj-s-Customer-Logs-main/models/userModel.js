@@ -28,8 +28,10 @@ import { sequelize } from "./db.js";
 
 export const User = sequelize.define("User", {
   name: { type: DataTypes.STRING, allowNull: false },
-  email: { type: DataTypes.STRING, allowNull: false },
+  email: { type: DataTypes.STRING, allowNull: false, unique: true },
   password: { type: DataTypes.STRING, allowNull: false },
-  role: { type: DataTypes.ENUM("admin", "staff", "visitors"), allowNull: false, defaultValue: "staff" }
+  role: { type: DataTypes.ENUM("admin", "staff"), allowNull: false, defaultValue: "staff" },
+  status: { type: DataTypes.ENUM("active", "inactive", "pending"), allowNull: false, defaultValue: "active" },
+  lastLoginAt: { type: DataTypes.DATE, allowNull: true }
 }, { tableName: "crm_users" });
 export { sequelize }; 

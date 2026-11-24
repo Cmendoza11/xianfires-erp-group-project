@@ -27,8 +27,6 @@ import {
   toInt,
 } from "../utils/pos.js";
 
-const availableAddOns = (product) => product.type === "Beverage" ? product.addOns || [] : [];
-
 export const terminalPage = async (req, res, next) => {
   try {
     const [products, categories, discounts, settings] = await Promise.all([
@@ -61,7 +59,6 @@ export const terminalPage = async (req, res, next) => {
         stock: preparedStock.get(record.id)?.available ?? Number(record.inventory?.currentStock ?? 0),
         unit: preparedStock.get(record.id)?.unit || record.inventory?.unit || "pcs",
         type: record.type,
-        addOns: availableAddOns(record),
       };
     });
 
@@ -110,22 +107,17 @@ const parseCart = (raw) => {
     if (!validQuantity(quantity)) {
       throw new PosError("Every order quantity must be a whole number between 1 and 999.");
     }
-    const selected = line.addOnIds ?? [];
-    if (!Array.isArray(selected) || selected.length > 5 || !selected.every(Number.isSafeInteger)) {
-      throw new PosError("The cart contains invalid add-ons.");
-    }
-    const addOnIds = [...new Set(selected)].sort((a, b) => a - b);
-    const key = [productId, ...addOnIds].join(":");
-    merged.set(key, { productId, addOnIds, quantity: (merged.get(key)?.quantity || 0) + quantity });
+    merged.set(productId, (merged.get(productId) || 0) + quantity);
   }
 
-  for (const { quantity } of merged.values()) {
+  for (const [productId, quantity] of merged) {
     if (quantity > 999) {
       throw new PosError("A single item quantity cannot exceed 999.");
     }
+    merged.set(productId, quantity);
   }
 
-  return [...merged.values()];
+  return [...merged].map(([productId, quantity]) => ({ productId, quantity }));
 };
 
 /** Validates cart lines against live products, availability and stock. */
@@ -162,17 +154,10 @@ export const resolveCart = async ({ rawItems, transaction }) => {
       );
     }
 
-    const options = availableAddOns(product);
-    const addOns = line.addOnIds.map((id) => {
-      const option = options.find((entry) => entry.id === id);
-      if (!option) throw new PosError(`An add-on for "${product.name}" is no longer available.`);
-      return { name: option.name, price: option.price };
-    });
-    const unitPrice = round2(Number(product.price) + addOns.reduce((sum, option) => sum + option.price, 0));
+    const unitPrice = round2(product.price);
     return {
       productId: product.id,
       productName: product.name,
-      addOns: addOns.length ? addOns : null,
       unitPrice,
       quantity: line.quantity,
       subtotal: round2(unitPrice * line.quantity),

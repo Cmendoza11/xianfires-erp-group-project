@@ -17,7 +17,6 @@ import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import { sequelize, User, PasswordRequest } from "../models/index.js";
 import { asyncHandler, parseId } from "../utils/helpers.js";
-import { notifyRoles } from "../services/notify.js";
 
 export const RESET_MINUTES = 30;
 const TTL_MS = RESET_MINUTES * 60 * 1000;
@@ -81,13 +80,10 @@ export const CLEAR_RESET = { tokenHash: null, expiresAt: null, approvedAt: null 
 // ---------------------------------------------------------------- user side
 export const forgotPasswordPage = (req, res) => {
   if (req.session.userId) return res.redirect("/profile#password");
-  // While this browser has a request it shows "Waiting for HR approval" and opens
-  // "Set a new password" by itself once the admin approves.
+  // While this browser has a request, the page quietly checks for an approval and opens
+  // "Set a new password" by itself; otherwise HR gives a reset link or a temporary password.
   const waiting = readResetCookie(req);
-  res.render("forgotpassword", {
-    title: "Forgot Password | DJs HRMS",
-    waiting: waiting ? { email: waiting.email, until: timeOf(waiting.until) } : null
-  });
+  res.render("forgotpassword", { title: "Forgot Password | DJs HRMS", waiting: !!waiting });
 };
 
 export const forgotPasswordSubmit = asyncHandler(async (req, res) => {
@@ -108,20 +104,13 @@ export const forgotPasswordSubmit = asyncHandler(async (req, res) => {
     const fresh = { name, note, claimHash: sha256(claim), ...CLEAR_RESET };
     let request = await PasswordRequest.findOne({ where: { userId: user.id, status: "Pending" } });
     if (request) await request.update(fresh); // one pending request per account; a new send restarts it
-    else {
-      request = await PasswordRequest.create({ userId: user.id, ...fresh });
-      await notifyRoles(["admin"], {
-        type: "password", icon: "i-key", tone: "orange",
-        title: `${user.name} forgot their password`,
-        detail: `${user.email} · approve it in User Accounts`,
-        href: "/users#password-requests"
-      });
-    }
+    else request = await PasswordRequest.create({ userId: user.id, ...fresh });
     id = request.id;
   }
 
   setResetCookie(res, { id, claim, email, until: Date.now() + TTL_MS });
-  res.redirect("/forgot-password"); // shows "Waiting for HR approval" (same page for unknown emails)
+  req.flash("success_msg", "Request sent. If the email belongs to an account, the HR administrator will give you a reset link.");
+  res.redirect("/forgot-password");
 });
 
 // GET /forgot-password/status (JSON) — polled by the waiting page.

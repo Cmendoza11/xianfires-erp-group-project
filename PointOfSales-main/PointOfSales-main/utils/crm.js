@@ -19,13 +19,11 @@ const toPick = (c) => ({ customerId: c.customerId, name: c.name, contactNumber: 
 /** Active customers matching a name, mobile number or email. { customers, available } */
 export async function searchCustomers(term, limit = 10) {
   const q = String(term || "").trim();
-  if (q.length === 1 || !(await customersInstalled())) return { customers: [], available: true };
+  if (q.length < 2 || !(await customersInstalled())) return { customers: [], available: true };
   const max = Math.min(Math.max(Number(limit) || 10, 1), 25);
   try {
-    const body = await crm(q ? `/api/customers/search?q=${encodeURIComponent(q)}&limit=${max}`
-      : `/api/customers?limit=${max}`);
-    const rows = q ? body?.data : body?.data?.customers;
-    if (!Array.isArray(rows)) return { customers: [], available: false };
+    const body = await crm(`/api/customers/search?q=${encodeURIComponent(q)}&limit=${max}`);
+    const rows = Array.isArray(body?.data) ? body.data : [];
     return { customers: rows.filter((c) => c.status === "ACTIVE").map(toPick), available: true };
   } catch (error) {
     console.warn(`[crm] customer search unavailable: ${error.message}`);

@@ -65,6 +65,17 @@
   </div>
 
   <aside class="space-y-6">
+    {{#can "inventory.manage"}}
+      <div class="card p-5">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-stone-500">Minimum Stock Level</h2>
+        <form method="POST" action="/pos/inventory/{{product.id}}/min-level" class="mt-3 space-y-3">
+          <input type="number" name="minStockLevel" min="0" step="1" value="{{inventory.minStockLevel}}" class="input" required />
+          <p class="text-[11px] text-stone-400">The product is flagged Low Stock when on hand reaches this number.</p>
+          <button type="submit" class="btn btn-dark w-full">Update minimum</button>
+        </form>
+      </div>
+    {{/can}}
+
     <div class="card p-5">
       <h2 class="text-sm font-bold uppercase tracking-wider text-stone-500">Rules</h2>
       <ul class="mt-3 space-y-2 text-xs leading-relaxed text-stone-500">

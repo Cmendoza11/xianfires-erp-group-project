@@ -13,10 +13,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const HR_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-// `npm run dev:solo` (node index.js --solo) uses .env.solo: this laptop's own database, for working
-// while the host is offline. Plain `npm run dev` uses .env (LAN mode, the host's database).
-export const SOLO = process.argv.includes("--solo");
-export const HR_ENV_FILE = path.join(HR_ROOT, SOLO ? ".env.solo" : ".env");
+export const HR_ENV_FILE = path.join(HR_ROOT, ".env");
 
 export function parseEnv(text) {
   const values = {};

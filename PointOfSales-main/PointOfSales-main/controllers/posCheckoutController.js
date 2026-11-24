@@ -4,8 +4,6 @@
   ONE database transaction: if anything fails, nothing is written, no stock is
   deducted and the order stays payable.
 */
-import { existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { Op } from "sequelize";
 import { stockRequirements } from '../utils/recipes.js';
 import { ownsOrder } from "../utils/access.js";
@@ -36,15 +34,6 @@ import {
 import { deliverSoon, queueIntegration } from "../utils/erpSync.js";
 import { customersInstalled, findCustomer, quotePromo, searchCustomers } from "../utils/crm.js";
 import { ErpApiError } from "../utils/erpClient.js";
-
-const GCASH_QR_PATH = fileURLToPath(new URL("../config/gcash-qr.jpeg", import.meta.url));
-
-export const gcashQrImage = (req, res, next) => {
-  res.sendFile(GCASH_QR_PATH, { headers: { "Cache-Control": "private, no-store" } }, (error) => {
-    if (error?.code === "ENOENT") return res.sendStatus(404);
-    if (error) return next(error);
-  });
-};
 
 // The customer chosen on the checkout form, checked with the Customer Logs API before the DB
 // transaction starts (no transaction waits on another module). undefined = the form did not send
@@ -83,7 +72,7 @@ const quotePromoFromForm = async (body, customer, subtotal) => {
   }
 };
 
-const PAYMENT_METHODS = ["Cash", "GCash"];
+export const PAYMENT_METHODS = ["Cash", "GCash", "Maya", "Credit/Debit Card"];
 const ACTIVE_ORDER_STATUSES = ["Pending", "Preparing", "Ready"];
 
 const currency = (value, settings) => `${settings.currency}${round2(value).toFixed(2)}`;
@@ -177,8 +166,8 @@ export const checkoutPage = async (req, res, next) => {
       tables: context.tables,
       discounts: context.discounts,
       posSettings: context.settings,
+      paymentMethods: PAYMENT_METHODS,
       selectedPaymentMethod: req.session.orderPaymentMethods?.[order.id] || 'Cash',
-      hasGcashQr: existsSync(GCASH_QR_PATH),
       customersEnabled: await customersInstalled(),
     });
   } catch (error) {
@@ -405,11 +394,11 @@ export const processPayment = async (req, res, next) => {
         referenceNumber = String(req.body.referenceNumber || "").trim();
         if (referenceNumber.length < 4) {
           throw new PosError(
-            "Enter the GCash reference number."
+            "Electronic payments require a reference number from the provider."
           );
         }
         if (req.body.verified !== "on") {
-          throw new PosError("Confirm you received the GCash payment before saving.");
+          throw new PosError("Confirm that the electronic payment was verified before saving.");
         }
         if (amountReceived !== null && Number.isFinite(amountReceived)) {
           if (amountReceived + 0.001 < totals.totalAmount) {
@@ -592,7 +581,7 @@ export const paymentConfirmation = async (req, res, next) => {
 // GET /pos/customers/search?q= : customers from Customer Logs for the checkout picker (read-only).
 export const customerSearch = async (req, res, next) => {
   try {
-    res.json(await searchCustomers(req.query.q, 20));
+    res.json(await searchCustomers(req.query.q));
   } catch (error) {
     next(error);
   }

@@ -8,6 +8,18 @@
         <p class="mt-1 text-sm text-[#75651d] dark:text-[#f5edbd]">FoodHuB Staff & Admin Access</p>
       </div>
 
+      {{#if error_msg}}
+      <div class="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3">
+        <p class="text-sm text-red-800 dark:text-red-200">{{error_msg}}</p>
+      </div>
+      {{/if}}
+
+      {{#if success_msg}}
+      <div class="mb-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3">
+        <p class="text-sm text-green-800 dark:text-green-200">{{success_msg}}</p>
+      </div>
+      {{/if}}
+
       <form class="grid gap-4" method="POST" action="/login">
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Email Address</label>
@@ -19,10 +31,6 @@
         </div>
         <button type="submit" class="mt-2 w-full rounded-xl bg-[#171717] dark:bg-[#f7d83d] p-3 text-sm font-bold text-[#f7d83d] dark:text-[#171717] hover:opacity-90 transition-all shadow-md">Sign In</button>
       </form>
-
-      <div class="mt-6 border-t border-[#f1e8ae] dark:border-[#2d2d2d] pt-4 text-center">
-        <a href="/register" class="text-sm font-semibold text-[#75651d] dark:text-[#f7d83d] hover:underline">Don't have an account? Register as Staff</a>
-      </div>
     </div>
   </div>
 {{> footer}}

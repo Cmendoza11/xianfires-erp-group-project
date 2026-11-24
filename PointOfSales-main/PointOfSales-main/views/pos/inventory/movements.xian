@@ -26,27 +26,7 @@
   <td><p>{{#if this.performedByName}}{{this.performedByName}}{{else}}System / unknown{{/if}}</p>{{#if this.performedBy}}<p class="mt-1 text-[10px] text-stone-500">User ID: {{this.performedBy}}</p>{{/if}}</td>
  </tr>{{else}}<tr><td colspan="7" class="py-12 text-center text-stone-500">No movements match these filters.</td></tr>{{/each}}</tbody>
 </table></div></section>
-<script>
-  const movementProduct = document.getElementById('movement-product');
-  document.getElementById('movement-scope').addEventListener('change', function () {
-    movementProduct.value = '';
-    this.form.requestSubmit();
-  });
-  for (const filter of [movementProduct, document.getElementById('movement-type')]) {
-    filter.addEventListener('change', function () {
-      this.form.requestSubmit();
-    });
-  }
-  const movementFrom = document.getElementById('movement-from');
-  const movementTo = document.getElementById('movement-to');
-  for (const dateFilter of [movementFrom, movementTo]) {
-    dateFilter.addEventListener('change', function () {
-      if (movementFrom.value && movementTo.value && movementFrom.value <= movementTo.value) {
-        this.form.requestSubmit();
-      }
-    });
-  }
-</script>
+<script>document.getElementById('movement-scope').addEventListener('change', function () { document.getElementById('movement-product').value = ''; this.form.requestSubmit(); });</script>
 {{> product-movement-modal}}
 <script defer src="/product-movement-modal.js"></script>
 {{> app-foot}}

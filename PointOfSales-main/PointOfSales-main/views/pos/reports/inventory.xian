@@ -55,7 +55,7 @@
   </div>
   <div class="table-wrap">
     <table class="data-table">
-      <thead><tr><th>Product</th><th>Category</th><th>On hand</th><th>Minimum</th><th class="stock-status-cell">Status</th><th>Unit price</th><th class="text-right">Stock value</th></tr></thead>
+      <thead><tr><th>Product</th><th>Category</th><th>On hand</th><th>Minimum</th><th>Status</th><th>Unit price</th><th class="text-right">Stock value</th></tr></thead>
       <tbody>
         {{#each rows}}
           <tr>
@@ -63,7 +63,7 @@
             <td class="text-stone-500">{{#if this.categoryName}}{{this.categoryName}}{{else}}—{{/if}}</td>
             <td class="font-bold">{{int this.currentStock}} <span class="text-[11px] font-normal text-stone-400">{{this.unit}}</span></td>
             <td class="text-stone-500">{{int this.minStockLevel}}</td>
-            <td class="stock-status-cell"><span class="badge {{statusBadge this.status}}">{{this.status}}</span></td>
+            <td><span class="badge {{statusBadge this.status}}">{{this.status}}</span></td>
             <td class="text-stone-600">{{money this.price}}</td>
             <td class="text-right font-bold">{{money this.value}}</td>
           </tr>
@@ -100,24 +100,5 @@
     </table>
   </div>
 </section>
-
-<script>
-  const reportPeriod = document.getElementById('period');
-  const reportFrom = document.getElementById('from');
-  const reportTo = document.getElementById('to');
-
-  reportPeriod.addEventListener('change', function () {
-    if (this.value !== 'custom') this.form.requestSubmit();
-  });
-
-  for (const dateField of [reportFrom, reportTo]) {
-    dateField.addEventListener('change', function () {
-      reportPeriod.value = 'custom';
-      if (reportFrom.value && reportTo.value && reportFrom.value <= reportTo.value) {
-        this.form.requestSubmit();
-      }
-    });
-  }
-</script>
 
 {{> app-foot}}

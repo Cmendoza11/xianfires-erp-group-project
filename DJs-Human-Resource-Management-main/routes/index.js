@@ -74,14 +74,6 @@ import {
   resetPasswordPage,
   resetPasswordSubmit
 } from "../controllers/passwordResetController.js";
-import {
-  notificationList,
-  notificationOpen,
-  notificationMarkRead,
-  notificationDelete,
-  notificationReadAll,
-  notificationDeleteAll
-} from "../controllers/notificationController.js";
 import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -105,14 +97,6 @@ router.get("/logout", logoutUser);
 
 // DASHBOARD
 router.get("/dashboard", requireAuth, dashboard);
-
-// NOTIFICATIONS (each user's own)
-router.get("/notifications", requireAuth, notificationList);
-router.post("/notifications/read-all", requireAuth, notificationReadAll);
-router.post("/notifications/delete-all", requireAuth, notificationDeleteAll);
-router.get("/notifications/:id/open", requireAuth, notificationOpen);
-router.post("/notifications/:id/read", requireAuth, notificationMarkRead);
-router.post("/notifications/:id/delete", requireAuth, notificationDelete);
 
 // SELF-SERVICE PROFILE
 router.get("/profile", requireAuth, employeeProfile);

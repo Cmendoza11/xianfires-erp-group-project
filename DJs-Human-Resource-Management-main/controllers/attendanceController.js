@@ -3,7 +3,6 @@ import { Attendance, Employee } from "../models/index.js";
 import { asyncHandler, parseId, findEmployeeForUser, paginate } from "../utils/helpers.js";
 import { ATTENDANCE_STATUSES, lateMinutesFor, checkInWindowProblem } from "../utils/hr.js";
 import { localDateISO, monthEndISO } from "../utils/format.js";
-import { notifyRoles } from "../services/notify.js";
 import { overtimeMinutes } from "../services/payrollCalc.js";
 
 const buildRow = (employee, record) => ({
@@ -141,14 +140,6 @@ export const checkIn = asyncHandler(async (req, res) => {
 
   if (existing) await existing.update(payload);
   else await Attendance.create({ employeeId: employee.id, date, ...payload });
-  if (lateMinutes > 0) {
-    await notifyRoles(["admin", "staff"], {
-      type: "attendance", icon: "i-clock", tone: "orange",
-      title: `${employee.firstName} ${employee.lastName} checked in late`,
-      detail: `${time} · ${lateMinutes} minute(s) late · ${employee.department}`,
-      href: `/attendance?date=${date}`
-    }, { except: req.user.id });
-  }
 
   req.flash("success_msg", `Checked in at ${time}${lateMinutes > 0 ? ` (${lateMinutes} minutes late)` : ""}.`);
   res.redirect("/my-attendance");

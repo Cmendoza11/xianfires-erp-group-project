@@ -1,6 +1,7 @@
 /*
   DJYum — server-side validation for product image uploads.
-  The browser posts the original file as a base64 data URL.
+  The browser compresses/resizes the file and posts a base64 data URL, so no
+  extra upload middleware or dependency is required.
 */
 const ALLOWED = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"];
 const DATA_URL = /^data:(image\/(?:png|jpe?g|webp|gif));base64,([A-Za-z0-9+/=\s]+)$/i;
@@ -21,7 +22,7 @@ export const validateImagePayload = (raw, maxBytes = 2 * 1024 * 1024) => {
   }
 
   const base64 = match[2].replace(/\s/g, "");
-  const bytes = Buffer.byteLength(base64, "base64");
+  const bytes = Math.floor((base64.length * 3) / 4);
   if (bytes > maxBytes) {
     return { error: "Product image is too large. Please use an image under 2 MB." };
   }

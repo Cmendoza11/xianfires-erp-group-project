@@ -22,43 +22,126 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
-    
+
 import bcrypt from "bcrypt";
 import { User } from "../models/userModel.js";
-// Tables are created at start-up (config/database.js) and by `npm run migrate`.
 
-export const loginPage = (req, res) => res.render("login", { title: "Login" });
-export const registerPage = (req, res) => res.render("register", { title: "Register" });
-export const forgotPasswordPage = (req, res) => res.render("forgotpassword", { title: "Forgot Password" });
+// Helper functions
+const cleanEmail = (value) => String(value || "").trim().toLowerCase();
+const cleanText = (value) => String(value || "").trim();
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+/**
+ * Start a new session for the user
+ */
+const startSession = (req, user) => {
+  return new Promise((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) return reject(err);
+      req.session.userId = user.id;
+      req.session.role = user.role;
+      req.session.save((saveErr) => {
+        if (saveErr) return reject(saveErr);
+        resolve();
+      });
+    });
+  });
+};
+
+// ==================== UNIFIED LOGIN ====================
+
+export const loginPage = (req, res) => {
+  if (req.session.userId) {
+    // Redirect based on role if already logged in
+    return res.redirect(req.session.role === "admin" ? "/admin/dashboard" : "/staff/dashboard");
+  }
+  
+  res.render("login", { 
+    title: "Login | Customer Logs",
+    layout: false
+  });
+};
 
 export const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ where: { email } });
-  if (!user) return res.send("User not found");
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) return res.send("Incorrect password");
-  if (!["staff", "admin"].includes(user.role)) return res.status(403).send("Staff or admin account required");
-  req.session.userId = user.id;
-  res.redirect(user.role === "admin" ? "/admin/promo-management" : "/staff/dashboard");
+  try {
+    const email = cleanEmail(req.body.email);
+    const password = String(req.body.password || "");
+
+    // Validation
+    if (!email || !password) {
+      req.flash("error_msg", "Email and password are required.");
+      return res.redirect("/login");
+    }
+
+    if (!isValidEmail(email)) {
+      req.flash("error_msg", "Please enter a valid email address.");
+      return res.redirect("/login");
+    }
+
+    // Find user
+    const user = await User.findOne({ where: { email } });
+    
+    if (!user) {
+      req.flash("error_msg", "Invalid email or password.");
+      return res.redirect("/login");
+    }
+
+    // Check if account is active
+    if (user.status !== "active") {
+      req.flash("error_msg", "Your account is inactive. Please contact an administrator.");
+      return res.redirect("/login");
+    }
+
+    // Verify password
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      req.flash("error_msg", "Invalid email or password.");
+      return res.redirect("/login");
+    }
+
+    // Update last login
+    await user.update({ lastLoginAt: new Date() });
+
+    // Create session
+    await startSession(req, user);
+
+    // Redirect based on role
+    const returnTo = req.session.returnTo;
+    delete req.session.returnTo;
+    
+    req.flash("success_msg", `Welcome back, ${user.name}!`);
+    
+    if (returnTo && (returnTo.startsWith("/staff") || returnTo.startsWith("/admin"))) {
+      return res.redirect(returnTo);
+    }
+    
+    // Default redirect based on role
+    res.redirect(user.role === "admin" ? "/admin/dashboard" : "/staff/dashboard");
+
+  } catch (error) {
+    console.error("Login error:", error);
+    req.flash("error_msg", "An error occurred during login. Please try again.");
+    res.redirect("/login");
+  }
 };
 
-export const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) {
-    return res.status(400).send("All fields are required");
-  }
-  const existing = await User.findOne({ where: { email } });
-  if (existing) {
-    return res.status(409).send("An account with this email already exists");
-  }
-  const hashed = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password: hashed, role: "staff" });
-  req.session.userId = user.id;
-  res.redirect("/staff/dashboard");
+// ==================== FORGOT PASSWORD ====================
+
+export const forgotPasswordPage = (req, res) => {
+  res.render("forgotpassword", { 
+    title: "Forgot Password | Customer Logs",
+    layout: false 
+  });
 };
+
+// ==================== LOGOUT ====================
 
 export const logoutUser = (req, res) => {
-  req.session.destroy(() => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Logout error:", err);
+    }
+    res.clearCookie("xf_crm.sid");
     res.redirect("/login");
   });
 };

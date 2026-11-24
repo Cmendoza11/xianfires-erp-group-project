@@ -73,21 +73,17 @@ const summarize = (rows) => ({
   ),
 });
 
-const matchesFilters = (row, { q, categoryId, recipeSelection, status }) => {
+const matchesFilters = (row, { q, categoryId, status }) => {
   if (q) {
     const needle = q.toLowerCase();
     if (
       !row.name.toLowerCase().includes(needle) &&
-      !(row.categoryName || "").toLowerCase().includes(needle) &&
-      !row.usedBy.some((product) => product.name.toLowerCase().includes(needle))
+      !(row.categoryName || "").toLowerCase().includes(needle)
     ) {
       return false;
     }
   }
   if (categoryId && Number(row.categoryId) !== Number(categoryId)) return false;
-  if (recipeSelection && !row.usedBy.some((product) =>
-    String(product.id) === recipeSelection || product.categoryValue === recipeSelection
-  )) return false;
   if (status === "in" && row.stockStatus !== "In Stock") return false;
   if (status === "low" && row.stockStatus !== "Low Stock") return false;
   if (status === "out" && row.stockStatus !== "Out of Stock") return false;
@@ -97,7 +93,6 @@ const matchesFilters = (row, { q, categoryId, recipeSelection, status }) => {
 const readFilters = (query) => ({
   q: String(query.q || "").trim(),
   categoryId: toInt(query.category) || null,
-  recipeSelection: String(query.product || '').trim(),
   status: String(query.status || "").trim(),
 });
 
@@ -113,33 +108,7 @@ const findInventoryForUpdate = async (productId, t) => {
 export const inventoryOverview = async (req, res, next) => {
   try {
     const filters = readFilters(req.query);
-    const [stock, recipeLinks] = await Promise.all([
-      stockRows(),
-      sequelize.query(
-        `SELECT r.ingredientId, p.id, p.name, c.id AS categoryId, c.name AS categoryName
-         FROM pos_recipes r
-         JOIN pos_products p ON p.id = r.productId
-         JOIN pos_products i ON i.id = r.ingredientId
-         LEFT JOIN pos_categories c ON c.id = p.categoryId
-         WHERE p.status = 'active' AND p.type <> 'Supply'
-           AND i.status = 'active' AND i.type = 'Supply'
-         ORDER BY c.name ASC, p.name ASC, p.id ASC`,
-        { type: QueryTypes.SELECT }
-      ),
-    ]);
-    const products = new Map();
-    const recipeCategories = new Map();
-    const usedByIngredient = new Map();
-    for (const link of recipeLinks) {
-      const categoryValue = link.categoryId == null ? null : `category-${link.categoryId}`;
-      if (categoryValue) recipeCategories.set(categoryValue, { value: categoryValue, name: link.categoryName });
-      const product = { id: Number(link.id), name: link.name, categoryValue };
-      products.set(product.id, product);
-      const ingredientId = Number(link.ingredientId);
-      if (!usedByIngredient.has(ingredientId)) usedByIngredient.set(ingredientId, []);
-      usedByIngredient.get(ingredientId).push(product);
-    }
-    const allRows = stock.map((row) => ({ ...row, usedBy: usedByIngredient.get(Number(row.productId)) || [] }));
+    const allRows = await stockRows();
     const rows = allRows.filter((row) => matchesFilters(row, filters));
 
     return res.render("pos/inventory/index", {
@@ -148,8 +117,10 @@ export const inventoryOverview = async (req, res, next) => {
       rows,
       summary: summarize(allRows),
       filters,
-      recipeCategories: [...recipeCategories.values()],
-      recipeProducts: [...products.values()],
+      categories: await Category.findAll({
+        where: { status: "active" },
+        order: [["name", "ASC"]],
+      }),
     });
   } catch (error) {
     return next(error);
@@ -451,6 +422,33 @@ export const adjustment = async (req, res, next) => {
       flashError(req, error.message);
       return res.redirect(`/pos/inventory/adjustment?product=${productId}`);
     }
+    return next(error);
+  }
+};
+
+export const updateMinLevel = async (req, res, next) => {
+  const productId = toInt(req.params.productId);
+  const minStockLevel = Number(req.body.minStockLevel);
+  if (!Number.isSafeInteger(minStockLevel) || minStockLevel < 0) {
+    flashError(req, "Minimum stock level must be zero or a positive number.");
+    return res.redirect("/pos/inventory");
+  }
+
+  try {
+    const item = await Product.findByPk(productId);
+    if (!item || item.type !== "Supply") throw new PosError("Select an ingredient.");
+    const inventory = await Inventory.findOne({ where: { productId } });
+    if (!inventory) {
+      flashError(req, "This product has no inventory record.");
+      return res.redirect("/pos/inventory");
+    }
+    await inventory.update({
+      minStockLevel,
+      lastUpdated: new Date(),
+    });
+    flashSuccess(req, "Minimum stock level updated.");
+    return res.redirect(`/pos/inventory/${productId}`);
+  } catch (error) {
     return next(error);
   }
 };

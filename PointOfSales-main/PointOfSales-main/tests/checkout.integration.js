@@ -6,7 +6,7 @@ process.env.ELECTRON = '1';
 process.env.ERP_API_KEY_POS = '';
 process.env.ERP_INTERNAL_KEY = '';
 const { default: app } = await import('../index.js');
-const { sequelize, User, Category, Product, Inventory, OrderItem, Transaction, Payment, InventoryMovement, Recipe } = await import('../models/index.js');
+const { sequelize, User, Category, Product, Inventory, Transaction, Payment, InventoryMovement, Recipe } = await import('../models/index.js');
 const { default: bcrypt } = await import('bcrypt');
 const server = app.listen(0, '127.0.0.1');
 await new Promise(resolve => server.once('listening', resolve));
@@ -20,8 +20,8 @@ let passed = 0;
 function check(value, message) { assert.ok(value, message); console.log(`PASS ${++passed}: ${message}`); }
 const client = () => {
   let cookie = '';
-  return async (path, data, origin = base) => {
-    const res = await fetch(origin + path, {
+  return async (path, data) => {
+    const res = await fetch(base + path, {
       method: data ? 'POST' : 'GET', redirect: 'manual',
       headers: { Cookie: cookie, ...(data ? { 'Content-Type': 'application/json' } : {}) },
       body: data ? JSON.stringify(data) : undefined,
@@ -36,60 +36,26 @@ try {
   const [admin, cashier, other] = await Promise.all(['admin', 'cashier', 'cashier'].map((role, i) => User.create({
     name: `Test User ${i}`, email: `user${i}@pos.test`, password: hash, role,
   })));
-  const category = await Category.create({ name: 'Acceptance menu' });
-  const product = await Product.create({ name: 'Test Milk Tea', categoryId: category.id, price: 100, type: 'Beverage' });
+  const category = await Category.create({ name: 'Acceptance meals' });
+  const product = await Product.create({ name: 'Test Burger', categoryId: category.id, price: 100, type: 'Food' });
   await Inventory.create({ productId: product.id, currentStock: 10 });
-  const food = await Product.create({
-    name: 'Test Burger', categoryId: category.id, price: 100, type: 'Food',
-    addOns: [{ id: 2, name: 'Pearl', price: 15 }],
-  });
-  await Inventory.create({ productId: food.id, currentStock: 10 });
   const a = client(), c = client(), o = client();
   for (const [request, user] of [[a, admin], [c, cashier], [o, other]]) {
     const login = await request('/login', { email: user.email, password: 'Acceptance123!' });
     check(login.location === (user.role === 'cashier' ? '/pos/terminal' : '/dashboard'), `${user.email} role landing`);
   }
   check((await c('/pos/settings')).location === '/dashboard', 'cashier blocked from Settings');
-  const productForm = await a('/pos/products/new');
-  const foodForm = await a(`/pos/products/${food.id}/edit`);
-  const drinkForm = await a(`/pos/products/${product.id}/edit`);
-  const hiddenAddOns = /<fieldset id="product-add-ons"[^>]*hidden disabled/;
-  check(hiddenAddOns.test(productForm.text) && hiddenAddOns.test(foodForm.text)
-    && drinkForm.text.includes('id="product-add-ons"') && !hiddenAddOns.test(drinkForm.text),
-    'product form shows add-on settings only for beverages');
-  checkScripts(drinkForm.text);
-  const updateDrink = await a(`/pos/products/${product.id}`, {
-    name: product.name, categoryId: category.id, price: 100, type: 'Beverage', availability: 'on', addOn2: '15',
-  });
-  check(updateDrink.location === '/pos/products' && (await product.reload()).addOns?.[0]?.price === 15,
-    'product editor saves the beverage add-on price');
   const terminal = await c('/pos/terminal');
   check(terminal.status === 200, 'cashier terminal renders');
   checkScripts(terminal.text);
-  const catalog = JSON.parse(terminal.text.match(/const PRODUCTS = (.*);/)[1]);
-  check(catalog.find(item => item.id === food.id).addOns.length === 0
-    && catalog.find(item => item.id === product.id).addOns[0].name === 'Pearl',
-    'terminal only offers add-ons for beverages');
-  const foodWithAddOn = await c('/pos/orders', { items: [{ productId: food.id, quantity: 1, addOnIds: [2] }] });
-  check(foodWithAddOn.location === '/pos/terminal', 'order rejects add-ons for food with legacy settings');
   const bad = await c('/pos/orders', { items: [{ productId: product.id, quantity: 1.5 }] });
   check(bad.location === '/pos/terminal', 'fractional quantity rejected');
-  const unavailable = await c('/pos/orders', { items: [{ productId: product.id, quantity: 1, addOnIds: [4] }] });
-  check(unavailable.location === '/pos/terminal', 'unavailable add-on is rejected');
-  const created = await c('/pos/orders', { orderType: 'Take-Out', items: [
-    { productId: product.id, quantity: 1 },
-    { productId: product.id, quantity: 1, addOnIds: [2], price: 0 },
-  ] });
+  const created = await c('/pos/orders', { orderType: 'Take-Out', items: [{ productId: product.id, quantity: 2 }] });
   check(/^\/pos\/checkout\/\d+$/.test(created.location), 'cart creates checkout order');
   const orderId = Number(created.location.split('/').pop());
-  const lines = await OrderItem.findAll({ where: { orderId }, order: [['id', 'ASC']] });
-  check(lines.length === 2 && Number(lines[0].unitPrice) === 100 && Number(lines[1].unitPrice) === 115,
-    'different add-ons create separate lines and use the configured price');
   check((await Inventory.findOne({ where: { productId: product.id } })).currentStock === 10, 'unpaid cart does not deduct stock');
   const checkout = await c(created.location);
   check(checkout.status === 200, 'checkout page renders');
-  const paymentOptions = [...checkout.text.matchAll(/name="paymentMethod" value="([^"]+)"/g)].map(match => match[1]);
-  check(paymentOptions.join(',') === 'Cash,GCash', 'checkout offers only Cash and GCash');
   checkScripts(checkout.text);
   check((await o(created.location)).location === '/pos/orders', 'other cashier cannot open checkout');
   const pay = { orderType: 'Take-Out', paymentMethod: 'Cash', amountReceived: '500' };
@@ -97,19 +63,6 @@ try {
   check(await Transaction.count() === 0, 'other cashier cannot pay the order');
   await c(`/pos/checkout/${orderId}/pay`, { ...pay, amountReceived: '1' });
   check(await Transaction.count() === 0, 'insufficient cash writes no sale');
-  for (const paymentMethod of ['Maya', 'Credit/Debit Card']) {
-    const blockedPayment = await c(`/pos/checkout/${orderId}/pay`, {
-      ...pay, paymentMethod, referenceNumber: 'TEST-123', verified: 'on',
-    });
-    check(blockedPayment.location === created.location && await Transaction.count() === 0,
-      `${paymentMethod} is rejected for new sales`);
-  }
-  const missingReference = await c(`/pos/checkout/${orderId}/pay`, {
-    ...pay, paymentMethod: 'GCash', referenceNumber: '   ', verified: 'on',
-  });
-  check(missingReference.location === created.location && await Transaction.count() === 0
-    && (await c(created.location)).text.includes('Enter the GCash reference number.'),
-    'blank GCash reference is rejected with an error before recording payment');
   await c(`/pos/checkout/${orderId}/pay`, { ...pay, paymentMethod: 'GCash', referenceNumber: 'TEST-123', verified: '' });
   check(await Transaction.count() === 0, 'unverified electronic payment rejected');
   const paid = await c(`/pos/checkout/${orderId}/pay`, pay);
@@ -122,11 +75,10 @@ try {
   check(await Transaction.count({ where: { orderId } }) === 1, 'repeat payment does not duplicate sale');
   const dashboard = await a('/dashboard');
   check(dashboard.status === 200 && dashboard.text.includes('Weekly Sales Trend') && dashboard.text.includes('Top Selling Products'), 'POS dashboard renders sales panels');
-  check(dashboard.text.includes(sale.transactionNumber) && dashboard.text.includes(product.name), 'dashboard shows real recent sale and top product');
+  check(dashboard.text.includes(sale.transactionNumber) && dashboard.text.includes('Test Burger'), 'dashboard shows real recent sale and top product');
   checkScripts(dashboard.text);
   const receipt = await c(`/pos/receipts/${sale.id}`);
   check(receipt.status === 200 && receipt.text.includes('receipt-paper'), 'receipt renders with paper size selector');
-  check(receipt.text.includes('+ Pearl'), 'receipt displays the selected add-on');
   check((await o(`/pos/receipts/${sale.id}`)).status === 302, 'other cashier cannot read receipt');
   check((await a('/pos/reports/sales')).status === 200, 'admin sales report renders');
   await c(`/pos/transactions/${sale.id}/void`, { reason: 'Acceptance reversal' });
@@ -189,10 +141,10 @@ try {
   await a('/pos/inventory/recipes', recipeBody);
   check(await Recipe.count({ where: { productId: product.id } }) === 1, 'product recipe is saved');
   const stockScreen = await a('/pos/inventory');
-  check(stockScreen.status === 200 && stockScreen.text.includes('Recipe Beef') && !stockScreen.text.includes(product.name), 'stock overview lists ingredients instead of menu products');
+  check(stockScreen.status === 200 && stockScreen.text.includes('Recipe Beef') && !stockScreen.text.includes('Test Burger'), 'stock overview lists ingredients instead of menu products');
   check((await a('/pos/inventory/movements')).status === 200, 'unified stock movement screen renders');
   const menuScreen = await a('/pos/products');
-  check(menuScreen.status === 200 && menuScreen.text.includes(product.name) && !menuScreen.text.includes('Recipe Beef'), 'menu products exclude raw materials');
+  check(menuScreen.status === 200 && menuScreen.text.includes('Test Burger') && !menuScreen.text.includes('Recipe Beef'), 'menu products exclude raw materials');
   const recipeOrder = await c('/pos/orders', { orderType: 'Take-Out', items: [{ productId: product.id, quantity: 2 }] });
   const recipeOrderId = Number(recipeOrder.location.split('/').pop());
   check(Number.isFinite(recipeOrderId), 'recipe-based order created');
@@ -209,28 +161,6 @@ try {
   check((await a('/pos/inventory/out-of-stock')).text.includes('Recipe Beef'), 'ingredient out-of-stock alert appears at zero');
   const blockedRecipe = await c('/pos/orders', { orderType: 'Take-Out', items: [{ productId: product.id, quantity: 1 }] });
   check(blockedRecipe.location === '/pos/terminal', 'out-of-stock ingredients block recipe sale');
-  const availabilityPage = '/pos/products?q=' + encodeURIComponent(product.name);
-  const soldOutProduct = await a(availabilityPage);
-  check(soldOutProduct.text.includes('0 servings') && soldOutProduct.text.includes('>Not Available<'),
-    'a product with zero servings is labeled Not Available');
-  await a('/pos/inventory/stock-in', { productId: ingredient.id, quantity: 150, reason: 'Test restock' });
-  const restockedProduct = await a(availabilityPage);
-  check(restockedProduct.text.includes('1 servings') && restockedProduct.text.includes('>Available<'),
-    'availability returns after enough ingredients are restocked');
-  await product.update({ availability: false });
-  check((await a(availabilityPage)).text.includes('>Not Available<'), 'a product disabled for sale stays Not Available with stock');
-  const { default: restartedApp } = await import('../index.js?restart');
-  const restartedServer = restartedApp.listen(0, '127.0.0.1');
-  await new Promise(resolve => restartedServer.once('listening', resolve));
-  try {
-    const restartedBase = `http://127.0.0.1:${restartedServer.address().port}`;
-    check((await a('/pos/products', undefined, restartedBase)).status === 200, 'a new POS app instance accepts the existing login session');
-    check((await a('/logout', undefined, restartedBase)).location === '/login'
-      && (await a('/pos/products')).location === '/login', 'logout revokes the session across app instances');
-  } finally {
-    restartedServer.closeAllConnections();
-    await new Promise(resolve => restartedServer.close(resolve));
-  }
   console.log(`\n${passed} checks passed. Isolated test database retained: ${process.env.DB_NAME}`);
 } finally {
   server.closeAllConnections();

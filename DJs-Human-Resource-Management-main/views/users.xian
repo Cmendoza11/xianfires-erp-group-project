@@ -42,7 +42,7 @@
         <div class="flex items-center justify-between gap-3 border-b border-orange-500/20 px-5 py-4">
           <div>
             <h3 class="font-bold">Password reset requests</h3>
-            <p class="text-xs text-gray-500">From the "Forgot password" page. The person waits on that page: Approve opens "Set a new password" on their screen by itself. If they closed it, use Send link instead or set a temporary password.</p>
+            <p class="text-xs text-gray-500">From the "Forgot password" page. Confirm with the person first, then use Send link (copy it to them) or set a temporary password. If their page is still open, Approve opens "Set a new password" on it by itself.</p>
           </div>
           <span class="whitespace-nowrap rounded-full bg-orange-500/10 px-2.5 py-1 text-[11px] font-semibold text-orange-400">{{passwordRequests.length}} pending</span>
         </div>
