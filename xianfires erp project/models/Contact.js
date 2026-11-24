@@ -19,6 +19,8 @@ export const Contact = sequelize.define("Contact", {
 }, {
   tableName: "contact",
   underscored: true,
+  paranoid: true,
+  deletedAt: "deleted_at",
   indexes: [{ name: "IDX_CONTACT_TYPE", fields: ["type"] }]
 });
 

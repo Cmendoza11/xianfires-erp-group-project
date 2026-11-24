@@ -1,0 +1,135 @@
+{{> head}}
+<body>
+{{> adminHeader}}
+<div class="flex">
+  {{> adminNav}}
+  <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
+    <div class="max-w-[50rem] mx-auto space-y-4">
+      <div class="no-print">
+        {{> pageHeading heading=(concat "Expense Voucher " voucher.number) backUrl=urls.expenseVoucherGrid }}
+        <div class="flex flex-wrap gap-2 -mt-3 mb-2">
+          <button type="button" class="btn btn-outline" data-print>Print voucher</button>
+          {{#if can.write}}{{#unless voucher.isVoid}}
+          <button type="button" class="btn btn-outline" data-modal-target="#editVoucherModal">Edit</button>
+          <button type="button" class="btn btn-outline" data-modal-target="#receiptModal">{{#if voucher.receipt}}Replace receipt{{else}}Attach receipt{{/if}}</button>
+          <button type="button" class="btn btn-destructive" data-modal-target="#voidModal">Void</button>
+          {{/unless}}{{/if}}
+          {{#if voucher.entry}}<a href="{{ voucher.entry.url }}" class="btn btn-ghost">Journal entry {{ voucher.entry.number }}</a>{{/if}}
+          {{#if voucher.voidEntry}}<a href="{{ voucher.voidEntry.url }}" class="btn btn-ghost">Void entry {{ voucher.voidEntry.number }}</a>{{/if}}
+        </div>
+        {{#if voucher.isVoid}}
+        <div class="notice notice-warning">This voucher is void{{#if voucher.voidReason}}: {{ voucher.voidReason }}{{/if}}. Its journal entry was cancelled by a reversing entry.</div>
+        {{/if}}
+      </div>
+
+      <div class="card p-6">
+        <div class="text-center mb-6">
+          {{#if company.name}}<div class="text-lg font-semibold">{{ company.name }}</div>{{/if}}
+          {{#if company.address}}<div class="text-sm text-muted whitespace-pre-line">{{ company.address }}</div>{{/if}}
+          {{#if company.tin}}<div class="text-sm text-muted">TIN: {{ company.tin }}</div>{{/if}}
+          <div class="text-xl font-bold mt-3">EXPENSE VOUCHER</div>
+          <div class="text-sm text-muted">{{ voucher.number }}{{#if voucher.isVoid}} · VOID{{/if}}</div>
+        </div>
+
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm mb-6">
+          <div><dt class="text-muted">Date</dt><dd class="font-medium">{{ voucher.voucherDate }}</dd></div>
+          <div><dt class="text-muted">Paid to</dt><dd class="font-medium">{{ voucher.payee }}</dd></div>
+          <div class="sm:col-span-2"><dt class="text-muted">Particulars</dt><dd class="font-medium whitespace-pre-line">{{ voucher.description }}</dd></div>
+        </dl>
+
+        <table class="data-table">
+          <thead><tr><th>Account</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+          <tbody>
+            <tr><td>{{ voucher.expenseAccount }}</td><td class="num">{{ formatMoney voucher.amount }}</td><td></td></tr>
+            <tr><td class="report-indent">{{ voucher.paymentAccount }}</td><td></td><td class="num">{{ formatMoney voucher.amount }}</td></tr>
+            <tr class="report-row-grand"><td>Amount paid</td><td class="num">{{ formatMoney voucher.amount }}</td><td class="num">{{ formatMoney voucher.amount }}</td></tr>
+          </tbody>
+        </table>
+
+        <div class="grid grid-cols-3 gap-6 mt-14 text-sm text-center">
+          <div><div class="border-t pt-1">Prepared by</div>{{#if voucher.createdBy}}<div class="text-xs text-muted">{{ voucher.createdBy }}</div>{{/if}}</div>
+          <div><div class="border-t pt-1">Approved by</div></div>
+          <div><div class="border-t pt-1">Received by</div></div>
+        </div>
+      </div>
+
+      {{#if voucher.receipt}}
+      <section class="card no-print">
+        <div class="card-header flex items-center justify-between gap-3">
+          <div>
+            <h2 class="card-title">Receipt</h2>
+            <p class="card-description">{{ voucher.receipt.name }} · {{ voucher.receipt.sizeLabel }}</p>
+          </div>
+          <div class="flex gap-2">
+            <a href="{{ voucher.receipt.url }}" target="_blank" rel="noopener" class="btn btn-outline">Open</a>
+            {{#if can.write}}{{#unless voucher.isVoid}}
+            <button type="button" class="btn btn-ghost" data-api-action="{{ voucher.receiptApi }}" data-method="DELETE"
+              data-confirm-heading="Remove the receipt?" data-confirm-content="The file is deleted from the server." data-confirm-label="Remove"
+              data-success-message="Receipt removed" data-success-redirect="reload">Remove</button>
+            {{/unless}}{{/if}}
+          </div>
+        </div>
+        {{#if voucher.receipt.isImage}}
+        <div class="card-content"><img src="{{ voucher.receipt.url }}" alt="Receipt for {{ voucher.number }}" class="max-h-[28rem] rounded-lg border border-border mx-auto"></div>
+        {{/if}}
+      </section>
+      {{/if}}
+
+      {{#if can.write}}{{#unless voucher.isVoid}}
+      <template id="editVoucherModal" data-title="Edit {{ voucher.number }}">
+        <form method="POST" action="{{ voucher.updateApi }}" data-method="PATCH" novalidate data-json-form data-success-message="Voucher updated"
+          data-confirm-heading="Save the changes?" data-confirm-label="Save" class="grid gap-3">
+          <p class="notice notice-info">Only the payee and particulars can change. For a wrong amount or account, void this voucher and issue a new one.</p>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Paid to (payee)</span>
+            <input type="text" name="payee" class="input" maxlength="150" value="{{ voucher.payee }}" data-required="Payee is required">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Particulars</span>
+            <textarea name="description" rows="3" maxlength="1000" class="textarea" data-required="Describe what was paid for">{{ voucher.description }}</textarea>
+          </label>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </template>
+
+      <template id="receiptModal" data-title="Receipt for {{ voucher.number }}">
+        <form method="POST" action="{{ voucher.receiptApi }}" novalidate data-json-form data-success-message="Receipt attached"
+          data-confirm-heading="Upload this receipt?" data-confirm-content="The file is checked on the server before it is saved." data-confirm-label="Upload" class="grid gap-3">
+          <label class="grid gap-1 text-sm ">
+              <span class="font-medium">Receipt file</span>
+              <input type="file" name="receipt" class="input" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                data-upload data-allowed="jpg,jpeg,png,pdf" data-max-bytes="2097152" data-required="Choose a file">
+              <span class="field-help">JPG, PNG or PDF, up to 2 MB. Other files (e.g. .php, shell.php.jpg, fake images) are rejected.</span>
+            </label>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+            <button type="submit" class="btn btn-primary">Upload</button>
+          </div>
+        </form>
+      </template>
+
+      <template id="voidModal" data-title="Void {{ voucher.number }}">
+        <div class="grid gap-3">
+          <p class="text-sm text-muted">Posts a reversing entry dated today. The voucher stays on record as void.</p>
+          <form id="voidForm" class="grid gap-3" novalidate onsubmit="return false">
+            <label class="grid gap-1 text-sm">
+              <span class="font-medium">Reason</span>
+              <input type="text" name="reason" class="input" maxlength="255" data-required="Give a reason">
+            </label>
+          </form>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+            <button type="button" class="btn btn-destructive" data-api-action="{{ voucher.voidApi }}" data-payload-from="voidForm"
+              data-confirm-heading="Void {{ voucher.number }}?" data-confirm-content="A reversing journal entry will cancel this voucher." data-confirm-label="Void voucher"
+              data-success-message="Voucher voided" data-success-redirect="reload">Void voucher</button>
+          </div>
+        </div>
+      </template>
+      {{/unless}}{{/if}}
+    </div>
+  </main>
+</div>
+{{> footer }}

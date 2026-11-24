@@ -12,7 +12,11 @@
     "create:model": "node create.js model",
     "create:controller": "node create.js controller",
     "user:create": "node user.js create",
-    "user:changePassword": "node user.js changePassword"
+    "user:changePassword": "node user.js changePassword",
+    "test": "node tests/run-all.mjs",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "test:docker": "node tests/docker.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

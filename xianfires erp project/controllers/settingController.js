@@ -3,6 +3,7 @@ import { urls } from "../routes/urls.js";
 import { currencies } from "../services/currencies.js";
 import { diffFields, logAudit } from "../services/auditService.js";
 import { hasClosedPeriods } from "../services/periodService.js";
+import { getSecuritySettings, SECURITY_KEYS, SECURITY_LIMITS, validateSecurityPayload } from "../services/securityService.js";
 import {
   CONTROL_ACCOUNTS,
   getAccountingSettings,
@@ -25,7 +26,8 @@ const ALLOWED_KEYS = [
   "accountingCompanyName", "accountingCompanyTin", "accountingCompanyAddress", "accountingCurrency",
   "accountingFiscalYearStart", "accountingVatRate", "accountingPaymentTermsDays",
   ...PREFIX_KEYS,
-  ...CONTROL_ACCOUNTS.map((c) => c.key)
+  ...CONTROL_ACCOUNTS.map((c) => c.key),
+  ...Object.values(SECURITY_KEYS)
 ];
 
 const badRequest = (res, message) => res.status(400).json({ error: { status: 400, message } });
@@ -65,7 +67,9 @@ export const accountingSettingPage = async (req, res) => {
       label,
       selected: i + 1 === settings.fiscalYearStartMonth
     })),
-    maxPrefixLength: MAX_PREFIX_LENGTH
+    maxPrefixLength: MAX_PREFIX_LENGTH,
+    security: await getSecuritySettings(),
+    securityLimits: SECURITY_LIMITS
   });
 };
 
@@ -83,6 +87,8 @@ export const saveSetting = async (req, res) => {
       return badRequest(res, `Use ${MAX_PREFIX_LENGTH} characters or fewer`);
     }
   }
+  const securityError = validateSecurityPayload(body);
+  if (securityError) return badRequest(res, securityError);
   if ("accountingVatRate" in body) {
     const rate = Number(body.accountingVatRate);
     if (!Number.isFinite(rate) || rate < 0 || rate > 100) return badRequest(res, "VAT rate must be between 0 and 100");

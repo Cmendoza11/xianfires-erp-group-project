@@ -33,16 +33,20 @@
           </div>
           <p class="text-xs text-gray-400 mt-1">Exportable decision-making analytics across purchasing, inventory deliveries, returns, and liabilities.</p>
         </div>
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-3 no-print">
           <button onclick="window.print()" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition border border-zinc-700 flex items-center space-x-2">
             <i class="fas fa-print"></i>
             <span>Print Report</span>
+          </button>
+          <!-- Theme Toggle Icon Button -->
+          <button onclick="toggleTheme()" type="button" class="theme-toggle-btn p-2.5 rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition shadow flex items-center justify-center" title="Toggle Theme">
+            <i class="themeToggleIcon fas fa-moon text-yellow-400"></i>
           </button>
         </div>
       </div>
 
       <!-- Report Type Navigation Tabs -->
-      <div class="flex items-center space-x-2 overflow-x-auto pb-3 mb-6 border-b border-zinc-800/80 text-xs">
+      <div class="flex items-center space-x-2 overflow-x-auto pb-3 mb-6 border-b border-zinc-800/80 text-xs no-print">
         <a href="/reports?reportType=purchase-orders" class="px-4 py-2 rounded-xl font-semibold transition shrink-0 {{#eq reportType 'purchase-orders'}}bg-yellow-400 text-black shadow-lg font-bold{{else}}text-gray-400 hover:bg-zinc-900 hover:text-white{{/eq}}">
           <i class="fas fa-file-invoice mr-1.5"></i> Purchase Orders
         </a>
@@ -67,7 +71,7 @@
       </div>
 
       <!-- Report Filters & Date Controls -->
-      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 mb-6 shadow-xl">
+      <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 mb-6 shadow-xl no-print">
         <form action="/reports" method="GET" class="flex flex-col md:flex-row items-center gap-3">
           <input type="hidden" name="reportType" value="{{reportType}}">
           

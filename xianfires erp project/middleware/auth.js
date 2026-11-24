@@ -1,5 +1,31 @@
 import { AdminUser } from "../models/index.js";
 import { urls } from "../routes/urls.js";
+import { getSecuritySettings } from "../services/securityService.js";
+
+// Idle timeout: a session that was not used for the admin-set number of minutes is ended. Every
+// request in time slides the window forward (express-session "rolling").
+export const enforceSessionTimeout = async (req, res, next) => {
+  try {
+    if (!req.session?.userID) return next();
+    const { sessionMinutes } = await getSecuritySettings();
+    const limit = sessionMinutes * 60_000;
+    const now = Date.now();
+    if (req.session.lastSeen && now - req.session.lastSeen > limit) {
+      return req.session.destroy(() => {
+        res.clearCookie("xf_erp.sid");
+        if (req.path.startsWith("/api/")) {
+          return res.status(401).json({ error: { status: 401, message: "Your session expired. Please log in again." } });
+        }
+        res.redirect(`${urls.adminLogin}?expired=1`);
+      });
+    }
+    req.session.lastSeen = now;
+    req.session.cookie.maxAge = limit;
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
 
 // Resolves the logged-in admin for every request; a disabled or deleted user is logged out immediately.
 export const loadAdminUser = async (req, res, next) => {

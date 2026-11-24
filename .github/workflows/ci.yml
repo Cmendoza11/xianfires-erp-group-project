@@ -1,0 +1,32 @@
+# Runs on every pull request and every push to main: the whole group's code must still parse,
+# and the Accounting Docker image must still build.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  syntax:
+    name: Syntax check (all 5 modules)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: node --check on every module
+        run: npm run check
+
+  docker:
+    name: Accounting Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker-compose.yml
+        working-directory: xianfires erp project
+        run: docker compose config --quiet
+      - name: Build the image
+        working-directory: xianfires erp project
+        run: docker build -t djs-erp-accounting:ci .

@@ -4,6 +4,7 @@ import { AdminUser } from "../models/index.js";
 import { urls } from "../routes/urls.js";
 import { UUID_PATTERN } from "./accountService.js";
 import { AccountingValidationError } from "./accountTypes.js";
+import { assertFormat, assertStrongPassword, FORMATS, PASSWORD_RULES } from "./securityService.js";
 
 export const ROLES = [
   { value: "admin", label: "Administrator", description: "Everything, including users, settings and period closing" },
@@ -12,7 +13,8 @@ export const ROLES = [
 ];
 
 export const MIN_PASSWORD_LENGTH = 8;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Shown under every password field and checked live by the page script.
+export const PASSWORD_HINTS = PASSWORD_RULES.map((r) => r.label);
 
 function toUser(row) {
   return {
@@ -24,7 +26,8 @@ function toUser(row) {
     status: row.status ? 1 : 0,
     createdAt: row.createdAt ?? row.created_at,
     editUrl: urls.userEdit(row.uuid),
-    updateApi: urls.updateUser(row.uuid)
+    updateApi: urls.updateUser(row.uuid),
+    deleteApi: urls.deleteUser(row.uuid)
   };
 }
 
@@ -39,10 +42,9 @@ export async function getUser(uuid) {
   return row ? toUser(row) : null;
 }
 
-function assertPassword(password) {
-  if (typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH) {
-    throw new AccountingValidationError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
-  }
+function assertFullName(fullName) {
+  if (!fullName) throw new AccountingValidationError("Full name is required");
+  assertFormat(fullName, FORMATS.personName, "Full name may only contain letters, spaces, dots, apostrophes and hyphens (2-100 characters)");
 }
 
 function assertRole(role) {
@@ -54,12 +56,18 @@ function assertRole(role) {
 export async function createUser(data) {
   const fullName = String(data?.full_name ?? "").trim();
   const email = String(data?.email ?? "").trim().toLowerCase();
-  if (!fullName) throw new AccountingValidationError("Full name is required");
-  if (!EMAIL_PATTERN.test(email)) throw new AccountingValidationError("Enter a valid email address");
+  assertFullName(fullName);
+  if (email.length > 254) throw new AccountingValidationError("Email is too long");
+  assertFormat(email, FORMATS.email, "Enter a valid email address, e.g. name@company.com");
   assertRole(data.role);
-  assertPassword(data.password);
-  if (await AdminUser.findOne({ where: { email } })) {
-    throw new AccountingValidationError(`A user with the email ${email} already exists`);
+  assertStrongPassword(data.password, email);
+  const existing = await AdminUser.findOne({ where: { email }, paranoid: false });
+  if (existing) {
+    throw new AccountingValidationError(
+      existing.deleted_at
+        ? `A deleted user already uses ${email}. Restore it from the Recycle Bin instead.`
+        : `A user with the email ${email} already exists`
+    );
   }
   const user = await AdminUser.create({
     full_name: fullName,
@@ -86,7 +94,7 @@ export async function updateUser(uuid, data, actingUserId) {
   if (!user) throw new AccountingValidationError("User not found");
   const before = toUser(user.get({ plain: true }));
   const fullName = String(data?.full_name ?? user.full_name ?? "").trim();
-  if (!fullName) throw new AccountingValidationError("Full name is required");
+  assertFullName(fullName);
   const role = data.role ?? user.role;
   assertRole(role);
   const status = data.status === undefined ? Boolean(user.status) : [1, "1", true, "true"].includes(data.status);
@@ -97,7 +105,7 @@ export async function updateUser(uuid, data, actingUserId) {
   }
   const changes = { full_name: fullName, role, status };
   if (data.password) {
-    assertPassword(data.password);
+    assertStrongPassword(data.password, user.email);
     changes.password = await bcrypt.hash(data.password, 10);
   }
   await user.update(changes);
@@ -110,9 +118,23 @@ export async function changeOwnPassword(userId, data) {
   if (!(await bcrypt.compare(String(data?.current_password ?? ""), user.password))) {
     throw new AccountingValidationError("The current password is incorrect");
   }
-  assertPassword(data.new_password);
+  assertStrongPassword(data.new_password, user.email);
+  if (await bcrypt.compare(String(data.new_password), user.password)) {
+    throw new AccountingValidationError("The new password must be different from the current one");
+  }
   if (data.new_password !== data.confirm_password) {
     throw new AccountingValidationError("The new passwords do not match");
   }
   await user.update({ password: await bcrypt.hash(data.new_password, 10) });
+}
+
+// Soft delete: the user disappears from lists and cannot log in, and can be restored from the Recycle Bin.
+export async function deleteUser(uuid, actingUserId) {
+  const user = UUID_PATTERN.test(String(uuid ?? "")) ? await AdminUser.findOne({ where: { uuid } }) : null;
+  if (!user) throw new AccountingValidationError("User not found");
+  if (user.admin_user_id === actingUserId) throw new AccountingValidationError("You cannot delete your own account");
+  if (user.role === "admin" && user.status) await assertAnotherActiveAdmin(user);
+  const plain = toUser(user.get({ plain: true }));
+  await user.destroy();
+  return plain;
 }

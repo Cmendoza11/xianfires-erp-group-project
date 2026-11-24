@@ -1,0 +1,71 @@
+{{> head}}
+<body>
+{{> adminHeader}}
+<div class="flex">
+  {{> adminNav}}
+  <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
+    <div class="max-w-[75rem] mx-auto space-y-4">
+      <div class="flex flex-wrap items-end justify-between gap-4 pb-2">
+        <div class="flex-1 basis-80 min-w-0">
+          <h1 class="text-[1.375rem] font-semibold tracking-tight">Backup and Restore</h1>
+          <p class="text-[13px] text-muted mt-0.5">A backup is a full copy of the Accounting books (accounts, journals, invoices, bills, vouchers, assets, users and settings) saved on this laptop. Make one before big changes and before the defense. Restore puts the books back exactly as they were in that backup; a safety copy of the current data is made first.</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-api-action="{{ urls.createBackupApi }}" data-payload="{}"
+          data-confirm-heading="Make a backup now?" data-confirm-content="A full copy of the Accounting database is saved on this laptop. It takes a few seconds."
+          data-confirm-label="Back up now" data-confirm-tone="primary" data-success-message="Backup saved" data-success-redirect="reload">Back up now</button>
+      </div>
+
+      <section class="card" data-list data-page-size="10">
+        {{#> listToolbar placeholder="Search backup name"}}
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Type</span>
+            <select class="select" data-list-filter="kind"><option value="">All</option><option value="backup">Backups</option><option value="safety">Safety copies</option></select>
+          </label>
+        {{/listToolbar}}
+        <div class="card-content overflow-x-auto">
+          <table class="data-table">
+            <thead><tr><th>Backup</th><th>Type</th><th>Made on</th><th class="num">Size</th><th class="text-right">Actions</th></tr></thead>
+            <tbody>
+              {{#each backups}}
+              <tr data-row data-kind="{{#if (eq kind "Backup")}}backup{{else}}safety{{/if}}">
+                <td class="font-mono text-sm">{{ name }}</td>
+                <td>{{#if (eq kind "Backup")}}<span class="badge badge-secondary">{{ kind }}</span>{{else}}<span class="badge badge-warning">{{ kind }}</span>{{/if}}</td>
+                <td class="text-sm text-muted whitespace-nowrap">{{ formatDateTime createdAt }}</td>
+                <td class="num">{{ sizeLabel }}</td>
+                <td class="text-right whitespace-nowrap">
+                  <a href="{{ downloadUrl }}" class="btn btn-link">Download</a>
+                  <button type="button" class="btn btn-link" data-modal-target="#restoreModal" data-modal-action="{{ restoreApi }}" data-modal-title="Restore {{ name }}">Restore</button>
+                  <button type="button" class="btn btn-link text-destructive" data-api-action="{{ deleteApi }}" data-method="DELETE"
+                    data-confirm-heading="Delete this backup?" data-confirm-content="{{ name }} is removed from this laptop. This cannot be undone."
+                    data-confirm-label="Delete" data-success-message="Backup deleted" data-success-redirect="reload">Delete</button>
+                </td>
+              </tr>
+              {{else}}
+              <tr data-empty-row><td colspan="5" class="text-center text-muted">No backups yet. Click <b>Back up now</b> to make the first one.</td></tr>
+              {{/each}}
+            </tbody>
+          </table>
+          <div data-list-pager></div>
+        </div>
+      </section>
+      <p class="text-xs text-muted">Backups are kept in <span class="font-mono">storage/backups</span> (the newest 30). Download one to keep a copy off this laptop.</p>
+
+      <template id="restoreModal" data-title="Restore backup">
+        <form method="POST" action="" novalidate data-json-form data-success-message="Books restored" data-success-redirect="reload"
+          data-confirm-heading="Replace the current books with this backup?" data-confirm-content="Everything recorded after this backup was made is replaced. A safety copy of the current data is saved first, so this can be undone by restoring that copy."
+          data-confirm-label="Restore" class="grid gap-3">
+          <div class="notice notice-warning text-sm">This replaces all Accounting data with the backup. Only do this to undo a mistake.</div>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Type RESTORE to confirm</span>
+            <input type="text" name="confirm" class="input" autocomplete="off" data-required="Type RESTORE to confirm" data-pattern="^\s*[Rr][Ee][Ss][Tt][Oo][Rr][Ee]\s*$" data-pattern-message="Type the word RESTORE">
+          </label>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+            <button type="submit" class="btn btn-destructive">Restore</button>
+          </div>
+        </form>
+      </template>
+    </div>
+  </main>
+</div>
+{{> footer }}

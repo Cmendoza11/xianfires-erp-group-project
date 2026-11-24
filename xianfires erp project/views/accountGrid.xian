@@ -6,22 +6,28 @@
   <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
     <div class="max-w-[75rem] mx-auto">
       {{#if can.write}}
-      {{> pageHeading heading="Chart of Accounts" actionUrl=urls.accountingAccountNew actionLabel="New account" }}
+      {{> pageHeading heading="Chart of Accounts" actionUrl=urls.accountingAccountNew actionLabel="New account" actionModal=true exportCsv=true }}
       {{else}}
-      {{> pageHeading heading="Chart of Accounts" }}
+      {{> pageHeading heading="Chart of Accounts" exportCsv=true }}
       {{/if}}
-      <div class="card">
-        <div class="card-header flex flex-wrap gap-3">
-          <div class="w-64 max-w-full">
-            <input type="text" class="input" placeholder="Search code or name" data-account-search aria-label="Search code or name">
-          </div>
-          <select class="select w-auto" data-account-type-filter aria-label="Filter by type">
-            <option value="">All types</option>
-            {{#each types}}
-            <option value="{{ value }}">{{ label }}</option>
-            {{/each}}
-          </select>
-        </div>
+      <div class="card" data-list data-page-size="25">
+        {{#> listToolbar placeholder="Search code or name"}}
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Type</span>
+            <select class="select" data-list-filter="type">
+              <option value="">All types</option>
+              {{#each types}}<option value="{{ value }}">{{ label }}</option>{{/each}}
+            </select>
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Status</span>
+            <select class="select" data-list-filter="status"><option value="">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Cash</span>
+            <select class="select" data-list-filter="cash"><option value="">All accounts</option><option value="yes">Cash and bank only</option></select>
+          </label>
+        {{/listToolbar}}
         <div class="card-content overflow-x-auto">
           <table class="data-table">
             <thead>
@@ -39,10 +45,10 @@
             </thead>
             <tbody>
               {{#each accounts}}
-              <tr data-account-row data-code="{{ code }}" data-name="{{ name }}" data-type="{{ type }}">
+              <tr data-row data-type="{{ type }}" data-status="{{#if (eq status 1)}}active{{else}}inactive{{/if}}" data-cash="{{#if isCash}}yes{{else}}no{{/if}}">
                 <td class="font-mono">{{ code }}</td>
                 <td>
-                  {{#if @root.can.write}}<a href="{{ editUrl }}" class="hover:underline font-medium">{{ name }}</a>{{else}}<span class="font-medium">{{ name }}</span>{{/if}}
+                  {{#if @root.can.write}}<a href="{{ editUrl }}" data-modal class="hover:underline font-medium">{{ name }}</a>{{else}}<span class="font-medium">{{ name }}</span>{{/if}}
                   {{#if isCash}}<span class="badge badge-info ml-1">Cash</span>{{/if}}
                 </td>
                 <td>{{ typeLabel }}</td>
@@ -60,16 +66,17 @@
                 <td class="text-right whitespace-nowrap">
                   <a href="{{ ledgerUrl }}" class="btn btn-link mr-3">Ledger</a>
                   {{#if @root.can.write}}
+                  <a href="{{ editUrl }}" data-modal class="btn btn-link mr-3">Edit</a>
                   <button type="button" class="btn btn-link" data-delete-account="{{ deleteApi }}" data-code="{{ code }}" data-name="{{ name }}">Delete</button>
                   {{/if}}
                 </td>
               </tr>
+              {{else}}
+              <tr data-empty-row><td colspan="9" class="text-center text-muted">There is no account to display</td></tr>
               {{/each}}
             </tbody>
           </table>
-          <div class="flex w-full justify-center mt-2 text-sm {{#if accounts.length}}hidden{{/if}}" data-account-empty>
-            There is no account to display
-          </div>
+          <div data-list-pager></div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 {{> head}}
 <body class="auth-page">
+  {{> themeToggle class="theme-toggle auth-theme-toggle" }}
   <div class="auth-shell">
     <div class="auth-main">
       <div class="w-full max-w-[22rem]">
@@ -21,8 +22,8 @@
           </div>
           <div>
             <label class="field-label" for="password">Password<span class="required">*</span></label>
-            <input id="password" name="password" type="password" class="input" autocomplete="new-password" data-required="Password is required">
-            <p class="field-help">At least {{ minPasswordLength }} characters</p>
+            <input id="password" name="password" type="password" class="input" autocomplete="new-password" data-password-policy data-required="Password is required">
+            {{> passwordRules }}
           </div>
           <div>
             <label class="field-label" for="confirm_password">Confirm password<span class="required">*</span></label>

@@ -5,23 +5,42 @@
   {{> adminNav}}
   <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
     <div class="max-w-[75rem] mx-auto space-y-5">
-      {{> pageHeading heading="Users" actionUrl=urls.userNew actionLabel="New user" }}
-      <div class="card">
-        <div class="card-content pt-5 overflow-x-auto">
+      {{> pageHeading heading="Users" actionUrl=urls.userNew actionLabel="New user" actionModal=true }}
+      <div class="card" data-list data-page-size="10">
+        {{#> listToolbar placeholder="Search name or email"}}
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Role</span>
+            <select class="select" data-list-filter="role"><option value="">All roles</option>{{#each roles}}<option value="{{ value }}">{{ label }}</option>{{/each}}</select>
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Status</span>
+            <select class="select" data-list-filter="status"><option value="">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+          </label>
+        {{/listToolbar}}
+        <div class="card-content overflow-x-auto">
           <table class="data-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th></th></tr></thead>
             <tbody>
               {{#each users}}
-              <tr>
-                <td><a href="{{ editUrl }}" class="hover:underline font-medium">{{#if fullName}}{{ fullName }}{{else}}{{ email }}{{/if}}</a></td>
+              <tr data-row data-role="{{ role }}" data-status="{{#if (eq status 1)}}active{{else}}inactive{{/if}}">
+                <td><a href="{{ editUrl }}" data-modal class="hover:underline font-medium">{{#if fullName}}{{ fullName }}{{else}}{{ email }}{{/if}}</a></td>
                 <td>{{ email }}</td>
                 <td><span class="badge badge-info">{{ roleLabel }}</span></td>
                 <td>{{#if (eq status 1)}}<span class="badge badge-success">Active</span>{{else}}<span class="badge badge-secondary">Inactive</span>{{/if}}</td>
                 <td class="text-sm text-muted">{{ formatDateTime createdAt }}</td>
+                <td class="text-right whitespace-nowrap">
+                  <a href="{{ editUrl }}" data-modal class="btn btn-link mr-3">Edit</a>
+                  <button type="button" class="btn btn-link" data-api-action="{{ deleteApi }}" data-method="DELETE"
+                    data-confirm-heading="Delete {{ email }}?" data-confirm-content="The user can no longer log in and moves to the Recycle Bin, where it can be restored."
+                    data-confirm-label="Delete" data-success-message="User moved to the Recycle Bin" data-success-redirect="reload">Delete</button>
+                </td>
               </tr>
+              {{else}}
+              <tr data-empty-row><td colspan="6" class="text-center text-muted">No users</td></tr>
               {{/each}}
             </tbody>
           </table>
+          <div data-list-pager></div>
         </div>
       </div>
       <div class="card">

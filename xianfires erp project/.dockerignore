@@ -1,0 +1,14 @@
+# Never baked into the image: local secrets, installed packages, uploads, tests and git data.
+.env
+.env.*
+node_modules
+storage
+tests
+docker/initdb
+npm-debug.log*
+*.log
+.git
+.claude
+.vscode
+Dockerfile
+docker-compose.yml

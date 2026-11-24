@@ -1,4 +1,9 @@
 node_modules/
 .env
+lan/
 *.log
 .DS_Store
+storage/
+*.local.txt
+.env.*
+!.env.example

@@ -38,6 +38,10 @@
             <i class="fas fa-plus"></i>
             <span>New Purchase Request</span>
           </button>
+          <!-- Theme Toggle Icon Button -->
+          <button onclick="toggleTheme()" type="button" class="theme-toggle-btn p-2.5 rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition shadow flex items-center justify-center" title="Toggle Theme">
+            <i class="themeToggleIcon fas fa-moon text-yellow-400"></i>
+          </button>
         </div>
       </div>
 

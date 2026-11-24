@@ -38,6 +38,7 @@ export async function accountTotals({ from = EARLIEST_DATE, to, excludeClosing =
      LEFT JOIN (accounting_journal_line l
        INNER JOIN accounting_journal_entry e ON e.accounting_journal_entry_id = l.journal_entry_id)
        ON l.account_id = a.accounting_account_id AND e.entry_date BETWEEN ? AND ? ${closingFilter}
+     WHERE a.deleted_at IS NULL
      GROUP BY a.accounting_account_id
      ORDER BY ${TYPE_ORDER}, a.code`,
     { replacements: [from, to], type: QueryTypes.SELECT }
@@ -303,7 +304,7 @@ export async function getCashBalances(asOf) {
      LEFT JOIN (accounting_journal_line l
        INNER JOIN accounting_journal_entry e ON e.accounting_journal_entry_id = l.journal_entry_id)
        ON l.account_id = a.accounting_account_id AND e.entry_date <= ?
-     WHERE a.is_cash = 1
+     WHERE a.is_cash = 1 AND a.deleted_at IS NULL
      GROUP BY a.accounting_account_id
      ORDER BY a.code`,
     { replacements: [asOf], type: QueryTypes.SELECT }

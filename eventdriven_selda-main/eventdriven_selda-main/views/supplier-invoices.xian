@@ -38,6 +38,10 @@
             <i class="fas fa-plus"></i>
             <span>Record Supplier Invoice</span>
           </button>
+          <!-- Theme Toggle Icon Button -->
+          <button onclick="toggleTheme()" type="button" class="theme-toggle-btn p-2.5 rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition shadow flex items-center justify-center" title="Toggle Theme">
+            <i class="themeToggleIcon fas fa-moon text-yellow-400"></i>
+          </button>
         </div>
       </div>
 
@@ -192,14 +196,14 @@
                       </span>
                     </td>
                     <td class="py-3.5 px-4 text-right font-mono font-bold text-white">
-                      ₱{{formatCurrency invoiceTotal}}
-                      {{#if vatInclusive}}<div class="text-[10px] font-normal text-gray-500">incl. VAT{{#gt vatAmount 0}} ₱{{formatCurrency vatAmount}}{{/gt}}</div>{{/if}}
+                      {{formatCurrency invoiceTotal}}
+                      {{#if vatInclusive}}<div class="text-[10px] font-normal text-gray-500">incl. VAT{{#gt vatAmount 0}} {{formatCurrency vatAmount}}{{/gt}}</div>{{/if}}
                     </td>
                     <td class="py-3.5 px-4 text-right font-mono text-emerald-400">
-                      ₱{{formatCurrency amountPaid}}
+                      {{formatCurrency amountPaid}}
                     </td>
                     <td class="py-3.5 px-4 text-right font-mono font-bold {{#gt outstandingBalance 0}}text-amber-400{{else}}text-gray-400{{/gt}}">
-                      ₱{{formatCurrency outstandingBalance}}
+                      {{formatCurrency outstandingBalance}}
                     </td>
                     <td class="py-3.5 px-4 text-center">
                       {{{statusBadge paymentStatus}}}
@@ -286,7 +290,7 @@
             <select name="purchaseOrderId" id="modalPOSelect" required onchange="syncPOAmount()" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-400 transition">
               <option value="">Select Purchase Order</option>
               {{#each openPOs}}
-                <option value="{{id}}" data-supplier-id="{{supplierId}}" data-total="{{totalAmount}}">{{poNumber}} (₱{{formatCurrency totalAmount}})</option>
+                <option value="{{id}}" data-supplier-id="{{supplierId}}" data-total="{{totalAmount}}">{{poNumber}} ({{formatCurrency totalAmount}})</option>
               {{/each}}
             </select>
           </div>

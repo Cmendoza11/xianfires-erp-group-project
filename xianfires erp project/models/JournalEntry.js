@@ -9,12 +9,13 @@ export const JournalEntry = sequelize.define("JournalEntry", {
   description: { type: DataTypes.TEXT, allowNull: false },
   created_by: { type: DataTypes.INTEGER, defaultValue: null },
   // manual: posted by a user; reversal: cancels reversal_of_id; closing: fiscal year closing entry;
-  // invoice / bill / receipt / disbursement: posted automatically from sales and purchases.
+  // invoice / bill / receipt / disbursement: posted automatically from sales and purchases;
+  // voucher: an expense voucher; asset: a fixed asset purchase or a month's depreciation.
   entry_type: {
     type: DataTypes.STRING(20),
     allowNull: false,
     defaultValue: "manual",
-    validate: { isIn: [["manual", "reversal", "closing", "invoice", "bill", "receipt", "disbursement"]] }
+    validate: { isIn: [["manual", "reversal", "closing", "invoice", "bill", "receipt", "disbursement", "voucher", "asset"]] }
   },
   reversal_of_id: { type: DataTypes.INTEGER, defaultValue: null }
 }, {

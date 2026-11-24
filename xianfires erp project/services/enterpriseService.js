@@ -29,7 +29,7 @@ async function ask(code) {
     return { data: body, error: null };
   } catch (error) {
     const reason = error.name === "TimeoutError" ? "no answer in time" : error.cause?.code || error.message;
-    return { data: null, error: `${source.name} is not reachable at ${base} (${reason}). Start it with npm run dev.` };
+    return { data: null, error: `${source.name} is not reachable at ${base} (${reason}). Make sure its laptop is on the same Wi-Fi and the module is running.` };
   }
 }
 

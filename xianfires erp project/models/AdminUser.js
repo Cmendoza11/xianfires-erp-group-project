@@ -17,7 +17,9 @@ export const AdminUser = sequelize.define("AdminUser", {
   }
 }, {
   tableName: "admin_user",
-  underscored: true
+  underscored: true,
+  paranoid: true,
+  deletedAt: "deleted_at"
 });
 
 export { sequelize };

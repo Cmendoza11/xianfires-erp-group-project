@@ -71,14 +71,19 @@ const CHECK_CONSTRAINTS = [
   ["accounting_journal_line", "ACCOUNTING_JOURNAL_LINE_AMOUNT_CHECK",
     "CHECK ((`debit` > 0 AND `credit` = 0) OR (`credit` > 0 AND `debit` = 0))"],
   ["accounting_journal_entry", "ACCOUNTING_JOURNAL_ENTRY_TYPE_CHECK",
-    "CHECK (`entry_type` IN ('manual', 'reversal', 'closing', 'invoice', 'bill', 'receipt', 'disbursement'))"],
+    "CHECK (`entry_type` IN ('manual', 'reversal', 'closing', 'invoice', 'bill', 'receipt', 'disbursement', 'voucher', 'asset'))"],
   ["accounting_account", "ACCOUNTING_ACCOUNT_CASH_FLOW_CHECK",
     "CHECK (`cash_flow_category` IN ('operating', 'investing', 'financing'))"],
   ["admin_user", "ADMIN_USER_ROLE_CHECK",
     "CHECK (`role` IN ('admin', 'accountant', 'viewer'))"],
   ["invoice", "INVOICE_AMOUNTS_CHECK",
     "CHECK (`total` > 0 AND `amount_paid` >= 0 AND `amount_paid` <= `total`)"],
-  ["payment", "PAYMENT_AMOUNT_CHECK", "CHECK (`amount` > 0)"]
+  ["payment", "PAYMENT_AMOUNT_CHECK", "CHECK (`amount` > 0)"],
+  ["expense_voucher", "EXPENSE_VOUCHER_AMOUNT_CHECK", "CHECK (`amount` > 0)"],
+  ["fixed_asset", "FIXED_ASSET_VALUES_CHECK",
+    "CHECK (`cost` > 0 AND `salvage_value` >= 0 AND `salvage_value` < `cost` AND `useful_life_months` > 0)"],
+  ["fixed_asset_depreciation", "FIXED_ASSET_DEPRECIATION_AMOUNT_CHECK", "CHECK (`amount` > 0)"],
+  ["budget", "BUDGET_AMOUNT_CHECK", "CHECK (`amount` >= 0)"]
 ];
 
 async function columnExists(table, column) {
@@ -184,6 +189,26 @@ const DATA_MIGRATIONS = [
     if (!(await Account.findOne({ where: { code: row.code }, transaction }))) {
       await Account.create(row, { transaction });
     }
+  }],
+  // Expense vouchers and fixed assets post their own entry types; the check is re-added with them
+  // after the data migrations. Their tables come from sequelize.sync().
+  ["accounting-1.5.0-vouchers-assets-budgets", async () => {
+    const [checks] = await sequelize.query(
+      "SELECT 1 FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'accounting_journal_entry' AND CONSTRAINT_NAME = 'ACCOUNTING_JOURNAL_ENTRY_TYPE_CHECK'"
+    );
+    if (checks.length > 0) {
+      await sequelize.query("ALTER TABLE accounting_journal_entry DROP CHECK `ACCOUNTING_JOURNAL_ENTRY_TYPE_CHECK`");
+    }
+  }],
+  // Soft delete (Recycle Bin) for master data, and receipt attachments on expense vouchers.
+  ["accounting-1.6.0-soft-delete-and-receipts", async () => {
+    for (const table of ["accounting_account", "contact", "admin_user", "fixed_asset"]) {
+      await addColumnIfMissing(table, "deleted_at", "DATETIME NULL");
+    }
+    await addColumnIfMissing("expense_voucher", "receipt_file", "VARCHAR(64) NULL");
+    await addColumnIfMissing("expense_voucher", "receipt_name", "VARCHAR(120) NULL");
+    await addColumnIfMissing("expense_voucher", "receipt_mime", "VARCHAR(40) NULL");
+    await addColumnIfMissing("expense_voucher", "receipt_size", "INT NULL");
   }]
 ];
 

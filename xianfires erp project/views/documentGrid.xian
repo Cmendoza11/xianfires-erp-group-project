@@ -6,9 +6,9 @@
   <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
     <div class="max-w-[75rem] mx-auto">
       {{#if can.write}}
-      {{> pageHeading heading=config.plural actionUrl=page.newUrl actionLabel=(concat "New " (lowercase config.label)) }}
+      {{> pageHeading heading=config.plural actionUrl=page.newUrl actionLabel=(concat "New " (lowercase config.label)) exportCsv=true }}
       {{else}}
-      {{> pageHeading heading=config.plural }}
+      {{> pageHeading heading=config.plural exportCsv=true }}
       {{/if}}
       <div class="card">
         <form method="GET" action="{{ page.gridUrl }}" class="card-header flex flex-wrap items-end gap-3">

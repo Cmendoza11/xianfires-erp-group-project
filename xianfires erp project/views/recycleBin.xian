@@ -1,0 +1,45 @@
+{{> head}}
+<body>
+{{> adminHeader}}
+<div class="flex">
+  {{> adminNav}}
+  <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
+    <div class="max-w-[75rem] mx-auto space-y-4">
+      <div class="pb-2">
+        <h1 class="text-[1.375rem] font-semibold tracking-tight">Recycle Bin</h1>
+        <p class="text-[13px] text-muted mt-0.5">Deleted accounts, customers, suppliers, users and fixed assets are kept here (soft delete) and can be restored. Journal entries are never deleted; they are reversed instead, so the audit trail stays complete.</p>
+      </div>
+      <section class="card" data-list data-page-size="15">
+        {{#> listToolbar placeholder="Search deleted records"}}
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Type</span>
+            <select class="select" data-list-filter="kind"><option value="">All types</option><option value="account">Accounts</option><option value="contact">Customers / suppliers</option><option value="user">Users</option><option value="asset">Fixed assets</option></select>
+          </label>
+        {{/listToolbar}}
+        <div class="card-content overflow-x-auto">
+          <table class="data-table">
+            <thead><tr><th>Type</th><th>Record</th><th>Deleted</th><th></th></tr></thead>
+            <tbody>
+              {{#each items}}
+              <tr data-row data-kind="{{ kind }}">
+                <td><span class="badge badge-secondary">{{ kindLabel }}</span></td>
+                <td class="font-medium">{{ label }}</td>
+                <td class="text-sm text-muted">{{ formatDateTime deletedAt }}</td>
+                <td class="text-right">
+                  <button type="button" class="btn btn-link" data-api-action="{{ restoreApi }}" data-payload="{}"
+                    data-confirm-heading="Restore {{ label }}?" data-confirm-content="The record comes back exactly as it was before it was deleted."
+                    data-confirm-label="Restore" data-confirm-tone="primary" data-success-message="Restored" data-success-redirect="reload">Restore</button>
+                </td>
+              </tr>
+              {{else}}
+              <tr data-empty-row><td colspan="4" class="text-center text-muted">The Recycle Bin is empty</td></tr>
+              {{/each}}
+            </tbody>
+          </table>
+          <div data-list-pager></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+{{> footer }}

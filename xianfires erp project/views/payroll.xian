@@ -8,9 +8,13 @@
       <div class="flex flex-wrap items-end justify-between gap-4 pb-2">
         <div class="flex-1 basis-80 min-w-0">
           <h1 class="text-[1.375rem] font-semibold tracking-tight">Payroll</h1>
-          <p class="text-[13px] text-muted mt-0.5">HR computes the payroll from attendance and marks it Paid; each paid payslip is posted here automatically: Dr 6000 Salaries, Cr 2400 SSS/PhilHealth/Pag-IBIG, Cr 1110 cash advances, Cr 1010 Cash in Bank.</p>
+          <p class="text-[13px] text-muted mt-0.5">HR computes the payroll from attendance and approves it. Accounting releases the salary here: Dr 6000 Salaries, Cr 2400 SSS/PhilHealth/Pag-IBIG, Cr 1110 cash advances, Cr cash or bank (net pay). HR then shows the payroll as Paid.</p>
         </div>
-        <a href="{{ hrPayrollUrl }}" class="btn btn-ghost">Open HR payroll</a>
+        <div class="flex flex-wrap gap-2">
+          <a href="{{ urls.payrollReport }}" class="btn btn-outline">Payroll summary</a>
+          <button type="button" class="btn btn-outline" data-export-csv>Export to Excel</button>
+          <a href="{{ hrPayrollUrl }}" class="btn btn-ghost">Open HR payroll</a>
+        </div>
       </div>
 
       {{#if overview.hrError}}
@@ -19,10 +23,13 @@
       {{#if overview.totals.waitingToPost}}
       <div class="notice notice-warning">{{ overview.totals.waitingToPost }} paid payslip(s) are not posted yet. HR retries every minute; see the payslip in HR for the reason.</div>
       {{/if}}
+      {{#if overview.totals.waitingForHr}}
+      <div class="notice notice-warning">{{ overview.totals.waitingForHr }} salary release(s) are posted here but HR has not marked them Paid yet (HR could not be reached). Use <b>Retry HR update</b> on the row.</div>
+      {{/if}}
 
       <section class="card metric-band" aria-label="Payroll figures">
         <div class="metric">
-          <div class="metric-label">Approved in HR, not paid yet</div>
+          <div class="metric-label">Approved, ready to release</div>
           <div class="metric-value is-gold">{{ formatMoney overview.totals.approved }}</div>
           <div class="metric-sub">{{ overview.totals.approvedCount }} payslip(s)</div>
         </div>
@@ -43,44 +50,65 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" data-list data-page-size="10">
         <div class="card-header">
-          <h2 class="card-title">Approved in HR, not paid yet</h2>
-          <p class="card-description">Payslips HR has marked <b>Processed</b>. They are posted here when HR marks them Paid.</p>
+          <h2 class="card-title">Approved, ready to release</h2>
+          <p class="card-description">Payslips HR has approved (<b>Processed</b>). <b>Release salary</b> posts the payment and marks the payroll Paid in HR.</p>
         </div>
+        {{#> listToolbar placeholder="Search employee, code or period"}}
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">State</span>
+            <select class="select" data-list-filter="state"><option value="">All</option><option value="ready">Ready to release</option><option value="waiting-hr">Posted, waiting for HR</option></select>
+          </label>
+        {{/listToolbar}}
         <div class="card-content overflow-x-auto">
           <table class="data-table">
-            <thead><tr><th>Employee</th><th>Period</th><th class="num">Gross</th><th class="num">Deductions</th><th class="num">Net pay</th></tr></thead>
+            <thead><tr><th>Employee</th><th>Period</th><th class="num">Gross</th><th class="num">Deductions</th><th class="num">Net pay</th>{{#if can.write}}<th class="text-right">Action</th>{{/if}}</tr></thead>
             <tbody>
               {{#each overview.approved}}
-              <tr>
+              <tr data-row data-state="{{#if entry}}waiting-hr{{else}}ready{{/if}}">
                 <td><div class="font-medium">{{ employee.name }}</div><div class="text-xs text-muted">{{ employee.code }}{{#if employee.department}} · {{ employee.department }}{{/if}} · #{{ id }}</div></td>
                 <td class="whitespace-nowrap">{{ periodStart }} to {{ periodEnd }}</td>
                 <td class="num">{{ formatMoney gross }}</td>
                 <td class="num">{{ formatMoney deductions }}</td>
                 <td class="num font-semibold">{{ formatMoney netSalary }}</td>
+                {{#if ../can.write}}
+                <td class="text-right whitespace-nowrap">
+                  {{#if entry}}<a href="{{ concat ../urls.accountingJournalGrid "/view/" entry.uuid }}" class="font-mono text-xs hover:underline mr-2">{{ entry.number }}</a>{{/if}}
+                  <button type="button" class="btn {{#if entry}}btn-outline{{else}}btn-primary{{/if}}" data-modal-target="#releaseModal"
+                    data-modal-action="{{ releaseApi }}" data-modal-title="{{#if entry}}Retry HR update{{else}}Release salary{{/if}}"
+                    data-modal-values="{{ toJson releaseValues }}">{{#if entry}}Retry HR update{{else}}Release salary{{/if}}</button>
+                </td>
+                {{/if}}
               </tr>
               {{else}}
-              <tr><td colspan="5" class="text-center text-muted">No approved payroll waiting</td></tr>
+              <tr data-empty-row><td colspan="6" class="text-center text-muted">No approved payroll waiting</td></tr>
               {{/each}}
             </tbody>
           </table>
+          <div data-list-pager></div>
         </div>
       </section>
 
-      <section class="card">
-        <div class="card-header"><h2 class="card-title">Paid</h2></div>
+      <section class="card" data-list data-page-size="10">
+        <div class="card-header pb-0"><h2 class="card-title">Paid</h2></div>
+        {{#> listToolbar placeholder="Search employee, code or period"}}
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Journal entry</span>
+            <select class="select" data-list-filter="posted"><option value="">All</option><option value="yes">Posted</option><option value="no">Not posted yet</option></select>
+          </label>
+        {{/listToolbar}}
         <div class="card-content overflow-x-auto">
           <table class="data-table">
             <thead>
               <tr>
                 <th>Employee</th><th>Period</th><th class="num">Days</th><th class="num">Gross</th>
-                <th class="num">SSS / PhilHealth / Pag-IBIG</th><th class="num">Cash advance</th><th class="num">Net pay</th><th>Paid on</th><th>Journal entry</th>
+                <th class="num">SSS / PhilHealth / Pag-IBIG</th><th class="num">Cash advance</th><th class="num">Net pay</th><th>Paid on</th><th>Journal entry</th><th></th>
               </tr>
             </thead>
             <tbody>
               {{#each overview.paid}}
-              <tr>
+              <tr data-row data-posted="{{#if entry}}yes{{else}}no{{/if}}">
                 <td><div class="font-medium">{{ employee.name }}</div><div class="text-xs text-muted">{{ employee.code }} · #{{ id }}</div></td>
                 <td class="whitespace-nowrap">{{ periodStart }} to {{ periodEnd }}</td>
                 <td class="num">{{#if daysWorked}}{{ daysWorked }}{{else}}—{{/if}}</td>
@@ -92,14 +120,50 @@
                 <td class="whitespace-nowrap">
                   {{#if entry}}<a href="{{ concat ../urls.accountingJournalGrid "/view/" entry.uuid }}" class="hover:underline font-mono">{{ entry.number }}</a>{{else}}<span class="badge badge-warning">Not posted yet</span>{{/if}}
                 </td>
+                <td class="text-right"><a href="{{ concat ../urls.accountingPayroll "/payslip/" id }}" class="btn btn-link">Payslip</a></td>
               </tr>
               {{else}}
-              <tr><td colspan="9" class="text-center text-muted">No paid payroll yet</td></tr>
+              <tr data-empty-row><td colspan="10" class="text-center text-muted">No paid payroll yet</td></tr>
               {{/each}}
             </tbody>
           </table>
+          <div data-list-pager></div>
         </div>
       </section>
+      {{#if can.write}}
+      <template id="releaseModal" data-title="Release salary">
+        <form method="POST" action="" novalidate data-json-form data-success-message="Salary released" data-success-redirect="reload"
+          data-confirm-heading="Release this salary?" data-confirm-content="This posts the payment to the books and marks the payroll Paid in HR. It cannot be edited afterwards (only reversed)." data-confirm-label="Release salary"
+          class="grid gap-3">
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Employee and period</span>
+            <input type="text" name="payee" class="input" readonly tabindex="-1">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Net pay</span>
+            <input type="text" name="net" class="input text-right font-semibold" readonly tabindex="-1">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Payment date</span>
+            <input type="date" name="payment_date" class="input" value="{{ defaultDate }}" data-required="A payment date is required">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Paid from</span>
+            <select name="cash_account" class="select" data-required="Select the cash or bank account">
+              {{#each cashAccounts}}<option value="{{ uuid }}" {{#if (eq label "1010 - Cash in Bank")}}selected{{/if}}>{{ label }}</option>{{/each}}
+            </select>
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Reference (optional)</span>
+            <input type="text" name="reference" class="input" maxlength="60" placeholder="Bank transfer no. / check no." data-pattern="^[^<>]*$" data-pattern-message="Do not use &lt; or &gt;">
+          </label>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+            <button type="submit" class="btn btn-primary">Release salary</button>
+          </div>
+        </form>
+      </template>
+      {{/if}}
     </div>
   </main>
 </div>

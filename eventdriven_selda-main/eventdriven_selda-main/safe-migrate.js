@@ -4,6 +4,7 @@
     Copyright (c) 2025 Christian I. Cabrera || XianFire Framework
     Mindoro State University - Philippines
 */
+import "./env.js";
 import { Sequelize } from "sequelize";
 import bcrypt from "bcrypt";
 import {

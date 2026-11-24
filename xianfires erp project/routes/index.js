@@ -45,18 +45,29 @@ import {
   completeReconciliation, undoReconciliation, deleteReconciliation
 } from "../controllers/bankRecController.js";
 import { periodClosingPage, closePeriod, reopenPeriod, lockMonthApi, unlockMonthApi } from "../controllers/periodController.js";
-import { payrollPage } from "../controllers/payrollController.js";
+import { payrollPage, payrollPayslipPage, payrollReportPage, releasePayrollApi } from "../controllers/payrollController.js";
 import { auditLogPage } from "../controllers/auditController.js";
 import { accountingSettingPage, saveSetting } from "../controllers/settingController.js";
 import {
-  userGrid, userNew, userEdit, createUser, updateUser, changePasswordPage, changePassword
+  userGrid, userNew, userEdit, createUser, updateUser, deleteUser, changePasswordPage, changePassword
 } from "../controllers/userController.js";
+import { recycleBinPage, restoreRecord } from "../controllers/recycleBinController.js";
+import { backupPage, createBackupApi, deleteBackupApi, downloadBackup, restoreBackupApi } from "../controllers/backupController.js";
 import {
   generalLedger, trialBalance, incomeStatement, balanceSheet, cashFlow, aging, vatSummary, documentBook
 } from "../controllers/reportController.js";
 import {
   integrationGrid, integrationNew, integrationEdit, createIntegration, updateIntegration, rotateIntegrationKey
 } from "../controllers/integrationController.js";
+import {
+  expenseVoucherGrid, expenseVoucherView, createExpenseVoucher, voidExpenseVoucher, updateExpenseVoucher,
+  attachReceipt, removeReceipt, downloadReceipt
+} from "../controllers/voucherController.js";
+import {
+  fixedAssetGrid, createFixedAsset, updateFixedAsset, deleteFixedAsset, depreciateMonth, undoDepreciation
+} from "../controllers/fixedAssetController.js";
+import { rateLimit } from "../services/securityService.js";
+import { budgetReport, saveBudgets } from "../controllers/budgetController.js";
 import apiV1Router from "./apiV1.js";
 import { urls } from "./urls.js";
 import {
@@ -80,7 +91,8 @@ router.get("/", homePage);
 
 // Auth
 router.get("/admin/login", loginPage);
-router.post("/admin/user/login", requireJson, h(loginUser));
+// At most 20 login requests a minute from one address, on top of the per-email lockout.
+router.post("/admin/user/login", rateLimit({ name: "login", limit: 20 }), requireJson, h(loginUser));
 router.get("/admin/signup", signupPage);
 router.post("/admin/user/signup", requireJson, h(signupUser));
 router.get("/admin/user/logout", h(logoutUser));
@@ -111,6 +123,10 @@ router.get("/admin/sales/invoices/view/:id", read, h(documentView("invoice")));
 router.get("/admin/purchases/bills", read, h(documentGrid("bill")));
 router.get("/admin/purchases/bills/new", write, h(documentNew("bill")));
 router.get("/admin/purchases/bills/view/:id", read, h(documentView("bill")));
+router.get(urls.expenseVoucherGrid, read, h(expenseVoucherGrid));
+router.get("/admin/purchases/expense-vouchers/view/:id", read, h(expenseVoucherView));
+router.get("/admin/purchases/expense-vouchers/receipt/:id", read, h(downloadReceipt));
+router.get(urls.fixedAssetGrid, read, h(fixedAssetGrid));
 
 // Banking
 router.get("/admin/banking/reconciliations", read, h(reconciliationGrid));
@@ -127,12 +143,18 @@ router.get("/admin/accounting/reports/ap-aging", read, h(aging("bill")));
 router.get("/admin/accounting/reports/vat-summary", read, h(vatSummary));
 router.get("/admin/accounting/reports/sales-book", read, h(documentBook("invoice")));
 router.get("/admin/accounting/reports/purchase-book", read, h(documentBook("bill")));
+router.get(urls.reportBudget, read, h(budgetReport));
 
 // Controls (administrators)
 router.get("/admin/setting/accounting", admin, h(accountingSettingPage));
 router.get("/admin/accounting/period-closing", admin, h(periodClosingPage));
 router.get(urls.accountingPayroll, read, h(payrollPage));
 router.get("/admin/audit-log", admin, h(auditLogPage));
+router.get(urls.recycleBin, admin, h(recycleBinPage));
+router.get(urls.backups, admin, h(backupPage));
+router.get("/admin/backups/download/:name", admin, h(downloadBackup));
+router.get(urls.payrollReport, read, h(payrollReportPage));
+router.get("/admin/accounting/payroll/payslip/:id", read, h(payrollPayslipPage));
 router.get("/admin/users", admin, h(userGrid));
 router.get("/admin/users/new", admin, userNew);
 router.get("/admin/users/edit/:id", admin, h(userEdit));
@@ -155,18 +177,35 @@ router.post("/api/purchases/bills", ...writeJsonApi, h(createDocumentApi("bill")
 router.post("/api/documents/:id/payments", ...writeJsonApi, h(recordPayment));
 router.post("/api/documents/:id/void", ...writeJsonApi, h(voidDocument));
 router.post("/api/payments/:id/void", ...writeJsonApi, h(voidPayment));
+router.post(urls.createExpenseVoucher, ...writeJsonApi, h(createExpenseVoucher));
+router.post("/api/payroll/:id/release", ...writeJsonApi, h(releasePayrollApi));
+router.post("/api/expense-vouchers/:id/void", ...writeJsonApi, h(voidExpenseVoucher));
+router.patch("/api/expense-vouchers/:id", ...writeJsonApi, h(updateExpenseVoucher));
+router.post("/api/expense-vouchers/:id/receipt", rateLimit({ name: "upload", limit: 10 }), ...writeJsonApi, h(attachReceipt));
+router.delete("/api/expense-vouchers/:id/receipt", ...writeApi, h(removeReceipt));
+router.post(urls.createFixedAsset, ...writeJsonApi, h(createFixedAsset));
+router.patch("/api/fixed-assets/:id", ...writeJsonApi, h(updateFixedAsset));
+router.delete("/api/fixed-assets/:id", ...writeApi, h(deleteFixedAsset));
+router.post(urls.runDepreciation, ...writeJsonApi, h(depreciateMonth));
+router.post(urls.undoDepreciation, ...writeJsonApi, h(undoDepreciation));
+router.post(urls.saveBudget, ...writeJsonApi, h(saveBudgets));
 router.post("/api/banking/reconciliations", ...writeJsonApi, h(startReconciliation));
 router.patch("/api/banking/reconciliations/:id/lines", ...writeJsonApi, h(toggleReconciliationLine));
 router.post("/api/banking/reconciliations/:id/complete", ...writeJsonApi, h(completeReconciliation));
 router.post("/api/banking/reconciliations/:id/undo", ...writeJsonApi, h(undoReconciliation));
 router.delete("/api/banking/reconciliations/:id", ...writeApi, h(deleteReconciliation));
 router.post("/api/accounting/periods/close", ...adminJsonApi, h(closePeriod));
+router.post(urls.createBackupApi, ...adminJsonApi, h(createBackupApi));
+router.post("/api/backups/:name/restore", ...adminJsonApi, h(restoreBackupApi));
+router.delete("/api/backups/:name", requireRoleApi("admin"), h(deleteBackupApi));
 router.post(urls.lockMonth, ...adminJsonApi, h(lockMonthApi));
 router.post(urls.unlockMonth, ...adminJsonApi, h(unlockMonthApi));
 router.post("/api/accounting/periods/reopen", ...adminJsonApi, h(reopenPeriod));
 router.post("/api/settings", ...adminJsonApi, h(saveSetting));
 router.post("/api/users", ...adminJsonApi, h(createUser));
 router.patch("/api/users/:id", ...adminJsonApi, h(updateUser));
+router.delete("/api/users/:id", requireRoleApi("admin"), h(deleteUser));
+router.post("/api/recycle-bin/:kind/:id/restore", ...adminJsonApi, h(restoreRecord));
 router.post("/api/integrations", ...adminJsonApi, h(createIntegration));
 router.patch("/api/integrations/:id", ...adminJsonApi, h(updateIntegration));
 router.post("/api/integrations/:id/rotate-key", ...adminJsonApi, h(rotateIntegrationKey));

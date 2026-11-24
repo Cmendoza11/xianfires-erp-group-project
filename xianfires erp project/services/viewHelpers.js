@@ -24,13 +24,14 @@ export function formatDateTime(value) {
 
 // Which sidebar section each page opens; a page not listed opens the dashboard section.
 const NAV_SECTIONS = {
-  accounts: "accounting", journal: "accounting", journalNew: "accounting",
+  accounts: "accounting", journal: "accounting", journalNew: "accounting", fixedAssets: "accounting",
   customers: "sales", invoices: "sales",
-  suppliers: "purchases", bills: "purchases", payroll: "purchases",
+  suppliers: "purchases", bills: "purchases", payroll: "purchases", expenseVouchers: "purchases", budget: "reports",
   bankrec: "banking",
   ledger: "reports", trialBalance: "reports", incomeStatement: "reports", balanceSheet: "reports", cashFlow: "reports",
   arAging: "reports", apAging: "reports", vatSummary: "reports", salesBook: "reports", purchaseBook: "reports",
-  periodClosing: "admin", auditLog: "admin", users: "admin", integrations: "admin", setting: "admin"
+  periodClosing: "admin", auditLog: "admin", recycleBin: "admin", users: "admin", integrations: "admin", setting: "admin",
+  backups: "admin", payrollReport: "purchases"
 };
 
 export function registerHelpers() {
@@ -40,7 +41,10 @@ export function registerHelpers() {
   hbs.registerHelper("formatSignedMoney", formatSignedMoney);
   hbs.registerHelper("eq", (a, b) => String(a) === String(b));
   hbs.registerHelper("gt", (a, b) => Number(a) > Number(b));
+  hbs.registerHelper("or", (...args) => args.slice(0, -1).some(Boolean));
   hbs.registerHelper("lowercase", (value) => String(value ?? "").toLowerCase());
+  // JSON for a data-* attribute; Handlebars escapes the quotes, the browser decodes them.
+  hbs.registerHelper("toJson", (value) => JSON.stringify(value ?? null));
   // The last argument Handlebars passes is its options object, so it is dropped.
   hbs.registerHelper("concat", (...args) => args.slice(0, -1).join(""));
   // Embeds data for page scripts; escaping "<" stops a value such as "</script>" from closing the tag.

@@ -1,0 +1,9 @@
+<div class="card-header flex flex-wrap items-end gap-3 no-print">
+  <label class="grid gap-1 text-sm grow basis-56 min-w-0">
+    <span class="font-medium">Search</span>
+    <input type="search" class="input" data-list-search placeholder="{{ placeholder }}" aria-label="Search" autocomplete="off">
+  </label>
+  {{> @partial-block }}
+  <button type="button" class="btn btn-ghost" data-list-reset>Clear filters</button>
+  <span class="text-xs text-muted ml-auto self-center whitespace-nowrap" data-list-count></span>
+</div>

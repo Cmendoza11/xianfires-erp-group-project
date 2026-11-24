@@ -2,3 +2,10 @@ node_modules/
 .env
 npm-debug.log*
 README.md
+
+# Uploaded receipts (never committed)
+storage/
+
+# Docker: database dumps used to seed the container
+docker/initdb/*.sql
+.env.docker

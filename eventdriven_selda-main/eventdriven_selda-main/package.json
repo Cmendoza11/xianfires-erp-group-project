@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
+    "dev": "nodemon -e js,mjs,cjs,json,xian index.js",
     "xian": "nodemon index.js",
     "migrate": "node migrate.js",
     "migrate:safe": "node safe-migrate.js",

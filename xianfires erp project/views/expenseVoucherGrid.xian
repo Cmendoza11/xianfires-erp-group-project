@@ -1,0 +1,127 @@
+{{> head}}
+<body>
+{{> adminHeader}}
+<div class="flex">
+  {{> adminNav}}
+  <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
+    <div class="max-w-[75rem] mx-auto space-y-4">
+      <div class="pb-2">
+        <h1 class="text-[1.375rem] font-semibold tracking-tight">Expense Vouchers</h1>
+        <p class="text-[13px] text-muted mt-0.5">Everyday cash or bank payments of the restaurant (market, gas, repairs, supplies). Each voucher posts Dr the expense, Cr the cash or bank account it was paid from.</p>
+      </div>
+
+      <section class="card metric-band" aria-label="Voucher figures">
+        <div class="metric">
+          <div class="metric-label">Paid this month</div>
+          <div class="metric-value is-gold">{{ formatMoney list.monthTotal }}</div>
+          <div class="metric-sub">vouchers not voided</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Vouchers listed</div>
+          <div class="metric-value">{{ list.items.length }}</div>
+          <div class="metric-sub">latest 200</div>
+        </div>
+      </section>
+
+      {{#if can.write}}
+      <template id="voucherModal" data-title="New expense voucher">
+        {{#if paymentAccounts.length}}
+        <form method="POST" action="{{ urls.createExpenseVoucher }}" novalidate data-json-form
+          data-success-message="Voucher saved" data-success-redirect="view"
+          data-confirm-heading="Post this expense voucher?" data-confirm-content="The journal entry is posted as soon as you confirm. A wrong voucher is voided, never edited." data-confirm-label="Post voucher"
+          class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Date</span>
+            <input type="date" name="voucher_date" class="input" value="{{ today }}" data-required="A date is required">
+          </label>
+          <label class="grid gap-1 text-sm sm:col-span-2">
+            <span class="font-medium">Paid to (payee)</span>
+            <input type="text" name="payee" class="input" maxlength="150" placeholder="e.g. Calapan Public Market" data-required="Payee is required">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Amount</span>
+            <input type="number" step="0.01" min="0.01" max="99999999" name="amount" class="input text-right" data-required="Enter the amount">
+          </label>
+          <label class="grid gap-1 text-sm sm:col-span-2">
+            <span class="font-medium">Expense account</span>
+            <select name="expense_account" class="select" data-required="Select an expense account">
+              <option value="">Select…</option>
+              {{#each expenseAccounts}}<option value="{{ uuid }}">{{ label }}</option>{{/each}}
+            </select>
+          </label>
+          <label class="grid gap-1 text-sm sm:col-span-2">
+            <span class="font-medium">Paid from</span>
+            <select name="payment_account" class="select">
+              {{#each paymentAccounts}}<option value="{{ uuid }}">{{ label }}</option>{{/each}}
+            </select>
+          </label>
+          <label class="grid gap-1 text-sm sm:col-span-4">
+            <span class="font-medium">What was paid for</span>
+            <textarea name="description" rows="2" maxlength="1000" class="textarea" placeholder="e.g. Vegetables and spices for the kitchen" data-required="Describe what was paid for"></textarea>
+          </label>
+          <label class="grid gap-1 text-sm sm:col-span-4">
+              <span class="font-medium">Receipt (optional)</span>
+              <input type="file" name="receipt" class="input" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                data-upload data-allowed="jpg,jpeg,png,pdf" data-max-bytes="2097152">
+              <span class="field-help">JPG, PNG or PDF, up to 2 MB. Other files (e.g. .php, shell.php.jpg, fake images) are rejected.</span>
+            </label>
+          <div class="sm:col-span-4 flex justify-end gap-2 pt-2">
+            <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+            <button type="submit" class="btn btn-primary">Save voucher</button>
+          </div>
+        </form>
+        {{else}}
+        <p class="text-sm text-muted">No cash or bank accounts yet. Tick "Cash or bank account" on an asset account in the Chart of Accounts.</p>
+        {{/if}}
+      </template>
+      <div class="flex justify-end"><button type="button" class="btn btn-primary" data-modal-target="#voucherModal">+ New expense voucher</button></div>
+      {{/if}}
+
+      <section class="card" data-list data-page-size="15">
+        {{#> listToolbar placeholder="Search voucher no., payee or description"}}
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Status</span>
+            <select class="select" data-list-filter="status"><option value="">All</option><option value="posted">Posted</option><option value="void">Void</option></select>
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Expense account</span>
+            <select class="select max-w-[14rem]" data-list-filter="account"><option value="">All accounts</option>{{#each expenseAccounts}}<option value="{{ label }}">{{ label }}</option>{{/each}}</select>
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Paid from</span>
+            <select class="select" data-list-filter="paid-from"><option value="">All</option>{{#each paymentAccounts}}<option value="{{ label }}">{{ label }}</option>{{/each}}</select>
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Receipt</span>
+            <select class="select" data-list-filter="receipt"><option value="">All</option><option value="yes">With receipt</option><option value="no">No receipt</option></select>
+          </label>
+        {{/listToolbar}}
+        <div class="card-content space-y-4">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>Voucher</th><th>Date</th><th>Payee</th><th>Expense account</th><th>Paid from</th><th class="num">Amount</th><th>Status</th><th>Receipt</th></tr></thead>
+              <tbody>
+                {{#each list.items}}
+                <tr data-row data-status="{{#if isVoid}}void{{else}}posted{{/if}}" data-account="{{ expenseAccount }}" data-paid-from="{{ paymentAccount }}" data-receipt="{{#if receipt}}yes{{else}}no{{/if}}">
+                  <td><a href="{{ viewUrl }}" class="font-medium hover:underline">{{ number }}</a></td>
+                  <td>{{ voucherDate }}</td>
+                  <td>{{ payee }}<div class="text-xs text-muted">{{ description }}</div></td>
+                  <td>{{ expenseAccount }}</td>
+                  <td>{{ paymentAccount }}</td>
+                  <td class="num">{{ formatMoney amount }}</td>
+                  <td>{{#if isVoid}}<span class="badge badge-danger">Void</span>{{else}}<span class="badge badge-success">Posted</span>{{/if}}</td>
+                  <td>{{#if receipt}}<span class="badge badge-info">Attached</span>{{else}}<span class="text-muted">-</span>{{/if}}</td>
+                </tr>
+                {{else}}
+                <tr data-empty-row><td colspan="8" class="text-center text-muted">No expense vouchers yet</td></tr>
+                {{/each}}
+              </tbody>
+            </table>
+            <div data-list-pager></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+{{> footer }}

@@ -1,4 +1,25 @@
-<aside class="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col justify-between h-screen sticky top-0 overflow-y-auto">
+<style>
+  @media print {
+    #appSidebar, aside, .sidebar-container, .no-print {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      max-height: 0 !important;
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      overflow: hidden !important;
+      position: absolute !important;
+      left: -99999px !important;
+      top: -99999px !important;
+    }
+  }
+</style>
+<aside id="appSidebar" class="no-print sidebar-container w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col justify-between h-screen sticky top-0 overflow-y-auto">
   <div>
     <!-- Brand Logo Section with Official DJ's FoodHub Logo -->
     <div class="p-4 flex items-center space-x-3 border-b border-zinc-800 bg-black/20">
@@ -102,19 +123,6 @@
   </div>
 
   <div>
-    <!-- Interactive Theme Switcher (Dark Mode / Light Mode) -->
-    <div class="px-4 py-3 border-t border-zinc-800">
-      <button id="themeToggleBtn" onclick="toggleTheme()" type="button" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-gray-300 transition group" title="Toggle Dark/Light Mode">
-        <span class="flex items-center space-x-2">
-          <i id="themeToggleIcon" class="fas fa-moon text-yellow-400 group-hover:rotate-12 transition-transform"></i>
-          <span id="themeToggleText">Dark Mode</span>
-        </span>
-        <span id="themeToggleBadge" class="text-[9px] font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full border border-yellow-400/30 uppercase tracking-wider">
-          Dark
-        </span>
-      </button>
-    </div>
-
     <!-- User Info & Logout Button -->
     <div class="p-4 border-t border-zinc-800 flex items-center justify-between bg-zinc-950">
       <div class="flex items-center space-x-3">

@@ -99,6 +99,33 @@
                   </div>
                 </div>
               </div>
+              <div class="card-content space-y-3 border-t border-border pt-5">
+                <div class="card-title">Security</div>
+                <p class="text-sm text-muted">Login protection and session length for every user of the Accounting system.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label class="field-label" for="securityLoginMaxAttempts">Failed logins before lock</label>
+                    <input id="securityLoginMaxAttempts" name="securityLoginMaxAttempts" type="number" step="1" class="input"
+                      min="{{ securityLimits.maxAttempts.min }}" max="{{ securityLimits.maxAttempts.max }}" value="{{ security.maxAttempts }}"
+                      data-required="Enter the number of attempts" data-pattern="^([1-9]|10)$" data-pattern-message="Use a whole number from 1 to 10">
+                    <p class="field-help">Wrong passwords allowed per email (1-10)</p>
+                  </div>
+                  <div>
+                    <label class="field-label" for="securityLockoutMinutes">Lockout time (minutes)</label>
+                    <input id="securityLockoutMinutes" name="securityLockoutMinutes" type="number" step="1" class="input"
+                      min="{{ securityLimits.lockoutMinutes.min }}" max="{{ securityLimits.lockoutMinutes.max }}" value="{{ security.lockoutMinutes }}"
+                      data-required="Enter the lockout time" data-pattern="^([1-9]|[1-5][0-9]|60)$" data-pattern-message="Use a whole number from 1 to 60">
+                    <p class="field-help">How long the login waits after the limit (1-60)</p>
+                  </div>
+                  <div>
+                    <label class="field-label" for="securitySessionMinutes">Session timeout (minutes)</label>
+                    <input id="securitySessionMinutes" name="securitySessionMinutes" type="number" step="1" class="input"
+                      min="{{ securityLimits.sessionMinutes.min }}" max="{{ securityLimits.sessionMinutes.max }}" value="{{ security.sessionMinutes }}"
+                      data-required="Enter the session timeout" data-pattern="^\d{1,3}$" data-pattern-message="Use a whole number from 5 to 480">
+                    <p class="field-help">Idle users are logged out after this (5-480)</p>
+                  </div>
+                </div>
+              </div>
               <div class="px-5 pb-5 flex justify-end w-full">
                 <button type="submit" class="btn btn-primary" form="accountingSetting">Save Settings</button>
               </div>

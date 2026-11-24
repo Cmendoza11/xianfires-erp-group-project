@@ -86,7 +86,8 @@ export const payrollCreate = asyncHandler(async (req, res) => {
   const employee = employeeId ? await Employee.findByPk(employeeId) : null;
   const periodStart = String(body.periodStart || "").trim();
   const periodEnd = String(body.periodEnd || "").trim();
-  const status = PAYROLL_STATUSES.includes(body.status) ? body.status : "Draft";
+  // A new payroll can be Draft or Processed (approved); only Accounting's salary release makes it Paid.
+  const status = ["Draft", "Processed"].includes(body.status) ? body.status : "Draft";
 
   const errors = [];
   if (!employee) errors.push("Select a valid employee.");
@@ -210,6 +211,11 @@ export const payrollUpdateStatus = asyncHandler(async (req, res) => {
   const status = PAYROLL_STATUSES.includes(req.body.status) ? req.body.status : null;
   if (!status) {
     req.flash("error_msg", "Invalid payroll status.");
+    return res.redirect(`/payroll/${payroll.id}`);
+  }
+  // Salaries are released by Accounting (Payroll > Release salary), which then marks the payroll Paid here.
+  if (status === "Paid" && payroll.status !== "Paid") {
+    req.flash("error_msg", "Approve the payroll (Processed). Accounting releases the salary and marks it Paid.");
     return res.redirect(`/payroll/${payroll.id}`);
   }
   if (status !== "Paid" && isLockedByAccounting(payroll)) {

@@ -8,10 +8,9 @@
       <span class="font-bold text-yellow-400 text-sm tracking-wide">DJ's FoodHub</span>
     </div>
 
-    <!-- Theme Switcher Pill -->
-    <button onclick="toggleTheme()" type="button" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-gray-300 transition shadow" title="Toggle Dark/Light Mode">
-      <i id="themeToggleIcon" class="fas fa-moon text-yellow-400"></i>
-      <span id="themeToggleText">Dark Mode</span>
+    <!-- Theme Toggle Icon Button -->
+    <button onclick="toggleTheme()" type="button" class="theme-toggle-btn p-2.5 rounded-xl border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 transition shadow flex items-center justify-center" title="Toggle Theme">
+      <i class="themeToggleIcon fas fa-moon text-yellow-400"></i>
     </button>
   </div>
 
@@ -77,36 +76,5 @@
     &copy; 2026 XianFire Framework &bull; Mindoro State University
   </footer>
 
-  <!-- Theme Script -->
-  <script>
-    function updateThemeUI(theme) {
-      const icon = document.getElementById('themeToggleIcon');
-      const text = document.getElementById('themeToggleText');
-
-      if (theme === 'light') {
-        document.documentElement.classList.remove('dark');
-        document.documentElement.classList.add('light');
-        if (icon) icon.className = 'fas fa-sun text-yellow-500';
-        if (text) text.innerText = 'Light Mode';
-      } else {
-        document.documentElement.classList.add('dark');
-        document.documentElement.classList.remove('light');
-        if (icon) icon.className = 'fas fa-moon text-yellow-400';
-        if (text) text.innerText = 'Dark Mode';
-      }
-    }
-
-    function toggleTheme() {
-      const isDark = document.documentElement.classList.contains('dark');
-      const newTheme = isDark ? 'light' : 'dark';
-      localStorage.setItem('dj_theme', newTheme);
-      updateThemeUI(newTheme);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const currentTheme = localStorage.getItem('dj_theme') || 'dark';
-      updateThemeUI(currentTheme);
-    });
-  </script>
 </body>
 </html>

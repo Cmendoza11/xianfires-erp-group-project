@@ -42,7 +42,7 @@
   --nav-muted: #7c7c85;
   --nav-line: rgba(255, 255, 255, .07);
   --nav-hover: rgba(255, 255, 255, .06);
-  --rail-width: 4rem;
+  --rail-width: 4.75rem;
   --panel-width: 15rem;
   --shell-width: calc(var(--rail-width) + var(--panel-width));
   --radius: .875rem;
@@ -122,10 +122,22 @@ body { background: var(--canvas); color: var(--ink); font-family: "Geist", ui-sa
 .app-rail { position: relative; z-index: 2; width: var(--rail-width); flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: .25rem; padding: 1rem 0; overflow-y: auto; }
 .rail-logo, .rail-account { display: none; justify-content: center; }
 .rail-logo { margin-bottom: 1rem; }
-.rail-account { margin-top: auto; padding-top: .5rem; }
+.rail-account { padding-top: .5rem; }
+.rail-theme { margin-top: auto; display: flex; justify-content: center; }
+/* Light/dark toggle: shows the moon in light mode (go dark) and the sun in dark mode (go light). */
+.theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; color: var(--muted); border: 1px solid var(--line-strong); background: var(--surface); transition: color .15s var(--ease), background .15s var(--ease); }
+.theme-toggle:hover { color: var(--ink); background: var(--surface-sunken); }
+.auth-theme-toggle { position: absolute; top: 1rem; left: 1rem; z-index: 5; }
+.theme-icon-sun, .theme-label-light { display: none; }
+:root[data-theme="dark"] .theme-icon-sun, :root[data-theme="dark"] .theme-label-light { display: inline; }
+:root[data-theme="dark"] .theme-icon-moon, :root[data-theme="dark"] .theme-label-dark { display: none; }
 .rail-item { position: relative; display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; flex-shrink: 0; border-radius: .75rem; color: var(--nav-muted); transition: background .15s var(--ease), color .15s var(--ease), box-shadow .15s var(--ease); }
 .rail-item:hover { background: var(--nav-hover); color: var(--nav-ink); }
 .rail-item.active { background: rgba(250, 204, 21, .14); color: var(--gold); box-shadow: inset 0 0 0 1px rgba(250, 204, 21, .22); }
+/* Each rail icon carries a short label, so the sections are found without hovering. */
+.rail-item:has(.rail-label) { flex-direction: column; gap: .1875rem; width: 4rem; height: 3.375rem; }
+.rail-label { font-size: .625rem; font-weight: 500; line-height: 1; letter-spacing: .01em; }
+.rail-item:has(.rail-label)::after { display: none; }
 
 @media (min-width: 768px) {
   .app-header { display: none; }
@@ -364,3 +376,32 @@ a.list-row:hover .list-row-title { text-decoration: underline; }
 .btn-hero-soft { background: rgba(255, 255, 255, .45); color: #111; font-weight: 600; }
 .btn-hero-soft:not(:disabled):hover { background: rgba(255, 255, 255, .7); }
 @media (max-width: 767px) { .hero-watermark { display: none; } .hero-actions { margin-right: 0; } }
+
+/* Modals: every form, confirmation and result opens in one of these. */
+.xf-modal-overlay { position: fixed; inset: 0; z-index: 70; display: flex; justify-content: center; align-items: flex-start; padding: 6vh 1rem 1rem; overflow-y: auto; background: var(--scrim); backdrop-filter: blur(2px); animation: fade .12s var(--ease); }
+.xf-modal { width: 100%; max-width: 44rem; background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-float); animation: pop .16s var(--ease); }
+.xf-modal.is-small { max-width: 26rem; }
+.xf-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
+.xf-modal-title { font-size: 1rem; font-weight: 600; color: var(--ink); }
+.xf-modal-close { border-radius: .5rem; padding: .25rem; color: var(--muted); }
+.xf-modal-close:hover { background: var(--surface-sunken); color: var(--ink); }
+.xf-modal-body { padding: 1.25rem; }
+.xf-modal-body .card { border: 0; box-shadow: none; background: transparent; }
+.xf-modal-body .card-header, .xf-modal-body .card-content { padding-left: 0; padding-right: 0; }
+.xf-modal-body .card-header { padding-top: 0; }
+.xf-alert { text-align: center; padding: 1.75rem 1.5rem 1.5rem; }
+.xf-alert-icon { width: 3rem; height: 3rem; margin: 0 auto .75rem; border-radius: 999px; display: flex; align-items: center; justify-content: center; }
+.xf-alert-icon svg { width: 1.5rem; height: 1.5rem; }
+.xf-alert.is-success .xf-alert-icon { background: var(--accent-soft); color: var(--gold-deep); }
+.xf-alert.is-error .xf-alert-icon { background: rgba(220, 38, 38, .12); color: var(--destructive-text); }
+.xf-alert.is-info .xf-alert-icon { background: var(--surface-sunken); color: var(--ink-soft); }
+.xf-alert-title { font-size: 1rem; font-weight: 600; color: var(--ink); }
+.xf-alert-message { font-size: .8125rem; color: var(--muted); margin-top: .35rem; white-space: pre-line; }
+
+/* Live password checklist under password fields. */
+.password-rules { margin-top: .4rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .15rem .75rem; font-size: .75rem; color: var(--muted); }
+.password-rules li { display: flex; align-items: center; gap: .35rem; }
+.password-rules li::before { content: "○"; font-size: .7rem; }
+.password-rules li.ok { color: var(--success-text); }
+.password-rules li.ok::before { content: "✓"; }
+.login-countdown { font-variant-numeric: tabular-nums; }

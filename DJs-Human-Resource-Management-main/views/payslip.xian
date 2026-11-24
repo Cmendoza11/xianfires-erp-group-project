@@ -102,22 +102,22 @@
       <div class="no-print rounded-2xl border border-white/5 bg-[#171717] p-5 space-y-4">
         <h3 class="font-bold">Manage Payroll Record</h3>
 
-        <form method="POST" action="/payroll/{{payroll.id}}/status" data-confirm-title="Update payroll status?" data-confirm="The status of this payslip will be changed to the one selected. Paid posts it to Accounting." data-confirm-ok="Update Status" data-confirm-tone="info" class="flex flex-wrap items-end gap-3">
+        {{#unless (eq payroll.status "Paid")}}
+        <form method="POST" action="/payroll/{{payroll.id}}/status" data-confirm-title="Update payroll status?" data-confirm="The status of this payslip will be changed to the one selected. Processed (approved) lets Accounting release the salary." data-confirm-ok="Update Status" data-confirm-tone="info" class="flex flex-wrap items-end gap-3">
           <div>
             <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Status</label>
             <select name="status" class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
-              {{#each statuses}}
-              <option value="{{this}}" {{#if (eq this ../payroll.status)}}selected{{/if}}>{{this}}</option>
-              {{/each}}
+              {{#each statuses}}{{#unless (eq this "Paid")}}
+              <option value="{{this}}" {{#if (eq this ../payroll.status)}}selected{{/if}}>{{#if (eq this "Processed")}}Processed (approved){{else}}{{this}}{{/if}}</option>
+              {{/unless}}{{/each}}
             </select>
           </div>
           <button type="submit" class="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Update Status</button>
         </form>
-        {{#unless (eq payroll.status "Paid")}}
-        <form method="POST" action="/payroll/{{payroll.id}}/status" data-confirm-title="Mark as Paid?" data-confirm="This payroll is posted to Accounting as a journal entry and becomes final. Corrections are then made in Accounting." data-confirm-ok="Mark as Paid" data-confirm-tone="success">
-          <input type="hidden" name="status" value="Paid">
-          <button type="submit" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-emerald-400">Mark as Paid</button>
-        </form>
+        <p class="text-sm text-gray-400">
+          {{#if (eq payroll.status "Processed")}}<span class="text-yellow-400 font-semibold">Approved.</span> Waiting for Accounting to release the salary; it becomes Paid automatically.
+          {{else}}Set the status to <b>Processed (approved)</b> so Accounting can release the salary.{{/if}}
+        </p>
         {{/unless}}
 
         <form action="/payroll/{{payroll.id}}/delete" method="POST" data-confirm-title="Delete payroll record?" data-confirm="This payslip will be deleted." data-confirm-ok="Delete">
@@ -139,7 +139,7 @@
               </form>
             {{/unless}}
           {{else}}
-            <p class="mt-1 text-sm text-gray-500">Posted to Accounting automatically when this payroll is marked Paid.</p>
+            <p class="mt-1 text-sm text-gray-500">Accounting releases the salary (Accounting &gt; Payroll &gt; Release salary); this payroll then shows Paid with its journal entry.</p>
           {{/if}}
         </div>
       </div>

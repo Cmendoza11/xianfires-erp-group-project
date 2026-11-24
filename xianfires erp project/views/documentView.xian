@@ -7,7 +7,13 @@
     <div class="max-w-[60rem] mx-auto space-y-5">
       <div class="no-print flex flex-wrap items-center justify-between gap-3">
         {{> pageHeading heading=(concat config.label " " document.number) backUrl=page.gridUrl }}
-        <button type="button" class="btn btn-outline" data-print>Print</button>
+        <div class="flex flex-wrap gap-2">
+          {{#if can.write}}
+          {{#if (eq document.status "open")}}<button type="button" class="btn btn-primary" data-modal-target="#paymentModal">Record payment</button>{{/if}}
+          {{#unless (eq document.status "void")}}<button type="button" class="btn btn-outline text-destructive" data-modal-target="#voidDocModal" {{#if document.hasPostedPayments}}disabled title="Void its payments first"{{/if}}>Void</button>{{/unless}}
+          {{/if}}
+          <button type="button" class="btn btn-outline" data-print>Print</button>
+        </div>
       </div>
       {{#if (eq document.status "void")}}
       <div class="notice notice-warning">Voided on {{ document.voidedOn }}. The posting was cancelled by <a href="{{ document.voidEntry.url }}" class="font-semibold underline">{{ document.voidEntry.number }}</a>.</div>
@@ -82,58 +88,65 @@
           </table>
 
           {{#if can.write}}{{#if (eq document.status "open")}}
-          <form id="paymentForm" method="POST" action="{{ document.paymentApi }}" novalidate data-json-form
-            data-success-message="Payment recorded" data-success-redirect="reload" class="mt-5 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-            <label class="grid gap-1 text-sm">
-              <span class="font-medium">Payment date</span>
-              <input type="date" name="payment_date" class="input" value="{{ defaultDate }}" min="{{ document.issueDate }}" data-required="A payment date is required">
-            </label>
-            <label class="grid gap-1 text-sm">
-              <span class="font-medium">Amount</span>
-              <input type="number" name="amount" step="0.01" min="0.01" max="{{ document.balance }}" class="input text-right" value="{{ document.balance }}" data-required="Enter the amount">
-            </label>
-            <label class="grid gap-1 text-sm">
-              <span class="font-medium">{{#if (eq kind "invoice")}}Deposited to{{else}}Paid from{{/if}}</span>
-              <select name="cash_account" class="select" data-required="Select a cash or bank account">
-                {{#each cashAccounts}}<option value="{{ uuid }}">{{ code }} - {{ name }}</option>{{/each}}
-              </select>
-            </label>
-            <label class="grid gap-1 text-sm">
-              <span class="font-medium">Reference</span>
-              <input type="text" name="reference" class="input" placeholder="OR / check no.">
-            </label>
-            <div class="sm:col-span-4 flex justify-end">
-              <button type="submit" class="btn btn-primary">Record payment</button>
-            </div>
-          </form>
+          <p class="mt-4 text-sm text-muted no-print">Balance due: <b>{{ formatMoney document.balance }}</b>. Use <b>Record payment</b> above to record a {{#if (eq kind "invoice")}}collection{{else}}payment{{/if}}.</p>
           {{/if}}{{/if}}
         </div>
       </div>
 
-      {{#if can.write}}{{#unless (eq document.status "void")}}
-      <div class="card no-print">
-        <div class="card-header">
-          <div class="card-title">Void this {{ lowercase config.label }}</div>
-          <p class="card-description">Posts a reversing entry so the ledger keeps both the original and the cancellation.{{#if document.hasPostedPayments}} Void its payments first.{{/if}}</p>
-        </div>
-        <div class="card-content">
-          <form id="voidForm" class="flex flex-wrap items-end gap-3" novalidate onsubmit="return false">
+      {{#if can.write}}
+      {{#if (eq document.status "open")}}
+      <template id="paymentModal" data-title="Record payment for {{ document.number }}">
+        <form method="POST" action="{{ document.paymentApi }}" novalidate data-json-form data-success-message="Payment recorded" data-success-redirect="reload"
+          data-confirm-heading="Record this payment?" data-confirm-content="The payment is posted to the books and the balance goes down." data-confirm-label="Record payment" class="grid gap-3">
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Payment date</span>
+            <input type="date" name="payment_date" class="input" value="{{ defaultDate }}" min="{{ document.issueDate }}" data-required="A payment date is required">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Amount (balance {{ formatMoney document.balance }})</span>
+            <input type="number" name="amount" step="0.01" min="0.01" max="{{ document.balance }}" class="input text-right" value="{{ document.balance }}" data-required="Enter the amount">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">{{#if (eq kind "invoice")}}Deposited to{{else}}Paid from{{/if}}</span>
+            <select name="cash_account" class="select" data-required="Select a cash or bank account">
+              {{#each cashAccounts}}<option value="{{ uuid }}">{{ code }} - {{ name }}</option>{{/each}}
+            </select>
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Reference (optional)</span>
+            <input type="text" name="reference" class="input" placeholder="OR / check no." maxlength="60">
+          </label>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+            <button type="submit" class="btn btn-primary">Record payment</button>
+          </div>
+        </form>
+      </template>
+      {{/if}}
+      {{#unless (eq document.status "void")}}
+      <template id="voidDocModal" data-title="Void {{ document.number }}">
+        <div class="grid gap-3">
+          <p class="text-sm text-muted">Posts a reversing entry so the ledger keeps both the original and the cancellation.</p>
+          <form id="voidForm" class="grid gap-3" novalidate onsubmit="return false">
             <label class="grid gap-1 text-sm">
               <span class="font-medium">Void date</span>
               <input type="date" name="void_date" class="input" value="{{ defaultDate }}" min="{{ document.issueDate }}" data-required="A void date is required">
             </label>
-            <label class="grid gap-1 text-sm grow min-w-[16rem]">
+            <label class="grid gap-1 text-sm">
               <span class="font-medium">Reason (optional)</span>
               <input type="text" name="reason" class="input" maxlength="200">
             </label>
-            <button type="button" class="btn btn-destructive" {{#if document.hasPostedPayments}}disabled{{/if}}
-              data-api-action="{{ document.voidApi }}" data-payload-from="voidForm"
-              data-confirm-heading="Void {{ document.number }}" data-confirm-content="The posting will be reversed and the document marked void. This cannot be undone."
-              data-confirm-label="Void" data-success-message="Voided" data-success-redirect="reload">Void</button>
           </form>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+            <button type="button" class="btn btn-destructive" data-api-action="{{ document.voidApi }}" data-payload-from="voidForm"
+              data-confirm-heading="Void {{ document.number }}?" data-confirm-content="The posting will be reversed and the document marked void. This cannot be undone."
+              data-confirm-label="Void" data-success-message="Voided" data-success-redirect="reload">Void</button>
+          </div>
         </div>
-      </div>
-      {{/unless}}{{/if}}
+      </template>
+      {{/unless}}
+      {{/if}}
     </div>
   </main>
 </div>

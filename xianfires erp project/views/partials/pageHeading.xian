@@ -7,7 +7,10 @@
     {{/if}}
     <h1 class="text-[1.375rem] font-semibold tracking-tight text-ink truncate">{{ heading }}</h1>
   </div>
-  {{#if actionUrl}}
-  <a href="{{ actionUrl }}" class="btn btn-primary">{{ actionLabel }}</a>
+  {{#if (or actionUrl exportCsv)}}
+  <div class="flex flex-wrap items-center gap-2">
+    {{#if exportCsv}}<button type="button" class="btn btn-outline" data-export-csv>Export to Excel</button>{{/if}}
+    {{#if actionUrl}}<a href="{{ actionUrl }}" class="btn btn-primary" {{#if actionModal}}data-modal{{/if}}>{{ actionLabel }}</a>{{/if}}
+  </div>
   {{/if}}
 </div>

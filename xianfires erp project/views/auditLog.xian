@@ -5,7 +5,7 @@
   {{> adminNav}}
   <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
     <div class="max-w-[75rem] mx-auto">
-      {{> pageHeading heading="Audit Log" }}
+      {{> pageHeading heading="Audit Log" exportCsv=true }}
       <div class="card">
         <form method="GET" action="{{ urls.auditLog }}" class="card-header flex flex-wrap items-end gap-3">
           <label class="grid gap-1 text-sm">
