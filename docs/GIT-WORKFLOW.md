@@ -107,7 +107,7 @@ tulad ng nasa itaas.
 |---|---|---|---|---|
 | 2026-11-24 | `9032272` | `main` → `accounting-finalize-2026-11-24` | 37 (HR, POS) | Kinuha ang naka-commit na HR at POS ng mga may-ari; pumasok nang malinis ang Customer Logs |
 | 2026-11-24 | `1d1c885` | (commit) | n/a | Ibinalik ang salary release API sa HR; payroll suite 28/28 |
-| 2026-11-24 | PR #PR_NUMBER | `accounting-finalize-2026-11-24` → `main` | wala (naayos na sa itaas) | Merge commit; pumasa ang CI |
+| 2026-11-24 | [PR #1](https://github.com/Cmendoza11/xianfires-erp-group-project/pull/1) | `accounting-finalize-2026-11-24` → `main` | wala (naayos na sa itaas) | Merge commit; pumasa ang CI (syntax check + Docker build) |
 
 ## 7. Mga kontribyutor
 
