@@ -23,6 +23,22 @@ Iisang repository ang 5 module. May sariling folder at may-ari ang bawat module,
 | `fix/<module>-<paksa>` | Mabilisang ayos ng bug | Hal. `fix/scm-po-numbering` |
 | `accounting-finalize-2026-11-24` | Ang malaking update ng Accounting, LAN tools at Docker | Na-merge sa `main` sa PR (tingnan ang Merge log) |
 
+### Branch protection sa `main` (naka-on mula 2026-11-24)
+
+Ipinapatupad ito ng GitHub mismo, at **kasama ang admin**:
+
+| Patakaran | Ibig sabihin |
+|---|---|
+| Kailangan ng pull request | Walang `git push` nang diretso sa `main`. Tinatanggihan ito: *"GH006: Protected branch update failed"* |
+| 1 approval | Kailangang i-approve ng **ibang kagrupo** ang PR bago ma-merge (Files changed → Review changes → Approve) |
+| Bagong commit = bagong review | Kapag may idinagdag na commit pagkatapos ng approval, kailangang i-approve ulit |
+| Dapat pumasa ang CI | "Syntax check (all 5 modules)" at "Accounting Docker image" |
+| Dapat resolved ang mga comment | Walang bukas na usapan sa PR bago ma-merge |
+| Bawal ang force push at pagbura sa `main` | Hindi masisira ang history |
+
+Kung kailangang pansamantalang luwagan (halimbawa, walang ibang makaka-approve bago ang defense): ang
+admin ang magbabago nito sa GitHub → **Settings → Branches → main → Edit**, at ibabalik pagkatapos.
+
 ## 2. Ang daloy (bawat pagbabago)
 
 ```bash
@@ -108,6 +124,8 @@ tulad ng nasa itaas.
 | 2026-11-24 | `9032272` | `main` → `accounting-finalize-2026-11-24` | 37 (HR, POS) | Kinuha ang naka-commit na HR at POS ng mga may-ari; pumasok nang malinis ang Customer Logs |
 | 2026-11-24 | `1d1c885` | (commit) | n/a | Ibinalik ang salary release API sa HR; payroll suite 28/28 |
 | 2026-11-24 | [PR #1](https://github.com/Cmendoza11/xianfires-erp-group-project/pull/1) | `accounting-finalize-2026-11-24` → `main` | wala (naayos na sa itaas) | Merge commit; pumasa ang CI (syntax check + Docker build) |
+| 2026-11-24 | (branch protection) | n/a | n/a | Naka-on ang protection sa `main`; sinubukan ang direktang push at tinanggihan (GH006) |
+| 2026-11-24 | PR #2 (naghihintay ng review) | `feature/accounting-performance-test` → `main` | wala | Unang PR sa ilalim ng protection: kailangan ng approval ng kagrupo at pasadong CI |
 
 ## 7. Mga kontribyutor
 
