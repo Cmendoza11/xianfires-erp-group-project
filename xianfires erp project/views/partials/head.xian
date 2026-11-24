@@ -36,5 +36,12 @@
   <link rel="stylesheet" href="/css/admin.css">
   <script src="/js/admin.js" defer></script>
   <link rel="icon" type="image/svg+xml" href="/images/djs-logo.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0b0b0c">
+  <link rel="apple-touch-icon" href="/images/app/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DJ's Accounting">
   <title>{{ title }} · DJ's ERP Accounting</title>
 </head>
