@@ -65,6 +65,15 @@ reports (trial balance, income statement, balance sheet, cash flow, general ledg
 with print and Export to Excel, audit log, roles (admin, accountant, viewer), login lockout, recycle bin,
 backup and restore, light and dark mode, and the `/api/v1` integration API.
 
+## Docker (Accounting)
+
+```bash
+cd "xianfires erp project"
+docker compose up -d --build      # Accounting + its own MySQL; open http://localhost:3000
+```
+
+Details, defense demo and commands: [xianfires erp project/docs/DOCKER.md](xianfires%20erp%20project/docs/DOCKER.md).
+
 ## Tests
 
 ```bash
@@ -85,4 +94,6 @@ Needs Laragon MySQL running and ports 3010 to 3012 free. The real books are neve
 | [docs/LAN-SETUP.md](docs/LAN-SETUP.md) | LAN mode in detail, troubleshooting |
 | [docs/DEFENSE-WALKTHROUGH.md](docs/DEFENSE-WALKTHROUGH.md) | Accounting demo script and likely questions |
 | [docs/SYSTEM-AUDIT.md](docs/SYSTEM-AUDIT.md) | QA, DevOps and UI/UX review of Accounting |
+| [xianfires erp project/docs/DOCKER.md](xianfires%20erp%20project/docs/DOCKER.md) | Running Accounting in Docker |
+| [docs/ACCOUNTING-SYSTEM-EXPLAINED.txt](docs/ACCOUNTING-SYSTEM-EXPLAINED.txt) | Plain-text explanation of every Accounting feature |
 | [docs/design/](docs/design/) | ERP diagram details and the diagram base document |

@@ -123,7 +123,8 @@ export async function restoreBackup(name, confirmText) {
     throw new AccountingValidationError('Type RESTORE to confirm');
   }
   const head = fs.readFileSync(full, { encoding: "utf8", flag: "r" }).slice(0, 4000);
-  if (!/MySQL dump/i.test(head)) throw new AccountingValidationError("This file is not a MySQL backup made by this system");
+  // Laragon writes "MySQL dump"; the Docker image's client (MariaDB's mysqldump) writes "MariaDB dump".
+  if (!/(MySQL|MariaDB) dump/i.test(head)) throw new AccountingValidationError("This file is not a MySQL backup made by this system");
   const safety = await createBackup({ suffix: "-before-restore" });
   await run("mysql", [...connectionArgs(), dbConfig.database], { input: fs.createReadStream(full) });
   return { restored: name, safetyCopy: safety?.name };

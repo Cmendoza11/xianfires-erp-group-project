@@ -15,7 +15,7 @@ import { assertSafeText } from "./securityService.js";
 // own database, so it is read and updated only through HR's API (X-ERP-Key).
 
 const TIMEOUT_MS = 6000;
-const PAYROLL_ACCOUNTS = { salaries: "6000", government: "2400", advances: "1110" };
+const PAYROLL_ACCOUNTS = { salaries: "6000", government: "2400", advances: "1110", tax: "2300" };
 const cents = (value) => Math.round(Number(value ?? 0) * 100);
 const pesos = (c) => Number((c / 100).toFixed(2));
 
@@ -91,7 +91,7 @@ export async function getPayrollOverview() {
   const entries = await postedEntries(payrolls.map((p) => p.id));
   const rows = payrolls.map((p) => ({
     ...p,
-    government: pesos(cents(p.deductions) - Math.min(cents(p.cashAdvance), cents(p.deductions))),
+    government: pesos(splitDeductions(p).government),
     entry: entries.get(p.id) || null,
     releaseApi: urls.releasePayroll(p.id),
     // Shown (read-only) in the Release salary modal. A release whose HR update failed reuses it for "Retry HR update".
@@ -120,11 +120,18 @@ export async function getPayrollOverview() {
   };
 }
 
-function payrollLines(payroll, accounts, cashAccount) {
-  const gross = cents(payroll.gross);
+// HR's deductions = SSS/PhilHealth/Pag-IBIG + cash advance (+ withholding tax once HR sends withholdingTax).
+// Each part goes to its own account; anything not named is treated as government contributions.
+function splitDeductions(payroll) {
   const deductions = cents(payroll.deductions);
   const advance = Math.min(cents(payroll.cashAdvance), deductions);
-  const government = deductions - advance;
+  const tax = Math.min(cents(payroll.withholdingTax), deductions - advance);
+  return { deductions, advance, tax, government: deductions - advance - tax };
+}
+
+function payrollLines(payroll, accounts, cashAccount) {
+  const gross = cents(payroll.gross);
+  const { deductions, advance, tax, government } = splitDeductions(payroll);
   const net = cents(payroll.netSalary);
   if (gross <= 0) throw new AccountingValidationError("This payroll has no gross pay to release");
   if (net < 0) throw new AccountingValidationError("Net pay is negative; HR must correct the payroll first");
@@ -134,6 +141,7 @@ function payrollLines(payroll, accounts, cashAccount) {
   return [
     { accountId: accounts.salaries.accounting_account_id, debitCents: gross, description: "Gross pay (basic, allowances, overtime)" },
     { accountId: accounts.government.accounting_account_id, creditCents: government, description: "SSS, PhilHealth and Pag-IBIG (employee share)" },
+    { accountId: accounts.tax.accounting_account_id, creditCents: tax, description: "Withholding tax (BIR)" },
     { accountId: accounts.advances.accounting_account_id, creditCents: advance, description: "Cash advance repaid" },
     { accountId: cashAccount.accounting_account_id, creditCents: net, description: "Net pay released" }
   ];
@@ -201,7 +209,7 @@ export async function releasePayroll(payrollId, data, adminUserId) {
 }
 
 const sumCents = (list, pick) => pesos(list.reduce((s, p) => s + cents(pick(p)), 0));
-const governmentOf = (p) => pesos(cents(p.deductions) - Math.min(cents(p.cashAdvance), cents(p.deductions)));
+const governmentOf = (p) => pesos(splitDeductions(p).government);
 
 /** Paid payroll for one pay period (default: the latest), with totals, for the printable summary. */
 export async function getPayrollReport(periodKey) {

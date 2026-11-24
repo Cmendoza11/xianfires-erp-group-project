@@ -1,0 +1,440 @@
+=====================================================================
+  DJ's ERP - ACCOUNTING SYSTEM
+  Paliwanag ng lahat ng bahagi, kakayahan at ginagawa ng system
+  (CJ Mendoza, Accounting module)
+=====================================================================
+
+
+---------------------------------------------------------------------
+ 1. ANO ANG SYSTEM NA ITO
+---------------------------------------------------------------------
+
+  Ang DJ's ERP ay isang ERP (Enterprise Resource Planning) para sa
+  DJ's FoodHub restaurant. Binubuo ito ng 5 system:
+
+    Module              Port   Database             Gumagawa
+    ------------------  -----  -------------------  ---------------
+    Accounting (ito)    3000   xianfires_erp        CJ (host)
+    POS & Inventory     3001   djs_pos              kagrupo
+    Human Resources     3002   djs_hr               kagrupo
+    Procurement         3003   djs_procurement      kagrupo
+    Customer Logs       3004   djs_customer_logs    kagrupo
+
+  Ang ACCOUNTING ang "hub" o sentro. Dito napupunta ang pera ng lahat:
+    - benta ng POS
+    - bayarin sa supplier (galing Procurement)
+    - sahod ng empleyado (galing HR)
+
+  Lahat ng ito ay nagiging JOURNAL ENTRY, kaya nasa iisang libro ang
+  lahat ng pera ng negosyo.
+
+
+---------------------------------------------------------------------
+ 2. PAANO ITO GINAWA (TEKNIKAL)
+---------------------------------------------------------------------
+
+  Teknolohiya:
+    - Node.js + Express 4    (ang server)
+    - XianFire framework     (.xian na pages, Handlebars)
+    - Sequelize 6 + MySQL 8  (ang database, sa Laragon)
+    - Tailwind CSS           (ang itsura)
+
+  Ayos ng code (layers):
+    routes/       -> anong URL ang tumatawag sa anong function
+    controllers/  -> tumatanggap ng request, nagre-render ng page
+    services/     -> DITO ang lahat ng accounting rules
+    models/       -> ang mga table sa database
+    views/        -> ang mga page (.xian)
+    public/       -> CSS at JavaScript ng browser
+
+  Bawat module ay may SARILING DATABASE. Hindi sila direktang
+  nagbabasa ng database ng iba. Nag-uusap sila sa pamamagitan ng
+  API na may susi (API key), kaya kontrolado kung ano ang puwede
+  nilang gawin.
+
+
+---------------------------------------------------------------------
+ 3. LOGIN, USERS AT SECURITY
+---------------------------------------------------------------------
+
+  3 ROLE (role-based access):
+    Administrator - lahat: users, settings, period closing, backup
+    Accountant    - lahat ng bookkeeping, pero walang users/settings
+    Viewer        - tingin lang, walang add/edit/delete
+
+    Sa SERVER sinusuri ang role, hindi lang tinatago ang button.
+    Kapag pinilit, "403 Forbidden" ang sagot.
+
+  SECURITY FEATURES:
+    - Password naka-hash (bcrypt). Hindi naka-save ang totoong password.
+    - Strong password: 8+ characters, may malaki at maliit na letra,
+      numero, symbol, walang space, hindi pangalan ng email.
+    - Login lockout: 3 maling subok -> naka-lock ng 1 minuto
+      (nababago ng admin sa Settings > Security).
+    - Session timeout: 30 minutong walang galaw -> kusang logout.
+    - Rate limiting: limitado ang dami ng request bawat minuto
+      (laban sa brute force at spam).
+    - Format validation: email, pangalan, TIN, phone, account code.
+    - Upload validation (resibo): larawan o PDF lang, 2 MB pababa,
+      sinusuri ang laman ng file, hindi lang ang pangalan
+      (laban sa PHP shell at script).
+    - SQL injection: lahat ng query ay parameterized.
+    - CSRF: JSON-only ang mga save request.
+    - Security headers sa bawat page.
+    - Ang bagong nagsa-sign-up ay VIEWER lang; ang admin ang
+      magtataas ng role.
+
+  Login page: may "Create an account" (puwedeng i-off:
+  ALLOW_SIGNUP=false sa .env).
+
+
+---------------------------------------------------------------------
+ 4. DASHBOARD AT ENTERPRISE OVERVIEW
+---------------------------------------------------------------------
+
+  DASHBOARD (Home):
+    - Cash and bank  : lahat ng perang hawak (Cash on Hand + Bank)
+    - Revenue        : kita ngayong taon
+    - Expenses       : gastos ngayong taon
+    - Net income/loss: Revenue - Expenses
+    - Chart ng kita at gastos bawat buwan (may Table view)
+    - Receivables (may utang sa atin) at Payables (utang natin)
+    - Recent journal entries, overdue invoices at bills
+    - Lahat ng numero ay galing sa journal entries. Walang tina-type.
+
+  ENTERPRISE OVERVIEW:
+    - Live na numero mula sa 4 na ibang system:
+        POS: benta ngayong araw, low stock
+        HR: aktibong empleyado, payroll
+        Procurement: bukas na PO, unpaid invoices
+        Customer Logs: customers, benta mula POS
+    - Kapag offline ang isang module, hindi bumabagsak ang
+      Accounting; sinasabi lang na hindi siya maabot.
+
+
+---------------------------------------------------------------------
+ 5. ANG LIBRO: CHART OF ACCOUNTS AT JOURNAL ENTRIES
+---------------------------------------------------------------------
+
+  CHART OF ACCOUNTS (Books > Chart of Accounts)
+    Ang listahan ng lahat ng "kahon" ng pera. 5 uri:
+      Asset     - ari-arian   (1000 Cash, 1010 Bank, 1200 Inventory)
+      Liability - utang       (2000 Accounts Payable, 2400 SSS...)
+      Equity    - puhunan     (3000 Owner's Capital)
+      Revenue   - kita        (4000 Sales Revenue)
+      Expense   - gastos      (6000 Salaries, 6200 Utilities)
+    Puwedeng mag-add, edit, i-inactive, at i-delete (soft delete).
+    Hindi mabubura ang account na may journal na.
+
+  JOURNAL ENTRIES (Books > Journal Entries)
+    Bawat galaw ng pera ay isang journal entry.
+    DOUBLE-ENTRY RULES (hindi nilalabag ng system):
+      1. Laging 2 linya o higit pa (debit at credit).
+      2. Laging PANTAY ang total debit at credit.
+         Kapag hindi pantay, ayaw i-save.
+      3. Ang naka-post na entry ay HINDI binubura o ine-edit.
+         Kapag may mali: REVERSE (gumagawa ng kabaligtarang entry),
+         kaya kumpleto ang kasaysayan (audit trail).
+      4. Isang database transaction ang bawat posting: kapag pumalya
+         ang isang bahagi, walang mase-save.
+      5. Hindi makakapag-post sa buwang naka-lock (period closing).
+      6. Pera ay kinukwenta sa centavo (walang rounding error).
+
+    Ang karamihan ng entry ay AUTOMATIC (galing invoice, bill,
+    voucher, asset, POS, payroll). Ang "New journal entry" ay para
+    sa iba pang galaw (puhunan, adjustment).
+
+
+---------------------------------------------------------------------
+ 6. SALES (BENTA)
+---------------------------------------------------------------------
+
+  CUSTOMERS (Sales > Customers)
+    Listahan ng customer: pangalan, TIN, email, phone, address.
+    Makikita ang bukas na invoice at kung magkano ang utang nila.
+
+  SALES INVOICES (Sales > Sales Invoices)
+    Paniningil sa customer (halimbawa: catering).
+      Pag-save:   Dr 1100 Accounts Receivable / Cr 4000 Sales
+                  (+ Cr 2200 Output VAT kung may VAT)
+    RECORD PAYMENT (modal):
+      Pagbayad:   Dr Cash/Bank / Cr 1100 Accounts Receivable
+    Status: Open -> Paid. Puwedeng VOID (gumagawa ng reversal).
+
+
+---------------------------------------------------------------------
+ 7. PURCHASES (BILI AT GASTOS)
+---------------------------------------------------------------------
+
+  SUPPLIERS (Purchases > Suppliers)
+    Listahan ng pinagbibilhan.
+
+  BILLS (Purchases > Bills)
+    Utang sa supplier. Ang mga bill mula sa Procurement ay
+    AUTOMATIC na pumapasok dito.
+      Pag-save:   Dr Inventory o Expense (+ Input VAT)
+                  Cr 2000 Accounts Payable
+    RECORD PAYMENT:
+      Pagbayad:   Dr 2000 Accounts Payable / Cr Cash/Bank
+    Nakikita ng Procurement kapag bayad na ang bill.
+
+  EXPENSE VOUCHERS (Purchases > Expense Vouchers)
+    Maliit na gastos na binayaran agad (kuryente, pamasahe, palengke).
+      Dr Expense account / Cr Cash on Hand o Bank
+    May RESIBO (upload ng larawan o PDF, may validation).
+    Numero: EV-000001. Edit, attach receipt, at VOID (reversal).
+
+
+---------------------------------------------------------------------
+ 8. PAYROLL (PAGPAPASWELDO)
+---------------------------------------------------------------------
+
+  ANG DALOY:
+    1. HR: kinukuwenta ang sahod mula sa DTR (attendance) kasama ang
+       SSS, PhilHealth, Pag-IBIG, cash advance at late.
+    2. HR: ina-approve (status "Processed").
+    3. ACCOUNTING: "RELEASE SALARY" (Purchases > Payroll)
+       - pipiliin ang petsa at pinagkunan ng pera (1010 Bank)
+       - automatic ang journal entry:
+           Dr 6000 Salaries and Wages Expense  (gross)
+             Cr 2400 SSS, PhilHealth, Pag-IBIG Payable
+             Cr 2300 Withholding Tax Payable (kapag may tax)
+             Cr 1110 Advances to Employees  (cash advance)
+             Cr 1010 Cash in Bank           (net pay)
+       - kusang nagiging "Paid" ang payroll sa HR.
+    4. Hindi makakapag-"Paid" ang HR mismo. Hiwalay ang nag-aapprove
+       at ang nagbabayad (SEGREGATION OF DUTIES).
+
+  Proteksyon:
+    - Hindi madodoble ang bayad (isang beses lang bawat payroll).
+    - Kapag hindi naabot ang HR pagkatapos magbayad, may
+      "Retry HR update" na hindi gagawa ng pangalawang entry.
+
+  PAYSLIP: printable bawat empleyado (earnings, deductions, net,
+           journal entry, pirma).
+  PAYROLL SUMMARY: bawat pay period, total ng gross, SSS,
+           PhilHealth, Pag-IBIG, cash advance at net, may pirma.
+
+
+---------------------------------------------------------------------
+ 9. FIXED ASSETS AT DEPRECIATION
+---------------------------------------------------------------------
+
+  (Books > Fixed Assets)
+    Kagamitan ng negosyo (ref, motor, computer).
+      Pagbili:  Dr 1500 Office Equipment / Cr Cash o Bank
+    DEPRECIATION (straight-line, buwan-buwan):
+      (Cost - Salvage value) / Useful life (buwan)
+      Dr 6500 Depreciation Expense
+        Cr 1510 Accumulated Depreciation
+    Makikita ang Book value (natitirang halaga).
+    Puwedeng i-UNDO ang huling buwan ng depreciation.
+
+
+---------------------------------------------------------------------
+ 10. BANKING: BANK RECONCILIATION
+---------------------------------------------------------------------
+
+  (Banking > Bank Reconciliation)
+    Itinutugma ang libro sa BANK STATEMENT:
+      - ilalagay ang petsa at ending balance ng statement
+      - iti-tick ang mga transaksyong lumabas sa statement
+      - kapag tugma (difference = 0), COMPLETE
+    Para matiyak na tama ang naitalang pera sa bangko.
+
+
+---------------------------------------------------------------------
+ 11. REPORTS
+---------------------------------------------------------------------
+
+  Lahat ay galing sa journal entries. Lahat ay may PRINT at
+  EXPORT TO EXCEL (CSV).
+
+    Trial Balance       - pantay ba ang lahat ng debit at credit?
+    Income Statement    - kumita ba o nalugi? (Revenue - Expense)
+    Balance Sheet       - Assets = Liabilities + Equity
+    Cash Flow Statement - saan nanggaling at napunta ang cash
+    General Ledger      - detalye ng bawat galaw ng isang account
+    Budget vs Actual    - plano vs aktwal na gastos bawat buwan
+    AR Aging            - sino ang may utang sa atin, gaano katagal
+    AP Aging            - kanino tayo may utang, gaano katagal
+    VAT Summary         - Output VAT vs Input VAT
+    Sales Book          - listahan ng benta (invoices)
+    Purchase Book       - listahan ng bili (bills)
+    Payroll Summary     - sahod bawat pay period
+
+  BUDGET VS ACTUAL: maglalagay ng budget bawat expense account bawat
+  buwan; ipinapakita kung lumampas (may "copy last month").
+
+
+---------------------------------------------------------------------
+ 12. ADMINISTRATION (Admin lang)
+---------------------------------------------------------------------
+
+  PERIOD CLOSING
+    - Monthly lock: naka-lock na buwan = wala nang makakapag-post.
+    - Year-end closing: isinasara ang taon (Revenue at Expense
+      papunta sa Retained Earnings). Puwedeng i-reopen.
+
+  AUDIT LOG
+    Bawat galaw ay naka-record: sino, ano, kailan, saan.
+    (login, post, reverse, void, bayad, delete, backup, settings...)
+    May filter at Export to Excel.
+
+  RECYCLE BIN (SOFT DELETE)
+    Ang binurang account, customer, supplier, user at fixed asset
+    ay hindi agad nawawala; puwedeng i-RESTORE.
+    Ang journal entries ay hindi binubura (reversal lang).
+
+  BACKUP AND RESTORE
+    - "Back up now": buong kopya ng Accounting database (.sql)
+    - Download para may kopya sa labas ng laptop
+    - Restore: ibabalik ang libro sa lagay ng backup.
+      Kailangang i-type ang "RESTORE", at gumagawa muna ng
+      SAFETY COPY ng kasalukuyang data.
+
+  USERS: add, edit, delete user at role.
+
+  ERP INTEGRATIONS: ang mga API key ng POS, HR at Procurement.
+
+  ACCOUNTING SETTINGS: pangalan ng negosyo, TIN, address, VAT rate,
+  fiscal year, numbering (INV-, BILL-, JE-, EV-), at Security
+  (login attempts, lockout minutes, session minutes).
+
+
+---------------------------------------------------------------------
+ 13. PAANO NAKIKIPAG-USAP SA IBANG SYSTEM (INTEGRATION)
+---------------------------------------------------------------------
+
+    Galing        Pangyayari               Sa Accounting
+    ------------  -----------------------  ------------------------------
+    POS           benta                    POS-<no>: Dr Cash / Cr Sales
+    POS           void ng benta            reversal entry
+    Procurement   supplier invoice         Bill SINV-<no>: Dr Inventory /
+                                           Cr Accounts Payable
+    Procurement   refunded return          Dr Cash / Cr Inventory
+    HR            approved payroll         Accounting ang nagre-release
+    Accounting    bayad sa bill            nakikita ng Procurement
+    Accounting    release salary           Paid sa HR
+
+  Paano:
+    - Ang ibang system ay tumatawag sa ACCOUNTING API (/api/v1) gamit
+      ang sarili nilang API key (Bearer token).
+    - Bawat request ay may "external_id", kaya kapag naulit ang
+      request (retry), HINDI madodoble ang posting.
+    - Ang POS at HR ay may "outbox/retry": kapag offline ang
+      Accounting, itinatabi ang data at ipinapadala pagbalik.
+
+
+---------------------------------------------------------------------
+ 14. RELIABILITY (MATIBAY NA SYSTEM)
+---------------------------------------------------------------------
+
+    - DATABASE OFFLINE: kapag namatay ang MySQL, hindi bumabagsak ang
+      system; "Database is offline" page na may "Try again".
+    - HEALTH CHECK (/api/v1/health): sinasabi kung online ang database.
+    - SESSIONS SA DATABASE: hindi nalo-logout ang users kapag
+      na-restart ang server.
+    - ERROR LOG: bawat error ay naka-save sa
+      storage/logs/errors-YYYY-MM.log (oras, page, user).
+    - BACKUP AND RESTORE (tingnan ang #12).
+
+
+---------------------------------------------------------------------
+ 15. ITSURA AT DALI NG PAGGAMIT (UI/UX)
+---------------------------------------------------------------------
+
+    - Black and gold na theme ng DJ's FoodHub.
+    - LIGHT at DARK MODE (button sa sidebar at login; may "Auto").
+    - MODALS: add, edit, delete, payment, void at reverse ay sa
+      pop-up, may "confirm" bago i-save at "result" pagkatapos.
+    - Bawat listahan: SEARCH, FILTER, PAGINATION
+      (Show 10/15/25/50/100), naaalala ang filter pagbalik.
+    - EXPORT TO EXCEL sa reports at listahan.
+    - Sidebar na may label (Home, Books, Sales, Purchases, Banking,
+      Reports, Admin).
+    - Ctrl+K: mabilisang hanap ng page o action.
+    - Gumagana sa laptop at sa phone (responsive).
+    - Laging light ang naka-print na report.
+
+
+---------------------------------------------------------------------
+ 16. PAGKONEKTA NG MGA LAPTOP (LAN MODE)
+---------------------------------------------------------------------
+
+  Ang laptop ni CJ ang HOST: nandito ang MySQL (lahat ng 5 database)
+  at ang Accounting. Ang bawat kagrupo ay sa sariling laptop, sa
+  iisang Wi-Fi o hotspot.
+
+    DJs-ERP-Host.bat     - inihahanda ang host (MySQL, firewall,
+                           settings, connect files) at pinapatakbo
+                           ang Accounting
+    lan/connect-*.txt    - settings para sa bawat kagrupo (PRIVATE)
+    lan/test-*.bat       - connection test ng kagrupo (dapat 3 OK)
+    npm run lan -- import  - kagrupo: inilalagay ang settings
+    DJs-ERP-Monitor.bat  - sino ang CONNECTED (live)
+
+  Bawat module ay may sariling MySQL account na sarili lang niyang
+  database ang mabubuksan (hal. djs_pos -> djs_pos lang).
+
+
+---------------------------------------------------------------------
+ 17. TESTING (QA)
+---------------------------------------------------------------------
+
+  npm run test:accounting  (o npm test sa Accounting folder)
+  Sinusubukan sa KOPYA ng database (hindi nagagalaw ang totoong data):
+
+    crawl         111 page bukas nang walang error
+    features       37 check (vouchers, assets, budget)
+    security       77 check (lockout, password, roles, upload...)
+    reliability    11 check (restart, offline, health)
+    payroll        28 check (HR approve -> Accounting release)
+    enhancements   36 check (backup, export, payslip, sidebar)
+    ---------------------------------------------------
+    KABUUAN       300 check - LAHAT PUMASA
+
+
+---------------------------------------------------------------------
+ 18. MGA POSIBLENG TANONG SA DEFENSE
+---------------------------------------------------------------------
+
+  T: Bakit hiwalay ang database ng bawat module?
+  S: Para independent: kapag may problema ang isa, hindi damay ang
+     iba. Nag-uusap sila sa API na may key, kaya kontrolado.
+
+  T: Bakit hindi puwedeng i-delete ang journal entry?
+  S: Sa accounting, hindi binubura ang naka-post. Reversal ang
+     ginagamit para may audit trail.
+
+  T: Paano kung sabay mag-post ang dalawang tao?
+  S: Isang database transaction ang bawat posting, at naka-lock ang
+     row habang binabago, kaya walang dobleng bayad.
+
+  T: Paano kung offline ang isang module?
+  S: Hindi bumabagsak ang Accounting. Ang POS at HR ay nag-iipon ng
+     data at ipinapadala pagbalik (outbox at retry).
+
+  T: Saan napupunta ang ibinawas na SSS, PhilHealth, Pag-IBIG?
+  S: Sa account 2400 (utang sa gobyerno) hanggang i-remit.
+
+  T: Bakit Accounting ang nagpapasweldo at hindi HR?
+  S: Segregation of duties: ang HR ang nagkukuwenta at nag-aapprove,
+     ang Accounting ang nagbabayad, para walang iisang tao na
+     gumagawa ng lahat.
+
+  T: Paano pinoprotektahan ang password?
+  S: Naka-hash gamit ang bcrypt, may strong password policy, at
+     may lockout pagkatapos ng 3 maling subok.
+
+  T: Paano kung mawala ang data?
+  S: May Backup and Restore, at may safety copy bago mag-restore.
+
+  T: Paano ninyo nalalaman na gumagana ang system?
+  S: May 300 automated test na pinapatakbo sa kopya ng database,
+     at may connection monitor para sa mga laptop.
+
+=====================================================================
+  Wakas. Para sa buong command list: COMMANDS.md
+  Para sa demo script: docs/DEFENSE-WALKTHROUGH.md
+=====================================================================
