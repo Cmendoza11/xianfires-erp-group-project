@@ -54,6 +54,9 @@ if (!process.env.SESSION_SECRET) {
 }
 
 app.disable("x-powered-by");
+// Behind a host's HTTPS proxy (Hostinger, Nginx): read the real client IP for rate limits and mark cookies secure.
+if (process.env.TRUST_PROXY === "true") app.set("trust proxy", 1);
+const secureCookie = process.env.COOKIE_SECURE === "true";
 app.use(securityHeaders);
 // Receipts are sent as base64 JSON (max 2 MB file), so only the voucher API accepts a bigger body.
 app.use("/api/expense-vouchers", express.json({ limit: "4mb" }));
@@ -70,7 +73,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   rolling: true,
-  cookie: { httpOnly: true, sameSite: "lax", maxAge: 30 * 60_000 }
+  cookie: { httpOnly: true, sameSite: "lax", secure: secureCookie, maxAge: 30 * 60_000 }
 }));
 app.use(enforceSessionTimeout);
 // Every JSON API: at most 300 requests a minute per address (the other ERP modules use /api/v1).

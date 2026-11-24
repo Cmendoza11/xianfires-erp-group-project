@@ -1,0 +1,22 @@
+{
+  "name": "DJ's ERP Accounting",
+  "short_name": "DJ's Accounting",
+  "description": "Double-entry accounting for DJ's ERP: journals, invoices, bills, payroll release and reports.",
+  "id": "/admin",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0b0c",
+  "theme_color": "#0b0b0c",
+  "icons": [
+    { "src": "/images/app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/images/app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/images/app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Journal Entries", "url": "/admin/accounting/journal-entries" },
+    { "name": "Sales Invoices", "url": "/admin/sales/invoices" },
+    { "name": "Payroll", "url": "/admin/accounting/payroll" }
+  ]
+}
