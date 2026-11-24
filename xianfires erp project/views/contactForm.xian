@@ -11,26 +11,27 @@
       {{> pageHeading heading=(concat "New " (lowercase typeInfo.label)) backUrl=page.gridUrl }}
       {{/if}}
       <form id="contactForm" method="POST" action="{{ form.action }}" novalidate data-json-form data-method="{{ form.method }}"
-        {{#if contact}}data-success-message="{{ typeInfo.label }} saved"{{else}}data-success-message="{{ typeInfo.label }} created" data-success-redirect="{{ page.gridUrl }}"{{/if}}>
+        {{#if contact}}data-success-message="{{ typeInfo.label }} saved"{{else}}data-success-message="{{ typeInfo.label }} created" data-success-redirect="{{ page.gridUrl }}"{{/if}}
+        data-confirm-heading="Save this {{ lowercase typeInfo.label }}?" data-confirm-label="Save">
         <input type="hidden" name="type" value="{{ type }}">
         <div class="card">
           <div class="card-header"><div class="card-title">{{ typeInfo.label }} details</div></div>
           <div class="card-content grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="sm:col-span-2">
               <label class="field-label" for="name">Name<span class="required">*</span></label>
-              <input id="name" name="name" class="input" value="{{ values.name }}" data-required="Name is required">
+              <input id="name" name="name" class="input" value="{{ values.name }}" maxlength="150" data-required="Name is required" data-pattern="^.{2,150}$" data-pattern-message="Use 2 to 150 characters">
             </div>
             <div>
               <label class="field-label" for="tin">TIN</label>
-              <input id="tin" name="tin" class="input" placeholder="000-000-000-000" value="{{ values.tin }}">
+              <input id="tin" name="tin" class="input" placeholder="000-000-000-000" value="{{ values.tin }}" maxlength="17" data-pattern="^\d{3}-?\d{3}-?\d{3}(-?\d{3,5})?$" data-pattern-message="Use the format 000-000-000 or 000-000-000-000">
             </div>
             <div>
               <label class="field-label" for="email">Email</label>
-              <input id="email" name="email" type="email" class="input" value="{{ values.email }}">
+              <input id="email" name="email" type="email" class="input" value="{{ values.email }}" maxlength="254">
             </div>
             <div>
               <label class="field-label" for="phone">Phone</label>
-              <input id="phone" name="phone" class="input" value="{{ values.phone }}">
+              <input id="phone" name="phone" class="input" value="{{ values.phone }}" placeholder="0917 123 4567" maxlength="20" data-pattern="^\+?[0-9][0-9()\- ]{6,19}$" data-pattern-message="Digits, spaces, + ( ) and - only, e.g. 0917 123 4567">
             </div>
             <div>
               <label class="field-label" for="status">Status</label>

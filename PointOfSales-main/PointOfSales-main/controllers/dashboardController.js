@@ -147,13 +147,13 @@ const loadSummary = async () => {
     Transaction.count({ where: completedToday }),
     Order.count({ where: { createdAt: { [Op.gte]: today.start, [Op.lte]: today.end } } }),
     Order.count(),
-    Product.count({ where: { status: "active" } }),
+    Product.count({ where: { status: "active", type: { [Op.ne]: "Supply" } } }),
     sequelize.query(
       `SELECT COALESCE(SUM(i.currentStock),0) AS totalStock,
               SUM(CASE WHEN i.currentStock = 0 THEN 1 ELSE 0 END) AS outOfStock,
               SUM(CASE WHEN i.currentStock > 0 AND i.currentStock <= i.minStockLevel THEN 1 ELSE 0 END) AS lowStock
        FROM pos_inventory i
-       JOIN pos_products p ON p.id = i.productId AND p.status = 'active'`,
+       JOIN pos_products p ON p.id = i.productId AND p.status = 'active' AND p.type = 'Supply'`,
       { type: QueryTypes.SELECT }
     ),
     RestaurantTable.findAll({ order: [["name", "ASC"]] }),
@@ -169,6 +169,7 @@ const loadSummary = async () => {
   return {
     salesToday: round2(salesTodayRow[0]?.total ?? 0),
     transactionsToday: Number(transactionsToday),
+    totalTransactions: await Transaction.count({ where: { status: "Completed" } }),
     ordersToday: Number(ordersToday),
     totalOrders: Number(totalOrders),
     totalProducts: Number(products),
@@ -182,13 +183,13 @@ const loadSummary = async () => {
   };
 };
 
-const loadPanels = async () => {
+const loadPanels = async (user) => {
   const [bestSellers, recentTransactions, recentMovements] = await Promise.all([
     sequelize.query(
       `SELECT oi.productName AS name, SUM(oi.quantity) AS qty, SUM(oi.subtotal) AS revenue
        FROM pos_order_items oi
        JOIN pos_transactions t ON t.orderId = oi.orderId
-       WHERE t.status = 'Completed' AND t.createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+       WHERE t.status = 'Completed' AND t.createdAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)
        GROUP BY oi.productName
        ORDER BY qty DESC
        LIMIT 5`,
@@ -204,7 +205,8 @@ const loadPanels = async () => {
   ]);
 
   return {
-    bestSellers: bestSellers.map((row) => ({
+    bestSellers: bestSellers.map((row, index) => ({
+      rank: index + 1,
       name: row.name,
       qty: Number(row.qty ?? 0),
       revenue: round2(row.revenue ?? 0),
@@ -219,7 +221,7 @@ export const dashboardPage = async (req, res, next) => {
     const [summary, charts, panels, settings] = await Promise.all([
       loadSummary(),
       loadSalesCharts(),
-      loadPanels(),
+      loadPanels(req.user),
       getSettings(),
     ]);
     return res.render("dashboard", {

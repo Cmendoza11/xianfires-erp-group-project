@@ -10,14 +10,20 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "dev:solo": "nodemon index.js --solo",
     "xian": "nodemon index.js",
     "migrate": "node migrate.js",
+    "check:lan": "node check-connection.js",
     "create:model": "node create.js model",
     "create:controller": "node create.js controller",
     "create:add-middleware": "node create.js middleware",
     "create:upload-middleware": "node create.js upload-middleware",
     "route:list": "node list-routes.js",
     "route:cache": "node route-cache.js"
+  },
+  "nodemonConfig": {
+    "ext": "js,json,xian",
+    "ignore": ["node_modules/*", "public/*"]
   },
   "dependencies": {
     "express": "^4.19.2",

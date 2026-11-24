@@ -4,6 +4,7 @@ import { diffFields, logAudit } from "../services/auditService.js";
 import {
   changeOwnPassword,
   createUser as createUserRecord,
+  deleteUser as deleteUserRecord,
   getUser,
   listUsers,
   MIN_PASSWORD_LENGTH,
@@ -91,6 +92,16 @@ export const changePassword = async (req, res) => {
     await changeOwnPassword(req.adminUser.admin_user_id, req.body);
     await logAudit(req, { action: "user.password", entityType: "user", summary: `${req.adminUser.email} changed their password` });
     res.json({ data: {} });
+  } catch (e) {
+    sendError(res, e);
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await deleteUserRecord(req.params.id, req.adminUser?.admin_user_id);
+    await logAudit(req, { action: "user.delete", entityType: "user", entityId: user.uuid, summary: `Moved user ${user.email} to the Recycle Bin` });
+    res.json({ data: user });
   } catch (e) {
     sendError(res, e);
   }

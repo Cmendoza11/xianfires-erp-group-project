@@ -1,8 +1,9 @@
 import { Op } from "sequelize";
 import { Attendance, Employee } from "../models/index.js";
-import { asyncHandler, parseId, findEmployeeForUser } from "../utils/helpers.js";
-import { ATTENDANCE_STATUSES, lateMinutesFor } from "../utils/hr.js";
-import { localDateISO } from "../utils/format.js";
+import { asyncHandler, parseId, findEmployeeForUser, paginate } from "../utils/helpers.js";
+import { ATTENDANCE_STATUSES, lateMinutesFor, checkInWindowProblem } from "../utils/hr.js";
+import { localDateISO, monthEndISO } from "../utils/format.js";
+import { notifyRoles } from "../services/notify.js";
 import { overtimeMinutes } from "../services/payrollCalc.js";
 
 const buildRow = (employee, record) => ({
@@ -33,15 +34,18 @@ export const attendanceIndex = asyncHandler(async (req, res) => {
   ]);
 
   const recordMap = new Map(records.map((r) => [r.employeeId, r]));
-  const rows = employees.map((e) => buildRow(e, recordMap.get(e.id)));
+  const allRows = employees.map((e) => buildRow(e, recordMap.get(e.id)));
 
+  // The summary cards count everyone; the table shows PAGE_SIZE employees per page.
   const summary = {
-    total: rows.length,
-    present: rows.filter((r) => r.status === "Present").length,
-    late: rows.filter((r) => r.status === "Late").length,
-    absent: rows.filter((r) => r.status === "Absent").length,
-    unrecorded: rows.filter((r) => r.status === "Not recorded").length
+    total: allRows.length,
+    present: allRows.filter((r) => r.status === "Present").length,
+    late: allRows.filter((r) => r.status === "Late").length,
+    absent: allRows.filter((r) => r.status === "Absent").length,
+    unrecorded: allRows.filter((r) => r.status === "Not recorded").length
   };
+
+  const { rows, pagination } = paginate(req, allRows);
 
   res.render("attendance", {
     title: "Attendance | DJs HRMS",
@@ -49,6 +53,7 @@ export const attendanceIndex = asyncHandler(async (req, res) => {
     department,
     rows,
     summary,
+    pagination,
     statuses: ATTENDANCE_STATUSES,
     departments: await Employee.findAll({
       attributes: ["department"],
@@ -96,7 +101,10 @@ export const recordAttendance = asyncHandler(async (req, res) => {
     req.flash("success_msg", `Attendance recorded for ${employee.firstName} ${employee.lastName}.`);
   }
 
-  res.redirect(`/attendance?date=${date}`);
+  // Back to the same page and department filter the form was opened from.
+  const page = Math.max(1, parseInt(req.body.page, 10) || 1);
+  const department = encodeURIComponent(String(req.body.department || "").trim());
+  res.redirect(`/attendance?date=${date}&department=${department}&page=${page}`);
 });
 
 export const checkIn = asyncHandler(async (req, res) => {
@@ -110,6 +118,12 @@ export const checkIn = asyncHandler(async (req, res) => {
   const date = localDateISO();
   const now = new Date();
   const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+  const windowProblem = checkInWindowProblem(time);
+  if (windowProblem) {
+    req.flash("error_msg", windowProblem);
+    return res.redirect("/my-attendance");
+  }
 
   const existing = await Attendance.findOne({ where: { employeeId: employee.id, date } });
   if (existing && existing.checkIn) {
@@ -127,6 +141,14 @@ export const checkIn = asyncHandler(async (req, res) => {
 
   if (existing) await existing.update(payload);
   else await Attendance.create({ employeeId: employee.id, date, ...payload });
+  if (lateMinutes > 0) {
+    await notifyRoles(["admin", "staff"], {
+      type: "attendance", icon: "i-clock", tone: "orange",
+      title: `${employee.firstName} ${employee.lastName} checked in late`,
+      detail: `${time} · ${lateMinutes} minute(s) late · ${employee.department}`,
+      href: `/attendance?date=${date}`
+    }, { except: req.user.id });
+  }
 
   req.flash("success_msg", `Checked in at ${time}${lateMinutes > 0 ? ` (${lateMinutes} minutes late)` : ""}.`);
   res.redirect("/my-attendance");
@@ -172,26 +194,29 @@ export const myAttendance = asyncHandler(async (req, res) => {
     ? req.query.month
     : localDateISO().slice(0, 7);
   const from = `${month}-01`;
-  const to = `${month}-31`;
+  const to = monthEndISO(month);
 
   const records = await Attendance.findAll({
     where: { employeeId: employee.id, date: { [Op.between]: [from, to] } },
     order: [["date", "DESC"]]
   });
 
-  const rows = records.map((r) => r.toJSON());
+  const all = records.map((r) => r.toJSON());
+  // The summary counts the whole month; the table shows 9 days per page.
   const summary = {
-    present: rows.filter((r) => r.status === "Present").length,
-    late: rows.filter((r) => r.status === "Late").length,
-    absent: rows.filter((r) => r.status === "Absent").length,
-    halfDay: rows.filter((r) => r.status === "Half Day").length,
-    totalLateMinutes: rows.reduce((sum, r) => sum + Number(r.lateMinutes || 0), 0)
+    present: all.filter((r) => r.status === "Present").length,
+    late: all.filter((r) => r.status === "Late").length,
+    absent: all.filter((r) => r.status === "Absent").length,
+    halfDay: all.filter((r) => r.status === "Half Day").length,
+    totalLateMinutes: all.reduce((sum, r) => sum + Number(r.lateMinutes || 0), 0)
   };
+  const { rows, pagination } = paginate(req, all);
 
   res.render("my-attendance", {
     title: "My Attendance | DJs HRMS",
     employee: employee.toJSON(),
     rows,
+    pagination,
     summary,
     month
   });

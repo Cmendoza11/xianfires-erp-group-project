@@ -4,6 +4,7 @@
     Copyright (c) 2025 Christian I. Cabrera || XianFire Framework
     Mindoro State University - Philippines
 */
+import '../env.js';
 import { Sequelize } from 'sequelize';
 
 // Central DJ's ERP database (shared with the other modules; Procurement tables use the scm_ prefix).

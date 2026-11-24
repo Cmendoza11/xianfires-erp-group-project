@@ -3,7 +3,6 @@ import { homePage } from "../controllers/homeController.js";
 import {
   loginPage,
   registerPage,
-  forgotPasswordPage,
   loginUser,
   registerUser,
   logoutUser,
@@ -61,8 +60,28 @@ import {
   createUser,
   resetUserPassword,
   updateUserRole,
+  linkUserEmployee,
+  dismissPasswordRequest,
   deleteUser
 } from "../controllers/userController.js";
+import {
+  forgotPasswordPage,
+  forgotPasswordSubmit,
+  forgotPasswordStatus,
+  forgotPasswordCancel,
+  approvePasswordRequest,
+  issueResetLink,
+  resetPasswordPage,
+  resetPasswordSubmit
+} from "../controllers/passwordResetController.js";
+import {
+  notificationList,
+  notificationOpen,
+  notificationMarkRead,
+  notificationDelete,
+  notificationReadAll,
+  notificationDeleteAll
+} from "../controllers/notificationController.js";
 import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -76,10 +95,24 @@ router.post("/login", loginUser);
 router.get("/register", registerPage);
 router.post("/register", registerUser);
 router.get("/forgot-password", forgotPasswordPage);
-router.get("/logout", requireAuth, logoutUser);
+router.post("/forgot-password", forgotPasswordSubmit);
+router.get("/forgot-password/status", forgotPasswordStatus);
+router.post("/forgot-password/cancel", forgotPasswordCancel);
+router.get("/reset-password/:token", resetPasswordPage);
+router.post("/reset-password/:token", resetPasswordSubmit);
+// No requireAuth: it would save /logout as the page to return to, and the next login would log out at once.
+router.get("/logout", logoutUser);
 
 // DASHBOARD
 router.get("/dashboard", requireAuth, dashboard);
+
+// NOTIFICATIONS (each user's own)
+router.get("/notifications", requireAuth, notificationList);
+router.post("/notifications/read-all", requireAuth, notificationReadAll);
+router.post("/notifications/delete-all", requireAuth, notificationDeleteAll);
+router.get("/notifications/:id/open", requireAuth, notificationOpen);
+router.post("/notifications/:id/read", requireAuth, notificationMarkRead);
+router.post("/notifications/:id/delete", requireAuth, notificationDelete);
 
 // SELF-SERVICE PROFILE
 router.get("/profile", requireAuth, employeeProfile);
@@ -139,6 +172,10 @@ router.get("/users", requireRole("admin"), userList);
 router.post("/users", requireRole("admin"), createUser);
 router.post("/users/:id/password", requireRole("admin"), resetUserPassword);
 router.post("/users/:id/role", requireRole("admin"), updateUserRole);
+router.post("/users/:id/employee", requireRole("admin"), linkUserEmployee);
+router.post("/password-requests/:id/dismiss", requireRole("admin"), dismissPasswordRequest);
+router.post("/password-requests/:id/approve", requireRole("admin"), approvePasswordRequest);
+router.post("/password-requests/:id/link", requireRole("admin"), issueResetLink);
 router.post("/users/:id/delete", requireRole("admin"), deleteUser);
 
 export default router;

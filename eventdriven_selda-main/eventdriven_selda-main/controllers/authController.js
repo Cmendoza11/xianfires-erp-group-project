@@ -25,14 +25,21 @@
     */
     
 import bcrypt from "bcrypt";
+import { Op } from "sequelize";
 import { User } from "../models/userModel.js";
 
 export const loginPage = (req, res) => {
+    if (req.session && req.session.userId) {
+        return res.redirect("/dashboard");
+    }
+    const errorMessage = req.session ? req.session.error : null;
+    if (req.session) {
+        delete req.session.error;
+    }
     res.render("login", { 
         title: "Login",
-        errorMessage: req.session.error 
+        errorMessage 
     });
-    delete req.session.error;
 };
 
 export const registerPage = (req, res) => res.render("register", { title: "Register" });
@@ -46,18 +53,27 @@ export const dashboardPage = (req, res) => {
 
 export const loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ where: { email } });
+        const email = String(req.body.email || "").trim();
+        const password = String(req.body.password || "");
+
+        const user = await User.findOne({
+            where: {
+                [Op.or]: [
+                    { email },
+                    { email: email.toLowerCase() }
+                ]
+            }
+        });
         
         if (!user) {
             req.session.error = "User not found";
-            return res.redirect("/login");
+            return req.session.save(() => res.redirect("/login"));
         }
         
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
             req.session.error = "Incorrect password";
-            return res.redirect("/login");
+            return req.session.save(() => res.redirect("/login"));
         }
         
         req.session.userId = user.id;
@@ -67,11 +83,17 @@ export const loginUser = async (req, res) => {
             email: user.email
         };
 
-        res.redirect("/suppliers");
+        return req.session.save((err) => {
+            if (err) console.error("Session save error:", err);
+            res.redirect("/suppliers");
+        });
     } catch (error) {
         console.error("Login Error:", error);
-        req.session.error = "Something went wrong during login.";
-        res.redirect("/login");
+        const host = process.env.DB_HOST || "localhost";
+        req.session.error = (error.name && error.name.includes("Connection"))
+            ? `Cannot connect to database (${host}:3306). Is the database/host online?`
+            : `Login error: ${error.message}`;
+        return req.session.save(() => res.redirect("/login"));
     }
 };
 

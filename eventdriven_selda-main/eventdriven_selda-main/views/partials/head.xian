@@ -39,10 +39,39 @@
     }
   </script>
 
-  <!-- Instant Theme Execution Script (Prevents White/Dark Flash on Load) -->
+  <!-- Global Dark / Light Theme Engine -->
   <script>
+    window.applyTheme = function(theme) {
+      const root = document.documentElement;
+      if (theme === 'light') {
+        root.classList.remove('dark');
+        root.classList.add('light');
+      } else {
+        root.classList.add('dark');
+        root.classList.remove('light');
+      }
+      localStorage.setItem('dj_theme', theme);
+
+      // Update all theme toggle icon buttons (uses class .themeToggleIcon)
+      const icons = document.querySelectorAll('.themeToggleIcon');
+      icons.forEach(el => {
+        if (theme === 'light') {
+          el.className = 'themeToggleIcon fas fa-sun text-amber-500';
+        } else {
+          el.className = 'themeToggleIcon fas fa-moon text-yellow-400';
+        }
+      });
+    };
+
+    window.toggleTheme = function() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const nextTheme = isDark ? 'light' : 'dark';
+      window.applyTheme(nextTheme);
+    };
+
+    // Instant theme application on parse (Zero flash)
     (function() {
-      const savedTheme = localStorage.getItem('dj_theme');
+      const savedTheme = localStorage.getItem('dj_theme') || 'dark';
       if (savedTheme === 'light') {
         document.documentElement.classList.remove('dark');
         document.documentElement.classList.add('light');
@@ -51,6 +80,12 @@
         document.documentElement.classList.remove('light');
       }
     })();
+
+    // Synchronize button text and icons when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      const currentTheme = localStorage.getItem('dj_theme') || (document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+      window.applyTheme(currentTheme);
+    });
   </script>
 
   <!-- Global Brand & Theme Styling for DJ's FoodHub (Black & Yellow) -->
@@ -101,16 +136,18 @@
 
     /* ========================================================
        LIGHT MODE THEME ENGINE FOR DJ'S FOODHUB
+       Enhanced contrast, WCAG AAA accessibility, no eye strain
        ======================================================== */
     html.light body {
       background-color: #f8fafc !important; /* Soft Slate Clean Canvas */
       color: #0f172a !important;            /* High Contrast Slate-900 */
     }
 
+    /* Aside / Sidebar */
     html.light aside {
       background-color: #ffffff !important;
       border-color: #e2e8f0 !important;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
     }
 
     html.light aside div,
@@ -119,24 +156,30 @@
     }
 
     html.light aside nav a:not(.bg-yellow-400) {
-      color: #475569 !important;
+      color: #334155 !important;
     }
     html.light aside nav a:not(.bg-yellow-400):hover {
       background-color: #fef9c3 !important; /* soft yellow-100 hover */
       color: #854d0e !important;            /* amber-800 */
+    }
+    html.light aside nav a:not(.bg-yellow-400):hover i {
+      color: #854d0e !important;
     }
 
     html.light main {
       background-color: #f8fafc !important;
     }
 
+    /* Background overrides for cards and sections */
     html.light .bg-black {
       background-color: #f8fafc !important;
     }
 
+    html.light .bg-black\/20,
     html.light .bg-black\/40,
     html.light .bg-black\/50,
-    html.light .bg-black\/60 {
+    html.light .bg-black\/60,
+    html.light .bg-black\/80 {
       background-color: #f1f5f9 !important;
       border-color: #e2e8f0 !important;
     }
@@ -153,7 +196,7 @@
     html.light .bg-zinc-900\/90 {
       background-color: #ffffff !important;
       border-color: #e2e8f0 !important;
-      box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03) !important;
     }
 
     html.light .bg-zinc-800,
@@ -165,18 +208,22 @@
       color: #1e293b !important;
     }
 
+    /* Borders */
     html.light .border-zinc-800,
+    html.light .border-zinc-800\/40,
     html.light .border-zinc-800\/60,
     html.light .border-zinc-800\/80,
     html.light .border-zinc-700 {
       border-color: #e2e8f0 !important;
     }
 
+    /* Typography & Contrast */
     html.light .text-white {
       color: #0f172a !important;
     }
 
-    html.light .text-gray-100 {
+    html.light .text-gray-100,
+    html.light .text-gray-200 {
       color: #1e293b !important;
     }
 
@@ -185,10 +232,16 @@
     }
 
     html.light .text-gray-400,
-    html.light .text-gray-500 {
-      color: #64748b !important;
+    html.light .text-zinc-400 {
+      color: #475569 !important; /* Slate-600: strong readable contrast on light */
     }
 
+    html.light .text-gray-500,
+    html.light .text-zinc-500 {
+      color: #475569 !important;
+    }
+
+    /* Form Controls */
     html.light input,
     html.light select,
     html.light textarea {
@@ -200,9 +253,9 @@
     html.light input:focus,
     html.light select:focus,
     html.light textarea:focus {
-      border-color: #eab308 !important;
+      border-color: #ca8a04 !important;
       outline: none;
-      box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.3) !important;
+      box-shadow: 0 0 0 3px rgba(202, 138, 4, 0.2) !important;
     }
 
     html.light input::placeholder,
@@ -210,38 +263,477 @@
       color: #94a3b8 !important;
     }
 
-    html.light table thead {
-      background-color: #f8fafc !important;
-      color: #475569 !important;
+    /* Tables */
+    html.light table thead tr {
+      background-color: #f1f5f9 !important;
+      color: #334155 !important;
       border-color: #e2e8f0 !important;
     }
 
-    html.light table tbody tr:hover {
-      background-color: #fefce8 !important; /* warm yellow hint */
+    html.light table thead th {
+      color: #334155 !important;
+      font-weight: 700 !important;
     }
 
     html.light table tbody tr {
       border-color: #f1f5f9 !important;
     }
 
-    html.light .fixed.inset-0.bg-black\/80 {
-      background-color: rgba(15, 23, 42, 0.65) !important;
+    html.light table tbody tr:hover {
+      background-color: #f8fafc !important;
     }
 
-    /* DJ's FoodHub Signature Black & Yellow Contrast rules */
-    .bg-yellow-400,
-    .hover\:bg-yellow-500:hover {
-      background-color: #facc15 !important;
-      color: #000000 !important;
+    /* Modals Backdrop */
+    html.light .fixed.inset-0[class*="bg-black"] {
+      background-color: rgba(15, 23, 42, 0.6) !important;
     }
+
+    /* Hover States in Light Mode (No more jarring black flashes) */
+    html.light .hover\:bg-zinc-800:hover,
+    html.light .hover\:bg-zinc-700:hover,
+    html.light .hover\:bg-zinc-900:hover,
+    html.light .hover\:bg-black:hover,
+    html.light .hover\:bg-zinc-800\/40:hover,
+    html.light .hover\:bg-zinc-800\/60:hover {
+      background-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+
+    html.light .hover\:text-white:hover {
+      color: #0f172a !important;
+    }
+
+    html.light .hover\:text-yellow-400:hover {
+      color: #854d0e !important;
+    }
+
+    /* High-Contrast Status Colors (Emerald, Amber, Red, Blue) */
+    html.light .text-emerald-400,
+    html.light .text-emerald-500,
+    html.light .text-green-400,
+    html.light .text-green-500 {
+      color: #047857 !important; /* Deep readable Emerald */
+    }
+
+    html.light .bg-emerald-950,
+    html.light .bg-emerald-950\/80,
+    html.light .bg-emerald-900,
+    html.light .bg-emerald-400\/10,
+    html.light .bg-emerald-500\/10,
+    html.light .bg-emerald-500\/20 {
+      background-color: #ecfdf5 !important;
+      border-color: #a7f3d0 !important;
+      color: #047857 !important;
+    }
+
+    html.light .border-emerald-800,
+    html.light .border-emerald-500\/30 {
+      border-color: #a7f3d0 !important;
+    }
+
+    html.light .text-red-400,
+    html.light .text-red-500 {
+      color: #b91c1c !important; /* Deep readable Crimson */
+    }
+
+    html.light .bg-red-950,
+    html.light .bg-red-950\/80,
+    html.light .bg-red-900,
+    html.light .bg-red-400\/10,
+    html.light .bg-red-500\/10,
+    html.light .bg-red-500\/20 {
+      background-color: #fef2f2 !important;
+      border-color: #fecaca !important;
+      color: #b91c1c !important;
+    }
+
+    html.light .border-red-800,
+    html.light .border-red-500\/30 {
+      border-color: #fecaca !important;
+    }
+
+    html.light .text-amber-400,
+    html.light .text-amber-500,
+    html.light .text-yellow-500 {
+      color: #b45309 !important; /* Deep readable Amber */
+    }
+
+    html.light .bg-amber-950,
+    html.light .bg-amber-950\/80,
+    html.light .bg-amber-900,
+    html.light .bg-amber-400\/10,
+    html.light .bg-amber-500\/10,
+    html.light .bg-amber-500\/20 {
+      background-color: #fffbeb !important;
+      border-color: #fde68a !important;
+      color: #b45309 !important;
+    }
+
+    html.light .border-amber-800,
+    html.light .border-amber-500\/30 {
+      border-color: #fde68a !important;
+    }
+
+    html.light .text-blue-400,
+    html.light .text-blue-500 {
+      color: #1d4ed8 !important; /* Deep readable Cobalt Blue */
+    }
+
+    html.light .bg-blue-950,
+    html.light .bg-blue-950\/80,
+    html.light .bg-blue-900,
+    html.light .bg-blue-400\/10,
+    html.light .bg-blue-500\/10,
+    html.light .bg-blue-500\/20 {
+      background-color: #eff6ff !important;
+      border-color: #bfdbfe !important;
+      color: #1d4ed8 !important;
+    }
+
+    html.light .border-blue-800,
+    html.light .border-blue-500\/30 {
+      border-color: #bfdbfe !important;
+    }
+
+    /* DJ's FoodHub Brand Yellow Rules */
+    .bg-yellow-400,
+    .bg-yellow-400 *,
+    .hover\:bg-yellow-500:hover,
+    .hover\:bg-yellow-500:hover * {
+      color: #0f172a !important; /* Crisp dark text on bright buttons */
+    }
+
+    .bg-yellow-400 {
+      background-color: #facc15 !important;
+    }
+
     .hover\:bg-yellow-500:hover {
       background-color: #eab308 !important;
     }
+
     html.dark .text-yellow-400 {
       color: #facc15 !important;
     }
+
     html.light .text-yellow-400 {
-      color: #ca8a04 !important; /* Gold in light mode for readability */
+      color: #854d0e !important; /* Warm Amber-800 for high contrast on light */
+    }
+
+    html.light .bg-yellow-400\/10,
+    html.light .bg-yellow-400\/20 {
+      background-color: #fef9c3 !important;
+      border-color: #fde047 !important;
+      color: #854d0e !important;
+    }
+
+    /* Toast Notifications in Light Mode */
+    html.light #toastMessage.bg-emerald-950 {
+      background-color: #ecfdf5 !important;
+      border-color: #6ee7b7 !important;
+      color: #065f46 !important;
+    }
+
+    html.light #toastMessage.bg-red-950 {
+      background-color: #fef2f2 !important;
+      border-color: #fca5a5 !important;
+      color: #991b1b !important;
+    }
+
+    /* Info Banners & Gradients in Light Mode */
+    html.light [class*="from-blue-950"] {
+      background-image: none !important;
+      background-color: #f0f9ff !important;
+      border-color: #bae6fd !important;
+    }
+    html.light [class*="from-blue-950"] h4,
+    html.light .text-blue-300 {
+      color: #0369a1 !important;
+      font-weight: 700 !important;
+    }
+    html.light [class*="from-blue-950"] p {
+      color: #0c4a6e !important;
+    }
+
+    /* Warning & Low Stock Banners */
+    html.light .bg-amber-950\/30,
+    html.light .border-amber-900\/50 {
+      background-color: #fffbeb !important;
+      border-color: #fde68a !important;
+    }
+    html.light .text-amber-300 {
+      color: #92400e !important;
+      font-weight: 700 !important;
+    }
+    html.light .text-emerald-300 {
+      color: #047857 !important;
+      font-weight: 700 !important;
+    }
+    html.light .text-red-300 {
+      color: #b91c1c !important;
+      font-weight: 700 !important;
+    }
+
+    /* Monospace Codes & Badges in Tables */
+    html.light .font-mono.text-yellow-400 {
+      color: #854d0e !important;
+      font-weight: 700 !important;
+    }
+    html.light span.bg-black,
+    html.light td .bg-black {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #1e293b !important;
+    }
+
+    /* Action Buttons & Icons */
+    html.light #themeToggleBtn {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #1e293b !important;
+    }
+    html.light #themeToggleBtn:hover {
+      background-color: #e2e8f0 !important;
+      border-color: #94a3b8 !important;
+    }
+
+    html.light .theme-toggle-btn {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+    }
+    html.light .theme-toggle-btn:hover {
+      background-color: #e2e8f0 !important;
+      border-color: #94a3b8 !important;
+    }
+    html.light .theme-toggle-btn .themeToggleIcon {
+      color: #b45309 !important; /* amber-700: sun icon visible on light */
+    }
+
+    html.light button.bg-zinc-800 i,
+    html.light a.bg-zinc-800 i {
+      color: #334155 !important;
+    }
+    html.light button.bg-zinc-800:hover i,
+    html.light a.bg-zinc-800:hover i {
+      color: #0f172a !important;
+    }
+
+    /* ========================================================
+       GLOBAL PRINT ENGINE & PAPER LAYOUT (WCAG High Contrast)
+       Hides sidebars, navs, action buttons, forms, and popups
+       ======================================================== */
+    @media print {
+      /* 1. HIDE NAVIGATION, SIDEBAR, BUTTONS, FORMS, MODALS, AND TOASTS */
+      aside,
+      #appSidebar,
+      .sidebar-container,
+      nav,
+      header,
+      footer,
+      .no-print,
+      .theme-toggle-btn,
+      button,
+      form,
+      #toastMessage,
+      .modal,
+      [onclick*="window.print"],
+      [href*="export/csv"],
+      .pagination {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -99999px !important;
+        top: -99999px !important;
+      }
+
+      /* 2. PAPER SIZE & MARGIN SETUP */
+      @page {
+        margin: 1cm 1.2cm !important;
+        size: auto;
+      }
+
+      html, body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+        font-size: 10pt !important;
+        line-height: 1.35 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* 3. EXPAND CONTENT TO FULL WIDTH (NO LEFTOVER SIDEBAR GAP) */
+      .flex, .flex-1, .min-h-screen, [class*="h-screen"] {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+      }
+
+      main {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        overflow: visible !important;
+        page-break-before: avoid !important;
+        break-before: avoid !important;
+      }
+
+      /* 4. STRIP OUT DARK & BLACK BACKGROUNDS */
+      .bg-black,
+      .bg-zinc-950,
+      .bg-zinc-900,
+      .bg-zinc-900\/60,
+      .bg-zinc-900\/80,
+      .bg-zinc-900\/90,
+      .bg-zinc-800,
+      .bg-black\/20,
+      .bg-black\/40,
+      .bg-black\/50,
+      .bg-black\/60,
+      .backdrop-blur-md {
+        background-color: transparent !important;
+        background-image: none !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        border-color: #cbd5e1 !important;
+      }
+
+      /* 5. TYPOGRAPHY CONTRAST */
+      h1, h2, h3, h4, h5, h6, strong, b,
+      .text-white,
+      .text-gray-100,
+      .text-gray-200,
+      .text-gray-300 {
+        color: #09090b !important;
+      }
+
+      p, span, td, th, div,
+      .text-gray-400,
+      .text-gray-500,
+      .text-zinc-400 {
+        color: #334155 !important;
+      }
+
+      /* Status Colors */
+      .text-emerald-400, .text-emerald-500, .text-green-500 {
+        color: #047857 !important;
+        font-weight: 700 !important;
+      }
+      .text-yellow-400, .text-amber-400, .text-amber-500 {
+        color: #92400e !important;
+        font-weight: 700 !important;
+      }
+      .text-red-400, .text-red-500 {
+        color: #b91c1c !important;
+        font-weight: 700 !important;
+      }
+      .text-blue-400, .text-blue-500 {
+        color: #1d4ed8 !important;
+        font-weight: 700 !important;
+      }
+
+      /* 6. KPI & SUMMARY CARDS */
+      .grid {
+        display: grid !important;
+        gap: 0.75rem !important;
+      }
+      .grid > div {
+        border: 1px solid #cbd5e1 !important;
+        background-color: #f8fafc !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        border-radius: 8px !important;
+        padding: 0.75rem !important;
+      }
+
+      /* 7. TABLES */
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-top: 8px !important;
+        page-break-inside: auto;
+      }
+
+      thead {
+        display: table-header-group !important;
+      }
+
+      thead tr {
+        background-color: #f1f5f9 !important;
+        border-bottom: 2px solid #94a3b8 !important;
+      }
+
+      th {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        font-size: 8.5pt !important;
+        padding: 6px 8px !important;
+        border-bottom: 2px solid #94a3b8 !important;
+        text-align: left;
+      }
+
+      tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+
+      td {
+        padding: 6px 8px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        color: #1e293b !important;
+        font-size: 8.5pt !important;
+      }
+
+      /* 8. BADGES & PILLS */
+      span[class*="rounded-full"],
+      span[class*="rounded"] {
+        border: 1px solid #cbd5e1 !important;
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+        font-size: 7.5pt !important;
+        padding: 1px 5px !important;
+      }
+
+      /* 9. VOUCHERS / INVOICES PRINT CARD */
+      .print-card {
+        max-width: 100% !important;
+        width: 100% !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        padding: 1.5rem !important;
+        background: #ffffff !important;
+      }
+      .print-border {
+        border-color: #cbd5e1 !important;
+      }
+      .print-bg-light {
+        background-color: #f8fafc !important;
+      }
+      .print-text-dark {
+        color: #09090b !important;
+      }
+      .print-text-gray {
+        color: #4b5563 !important;
+      }
     }
   </style>
 </head>

@@ -55,11 +55,14 @@
         {{#if customersEnabled}}
         <div class="mt-4">
           <label class="label" for="customerLookup">Customer for loyalty points (optional)</label>
-          <div class="flex gap-2">
-            <input id="customerLookup" list="customerOptions" autocomplete="off" class="input" placeholder="Search name or mobile number" value="{{order.customerName}}" />
+          <div id="customerPicker" class="relative flex gap-2">
+            <div class="relative min-w-0 flex-1">
+              <input id="customerLookup" autocomplete="off" class="input" style="padding-right: 3rem" placeholder="Search name or mobile number" value="{{order.customerName}}" />
+              <button type="button" id="customerDropdown" aria-label="Show customer list" aria-expanded="false" aria-controls="customerOptions" class="absolute inset-y-0 right-0 px-4 font-bold text-ember">▾</button>
+            </div>
             <button type="button" id="customerClear" class="btn btn-light">Clear</button>
+            <div id="customerOptions" hidden class="card absolute inset-x-0 top-full z-10 mt-1 max-h-56 overflow-y-auto p-1"></div>
           </div>
-          <datalist id="customerOptions"></datalist>
           <input type="hidden" id="customerId" name="customerId" value="{{order.customerId}}" />
           <input type="hidden" id="customerName" name="customerName" value="{{order.customerName}}" />
           <p id="customerHint" class="mt-1 text-[11px] text-stone-400">{{#if order.customerName}}Points go to {{order.customerName}} in Customer Logs.{{else}}Leave empty for a walk-in customer. Registered customers come from Customer Logs.{{/if}}</p>
@@ -78,7 +81,7 @@
         {{/if}}
 
         <div class="mt-4 flex flex-wrap gap-2">
-          <button type="submit" formaction="/pos/checkout/{{order.id}}/details" class="btn btn-light">Update order details</button>
+          <button type="submit" formnovalidate formaction="/pos/checkout/{{order.id}}/details" class="btn btn-light">Update order details</button>
           <p class="self-center text-[11px] text-stone-400">Table and discount are re-validated on the server.</p>
         </div>
       </div>
@@ -91,7 +94,7 @@
             <tbody>
               {{#each order.items}}
                 <tr>
-                  <td class="font-semibold text-stone-800">{{this.productName}}</td>
+                  <td class="font-semibold text-stone-800">{{this.productName}}{{#each this.addOns}}<div class="text-xs font-normal">+ {{name}}</div>{{/each}}</td>
                   <td class="text-stone-600">{{money this.unitPrice}}</td>
                   <td>{{int this.quantity}}</td>
                   <td class="text-right font-bold">{{money this.subtotal}}</td>
@@ -121,16 +124,10 @@
           <span class="label">Payment method *</span>
           <div class="grid grid-cols-2 gap-2">
             <label class="payment-option cursor-pointer rounded-xl border border-stone-200 px-3 py-2.5 text-center text-xs font-bold text-stone-600">
-              <input type="radio" name="paymentMethod" value="Cash" class="sr-only" checked /> 💵 Cash
+              <input type="radio" name="paymentMethod" value="Cash" class="sr-only" {{#if (eq selectedPaymentMethod "Cash")}}checked{{/if}} /> 💵 Cash
             </label>
             <label class="payment-option cursor-pointer rounded-xl border border-stone-200 px-3 py-2.5 text-center text-xs font-bold text-stone-600">
-              <input type="radio" name="paymentMethod" value="GCash" class="sr-only" /> 📱 GCash
-            </label>
-            <label class="payment-option cursor-pointer rounded-xl border border-stone-200 px-3 py-2.5 text-center text-xs font-bold text-stone-600">
-              <input type="radio" name="paymentMethod" value="Maya" class="sr-only" /> 💳 Maya
-            </label>
-            <label class="payment-option cursor-pointer rounded-xl border border-stone-200 px-3 py-2.5 text-center text-xs font-bold text-stone-600">
-              <input type="radio" name="paymentMethod" value="Credit/Debit Card" class="sr-only" /> 🏦 Card
+              <input type="radio" name="paymentMethod" value="GCash" class="sr-only" {{#if (eq selectedPaymentMethod "GCash")}}checked{{/if}} /> 📱 GCash
             </label>
           </div>
         </div>
@@ -152,13 +149,23 @@
         </div>
 
         <div id="electronic-fields" class="mt-4 hidden space-y-3">
+          {{#if hasGcashQr}}
+            <div id="gcash-qr" class="hidden rounded-xl border border-stone-200 p-3 text-center">
+              <p class="mb-2 text-sm font-bold">Scan to pay with GCash</p>
+              <div class="gcash-qr-crop mx-auto max-w-64">
+                <img src="/pos/checkout/gcash-qr" alt="GCash payment QR code" loading="lazy" />
+              </div>
+              <button type="button" id="open-gcash-qr" class="mt-2 text-xs font-semibold text-ember underline">Enlarge QR</button>
+            </div>
+          {{/if}}
           <div>
-            <label class="label" for="referenceNumber">Payment reference number *</label>
-            <input id="referenceNumber" name="referenceNumber" maxlength="80" class="input" placeholder="GCash / Maya / card approval code" />
+            <label class="label" for="referenceNumber">GCash reference number *</label>
+            <input id="referenceNumber" name="referenceNumber" maxlength="80" class="input" aria-describedby="reference-error" placeholder="Enter the GCash reference number" />
+            <p id="reference-error" role="alert" hidden class="mt-1 text-xs font-semibold text-red-400"></p>
           </div>
           <label class="flex items-start gap-3 rounded-xl border border-stone-200 px-3.5 py-3 text-xs text-stone-600">
             <input type="checkbox" name="verified" value="on" class="mt-0.5 h-4 w-4 rounded border-stone-300 text-ember focus:ring-ember" />
-            <span>I verified that the electronic payment was received for the full amount.</span>
+            <span>I verified that the full GCash payment was received.</span>
           </label>
         </div>
 
@@ -180,7 +187,20 @@
   </section>
 </form>
 
+{{#if hasGcashQr}}
+<dialog id="gcash-qr-dialog" aria-labelledby="gcash-qr-title" class="w-11/12 max-w-lg rounded-2xl bg-white p-4 shadow-xl backdrop:bg-black/60">
+  <div class="mb-3 flex items-center justify-between gap-3">
+    <h2 id="gcash-qr-title" class="text-base font-bold text-charcoal">GCash payment QR</h2>
+    <form method="dialog"><button class="btn btn-light">Close</button></form>
+  </div>
+  <div class="gcash-qr-crop">
+    <img src="/pos/checkout/gcash-qr" alt="GCash payment QR code" loading="lazy" />
+  </div>
+</dialog>
+{{/if}}
+
 <script>
+  try { sessionStorage.removeItem("djyum-cart-{{currentUser.id}}"); } catch {}
   const CURRENCY = {{{json posSettings.currency}}};
   const SUBTOTAL = Number("{{totals.subtotal}}") || 0;
   const SERVICE_RATE = Number("{{posSettings.serviceChargeRate}}") || 0;
@@ -256,8 +276,42 @@
   const paymentOptions = document.querySelectorAll(".payment-option");
   const cashFields = document.getElementById("cash-fields");
   const electronicFields = document.getElementById("electronic-fields");
+  const gcashQr = document.getElementById("gcash-qr");
+  document.getElementById("open-gcash-qr")?.addEventListener("click", () => {
+    document.getElementById("gcash-qr-dialog").showModal();
+  });
   const amountReceived = document.getElementById("amountReceived");
   const referenceNumber = document.getElementById("referenceNumber");
+  const referenceError = document.getElementById("reference-error");
+
+  function setReferenceError(message) {
+    referenceError.textContent = message;
+    referenceError.hidden = !message;
+    referenceNumber.setAttribute("aria-invalid", String(Boolean(message)));
+  }
+
+  function validateReference() {
+    const length = referenceNumber.value.trim().length;
+    const message = length === 0 ? "Enter the GCash reference number."
+      : length < 4 ? "The GCash reference number must have at least 4 characters." : "";
+    setReferenceError(message);
+    return !message;
+  }
+
+  referenceNumber.addEventListener("invalid", (event) => {
+    event.preventDefault();
+    validateReference();
+    referenceNumber.focus();
+  });
+  referenceNumber.addEventListener("input", () => {
+    if (!referenceError.hidden) validateReference();
+  });
+  document.getElementById("checkout-form").addEventListener("submit", (event) => {
+    if (referenceNumber.required && !validateReference()) {
+      event.preventDefault();
+      referenceNumber.focus();
+    }
+  });
 
   function syncPaymentMethod() {
     const selected = document.querySelector('input[name="paymentMethod"]:checked');
@@ -274,16 +328,15 @@
 
     cashFields.classList.toggle("hidden", !isCash);
     electronicFields.classList.toggle("hidden", isCash);
+    gcashQr?.classList.toggle("hidden", method !== "GCash");
     amountReceived.required = isCash;
     referenceNumber.required = !isCash;
+    if (isCash) setReferenceError("");
     updateChange();
   }
 
   paymentOptions.forEach((option) => {
-    option.addEventListener("click", () => {
-      option.querySelector("input").checked = true;
-      syncPaymentMethod();
-    });
+    option.querySelector("input").addEventListener("change", syncPaymentMethod);
   });
 
   document.getElementById("orderType").addEventListener("change", (event) => {
@@ -310,53 +363,22 @@
     if (!input) return;
     const hidden = document.getElementById("customerId");
     const hiddenName = document.getElementById("customerName");
+    const picker = document.getElementById("customerPicker");
+    const dropdown = document.getElementById("customerDropdown");
     const list = document.getElementById("customerOptions");
     const hint = document.getElementById("customerHint");
     const walkIn = "Leave empty for a walk-in customer. Registered customers come from Customer Logs.";
-    const label = (c) => `${c.name} · ${c.contactNumber}`;
-    let found = [];
     let timer;
-    // The chosen customer stays chosen while the box still shows their name.
-    let selected = hidden.value ? { customerId: hidden.value, name: input.value } : null;
+    let searchVersion = 0;
 
-    input.addEventListener("input", () => {
-      if (selected && input.value === selected.name) return;
-      const match = found.find((c) => label(c) === input.value);
-      if (match) {
-        selected = match;
-        hidden.value = match.customerId;
-        hiddenName.value = match.name;
-        input.value = match.name;
-        hint.textContent = `Points go to ${match.name} in Customer Logs.`;
-        return;
-      }
-      selected = null;
-      hidden.value = "";
-      hiddenName.value = "";
-      hint.textContent = input.value.trim() ? "Pick the customer from the list to add loyalty points." : walkIn;
+    function closeList() {
       clearTimeout(timer);
-      const q = input.value.trim();
-      if (q.length < 2) return;
-      timer = setTimeout(async () => {
-        try {
-          const res = await fetch(`/pos/customers/search?q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } });
-          if (!res.ok) return;
-          const data = await res.json();
-          found = data.customers || [];
-          if (data.available === false) hint.textContent = "Customer Logs is offline right now. The sale can go ahead as walk-in.";
-          list.replaceChildren(...found.map((c) => Object.assign(document.createElement("option"), { value: label(c) })));
-        } catch {
-          // Search is a convenience; the sale can still go ahead as walk-in.
-        }
-      }, 200);
-    });
+      searchVersion++;
+      list.hidden = true;
+      dropdown.setAttribute("aria-expanded", "false");
+    }
 
-    document.getElementById("customerClear").addEventListener("click", () => {
-      selected = null;
-      input.value = "";
-      hidden.value = "";
-      hiddenName.value = "";
-      hint.textContent = walkIn;
+    function resetPromo() {
       const promoCode = document.getElementById("promoCode");
       const promoAmount = document.getElementById("promoDiscountAmount");
       const promoInput = document.getElementById("promoCodeInput");
@@ -366,6 +388,86 @@
       if (promoInput) promoInput.value = "";
       if (promoHint) promoHint.textContent = "Choose the customer first, then enter a promo code.";
       if (typeof computeTotals === "function") computeTotals();
+    }
+
+    function chooseCustomer(customer) {
+      if (hidden.value !== String(customer.customerId)) resetPromo();
+      hidden.value = customer.customerId;
+      hiddenName.value = customer.name;
+      input.value = customer.name;
+      hint.textContent = `Points go to ${customer.name} in Customer Logs.`;
+      closeList();
+      input.focus();
+    }
+
+    async function loadCustomers(q) {
+      const version = ++searchVersion;
+      list.textContent = "Loading customers…";
+      list.hidden = false;
+      dropdown.setAttribute("aria-expanded", "true");
+      const offline = "Customer Logs is offline. You can continue as walk-in.";
+      try {
+        const res = await fetch(`/pos/customers/search?q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } });
+        if (!res.ok) throw new Error("Customer lookup failed");
+        const data = await res.json();
+        if (version !== searchVersion) return;
+        if (data.available === false) {
+          list.textContent = offline;
+          return;
+        }
+        if (!data.customers.length) {
+          list.textContent = "No matching customers.";
+          return;
+        }
+        const customers = data.customers.sort((a, b) => a.name.localeCompare(b.name));
+        list.replaceChildren(...customers.map((customer) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "block w-full rounded px-3 py-2 text-left text-sm hover:bg-ember-50 focus-visible:outline focus-visible:outline-ember";
+          button.textContent = customer.contactNumber ? `${customer.name} · ${customer.contactNumber}` : customer.name;
+          button.addEventListener("click", () => chooseCustomer(customer));
+          return button;
+        }));
+      } catch {
+        if (version === searchVersion) list.textContent = offline;
+      }
+    }
+
+    dropdown.addEventListener("click", () => {
+      if (list.hidden) loadCustomers("");
+      else closeList();
+    });
+
+    input.addEventListener("input", () => {
+      if (hidden.value) resetPromo();
+      hidden.value = "";
+      hiddenName.value = "";
+      const q = input.value.trim();
+      hint.textContent = q ? "Pick the customer from the list to add loyalty points." : walkIn;
+      closeList();
+      if (q.length >= 2) timer = setTimeout(() => loadCustomers(q), 200);
+    });
+
+    picker.addEventListener("focusout", (event) => {
+      if (event.relatedTarget && !picker.contains(event.relatedTarget)) closeList();
+    });
+    document.addEventListener("click", (event) => {
+      if (!picker.contains(event.target)) closeList();
+    });
+    picker.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !list.hidden) {
+        closeList();
+        dropdown.focus();
+      }
+    });
+
+    document.getElementById("customerClear").addEventListener("click", () => {
+      closeList();
+      input.value = "";
+      hidden.value = "";
+      hiddenName.value = "";
+      hint.textContent = walkIn;
+      resetPromo();
     });
   })();
 

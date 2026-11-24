@@ -26,7 +26,7 @@
         {{/unless}}
       {{/if}}
 
-      <form method="POST" action="/leaves/create" class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6 space-y-4">
+      <form method="POST" action="/leaves/create" data-confirm-title="Submit leave request?" data-confirm="The request is sent to HR for approval. Rest days are not counted." data-confirm-ok="Submit" data-confirm-tone="success" class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6 space-y-4">
 
         {{#unless selfView}}
         <div>
@@ -78,6 +78,7 @@
       </form>
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

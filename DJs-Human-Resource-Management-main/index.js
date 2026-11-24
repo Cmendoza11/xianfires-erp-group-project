@@ -3,7 +3,9 @@
     Built on the XianFire Framework (Christian I. Cabrera, Mindoro State University)
 */
 
+import "./config/env.js"; // must stay first: loads HR's own .env (LAN mode) before the models
 import express from "express";
+import os from "os";
 import path from "path";
 import fs from "fs";
 import session from "express-session";
@@ -16,6 +18,8 @@ import router from "./routes/index.js";
 import erpApi from "./routes/erpApi.js";
 import { syncDatabase } from "./models/index.js";
 import { attachUser } from "./middleware/authMiddleware.js";
+import { attachNotifications } from "./controllers/notificationController.js";
+import { backfillNotifications } from "./services/notify.js";
 import { erpModules } from "./middleware/erpModules.js";
 import { startAccountingSync } from "./services/accountingSync.js";
 import {
@@ -106,8 +110,23 @@ hbs.registerHelper("formatNumber", formatNumber);
 hbs.registerHelper("dash", (value) => (value === 0 ? 0 : value || "—"));
 hbs.registerHelper("json", (value) => JSON.stringify(value));
 
+// What kind of change a POST made, so the success banner can be coloured:
+// add = green, edit = blue, delete = red (views/partials/flash.xian).
+const actionKind = (path) => {
+  if (/\/(delete|reject|dismiss|delete-all)$/.test(path)) return "delete";
+  if (/\/(create|approve|check-in)$/.test(path) || ["/departments", "/users", "/login", "/register"].includes(path)) return "add";
+  return "edit";
+};
+
 app.use((req, res, next) => {
+  // Every success message set while handling a POST remembers its kind.
+  const flash = req.flash.bind(req);
+  req.flash = (type, message) => {
+    if (type === "success_msg" && message !== undefined && req.method === "POST") flash("success_kind", actionKind(req.path));
+    return flash(type, message);
+  };
   res.locals.success_msg = req.flash("success_msg");
+  res.locals.success_kind = req.flash("success_kind").pop() || "add";
   res.locals.error_msg = req.flash("error_msg");
   next();
 });
@@ -116,6 +135,7 @@ app.use((req, res, next) => {
 app.use("/api/v1", erpApi);
 app.use(erpModules);
 app.use(attachUser);
+app.use(attachNotifications); // the bell's latest notifications + unread count for every page
 app.use("/", router);
 
 app.use((req, res) => {
@@ -134,13 +154,23 @@ export default app;
 // Resolves once the server is listening and the database is ready.
 export const startServer = async (port = PORT) => {
   await syncDatabase();
-  console.log("✅ Connected to MySQL");
+  console.log(
+    `✅ Connected to MySQL at ${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || 3306} (${process.env.DB_NAME || "djs_hr"})`
+  );
+  // First start with notifications: what is already waiting becomes notifications (once).
+  await backfillNotifications();
   // Retries paid payroll that could not reach the Accounting ERP yet.
   startAccountingSync();
 
   return new Promise((resolve, reject) => {
     const server = app.listen(port, () => {
       console.log(`🔥 XianFire running at http://localhost:${port}`);
+      // Addresses the other laptops on the same Wi-Fi use to open HR.
+      for (const list of Object.values(os.networkInterfaces())) {
+        for (const net of list || []) {
+          if (net.family === "IPv4" && !net.internal) console.log(`   LAN: http://${net.address}:${port}`);
+        }
+      }
       resolve(server);
     });
     server.on("error", reject);

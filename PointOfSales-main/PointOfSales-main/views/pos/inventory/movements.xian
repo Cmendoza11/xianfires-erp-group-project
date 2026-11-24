@@ -1,61 +1,52 @@
-{{> app-head title="Stock Movements" active="inventory" subtitle="Full audit trail of every inventory change"}}
-
-<section class="grid grid-cols-2 gap-3 lg:grid-cols-5">
-  {{#each summary}}
-    <div class="card p-4">
-      <p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">{{@key}}</p>
-      <p class="stat-value mt-1 text-xl">{{int this.count}}</p>
-      <p class="text-[11px] text-stone-500">{{int this.units}} units</p>
-    </div>
-  {{/each}}
+{{> app-head title="Inventory Reports" active="reports-inventory" subtitle="Track inbound and outbound product stock with a complete audit trail"}}
+<nav class="flex flex-wrap gap-2"><a href="/pos/reports/inventory" class="btn btn-primary">Product Movement Report</a><a href="/pos/reports/inventory?view=stock" class="btn btn-light">Current Stock Report</a></nav>
+<section class="flex flex-wrap items-center justify-between gap-3">
+ <div><h1 class="text-xl font-bold">Product Movements</h1><p class="mt-1 text-xs text-stone-500">Showing {{shown}} of {{total}} matching movements, newest first.</p></div>
+ <button type="button" id="open-movement-modal" class="btn btn-primary">Add Movement</button>
 </section>
-
 <section class="card p-4">
-  <form method="GET" action="/pos/inventory/movements" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_170px_170px_150px_150px_auto]">
-    <input type="search" name="q" value="{{filters.q}}" class="input" placeholder="Product, reference, reason or user…" />
-    <select name="type" class="select">
-      <option value="">All types</option>
-      {{#each types}}
-        <option value="{{this}}" {{selected this ../filters.type}}>{{this}}</option>
-      {{/each}}
-    </select>
-    <select name="product" class="select">
-      <option value="">All products</option>
-      {{#each products}}
-        <option value="{{this.id}}" {{selected this.id ../filters.product}}>{{this.name}}</option>
-      {{/each}}
-    </select>
-    <input type="date" name="from" value="{{filters.from}}" class="input" />
-    <input type="date" name="to" value="{{filters.to}}" class="input" />
-    <div class="flex gap-2">
-      <button type="submit" class="btn btn-dark">Filter</button>
-      <a href="/pos/inventory/movements" class="btn btn-light">Reset</a>
-    </div>
-  </form>
+ <form method="GET" action="/pos/reports/inventory" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <div><label class="label" for="movement-scope">Items</label><select id="movement-scope" name="scope" class="select"><option value="products" {{selected "products" filters.scope}}>Menu products</option><option value="ingredients" {{selected "ingredients" filters.scope}}>Ingredients / raw materials</option><option value="all" {{selected "all" filters.scope}}>All items</option></select></div>
+  <div><label class="label" for="movement-product">Product</label><select id="movement-product" name="product" class="select"><option value="">All listed items</option>{{#each products}}<option value="{{this.id}}" {{selected this.id ../filters.product}}>{{this.name}}</option>{{/each}}</select></div>
+  <div><label class="label" for="movement-from">Start date</label><input id="movement-from" type="date" name="from" value="{{filters.from}}" class="input" /></div>
+  <div><label class="label" for="movement-to">End date</label><input id="movement-to" type="date" name="to" value="{{filters.to}}" class="input" /></div>
+  <div><label class="label" for="movement-type">Type</label><select id="movement-type" name="type" class="select"><option value="">All types</option>{{#each types}}<option value="{{this}}" {{selected this ../filters.type}}>{{this}}</option>{{/each}}</select></div>
+  <div class="sm:col-span-2"><label class="label" for="movement-search">Search</label><input id="movement-search" type="search" name="q" value="{{filters.q}}" class="input" placeholder="Product or user" /></div>
+  <div class="flex items-end gap-2"><button class="btn btn-primary">Filter</button><a href="/pos/reports/inventory" class="btn btn-light">Clear Filters</a></div>
+ </form>
 </section>
-
-<section class="card overflow-hidden">
-  <div class="table-wrap">
-    <table class="data-table">
-      <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Qty</th><th>Stock change</th><th>Reference</th><th>Reason</th><th>Performed by</th></tr></thead>
-      <tbody>
-        {{#each movements}}
-          <tr>
-            <td class="whitespace-nowrap text-stone-500">{{datetime this.createdAt}}</td>
-            <td class="font-semibold text-stone-800">{{this.productName}}</td>
-            <td><span class="badge bg-stone-100 text-stone-600">{{this.type}}</span></td>
-            <td class="font-bold">{{int this.quantity}}</td>
-            <td class="whitespace-nowrap text-stone-500">{{int this.previousStock}} → <span class="font-semibold text-stone-700">{{int this.newStock}}</span></td>
-            <td class="font-mono text-[11px] text-stone-500">{{this.referenceNumber}}</td>
-            <td class="max-w-[260px] truncate text-stone-500" title="{{this.reason}}">{{this.reason}}</td>
-            <td class="text-stone-500">{{this.performedByName}}</td>
-          </tr>
-        {{else}}
-          <tr><td colspan="8" class="py-12 text-center text-sm text-stone-500">No movements match this filter.</td></tr>
-        {{/each}}
-      </tbody>
-    </table>
-  </div>
-</section>
-
+<section class="card overflow-hidden"><div class="table-wrap"><table class="data-table movement-audit-table">
+ <thead><tr><th>Date &amp; Time</th><th>Product</th><th>Type</th><th>Quantity</th><th>Previous Balance</th><th>New Balance</th><th>User</th></tr></thead>
+ <tbody>{{#each movements}}<tr>
+  <td>{{datetime this.createdAt}}</td>
+  <td><p class="font-semibold">{{this.productName}}</p><p class="mt-1 text-[10px] text-stone-500">ID: {{this.productId}}</p></td>
+  <td><span class="badge {{#if this.inbound}}badge-available{{else}}bg-red-50 text-red-700{{/if}}">{{this.direction}}</span><p class="mt-1 text-[10px] text-stone-500">{{this.type}}</p></td>
+  <td class="font-bold {{#if this.inbound}}text-emerald-700{{else}}text-red-700{{/if}}">{{this.signedQuantity}} {{this.unit}}</td>
+  <td>{{int this.previousStock}} {{this.unit}}</td><td class="font-bold">{{int this.newStock}} {{this.unit}}</td>
+  <td><p>{{#if this.performedByName}}{{this.performedByName}}{{else}}System / unknown{{/if}}</p>{{#if this.performedBy}}<p class="mt-1 text-[10px] text-stone-500">User ID: {{this.performedBy}}</p>{{/if}}</td>
+ </tr>{{else}}<tr><td colspan="7" class="py-12 text-center text-stone-500">No movements match these filters.</td></tr>{{/each}}</tbody>
+</table></div></section>
+<script>
+  const movementProduct = document.getElementById('movement-product');
+  document.getElementById('movement-scope').addEventListener('change', function () {
+    movementProduct.value = '';
+    this.form.requestSubmit();
+  });
+  for (const filter of [movementProduct, document.getElementById('movement-type')]) {
+    filter.addEventListener('change', function () {
+      this.form.requestSubmit();
+    });
+  }
+  const movementFrom = document.getElementById('movement-from');
+  const movementTo = document.getElementById('movement-to');
+  for (const dateFilter of [movementFrom, movementTo]) {
+    dateFilter.addEventListener('change', function () {
+      if (movementFrom.value && movementTo.value && movementFrom.value <= movementTo.value) {
+        this.form.requestSubmit();
+      }
+    });
+  }
+</script>
+{{> product-movement-modal}}
+<script defer src="/product-movement-modal.js"></script>
 {{> app-foot}}

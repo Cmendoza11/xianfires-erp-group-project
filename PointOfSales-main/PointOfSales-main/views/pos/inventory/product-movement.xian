@@ -1,0 +1,11 @@
+{{> app-head title="Add Product Movement" active="inventory" subtitle="Record received or removed finished-product stock"}}
+<a href="/pos/reports/inventory" class="btn btn-light">Back to Inventory Reports</a>
+<form method="POST" action="/pos/inventory/movements" class="card mx-auto max-w-2xl space-y-4 p-5" data-submit-once>
+ <h1 class="text-xl font-bold">Add Product Movement</h1>
+ <div><label class="label" for="product">Product</label><select id="product" name="productId" class="select" required><option value="">Select product</option>{{#each products}}<option value="{{this.id}}">{{this.name}} ? {{int this.inventory.currentStock}} {{this.inventory.unit}} on hand</option>{{/each}}</select></div>
+ <div><label class="label" for="direction">Type</label><select id="direction" name="direction" class="select"><option value="Inbound">Inbound ? received stock</option><option value="Outbound">Outbound ? removed stock</option></select></div>
+ <div><label class="label" for="quantity">Quantity</label><input id="quantity" name="quantity" type="number" min="1" max="100000" step="1" class="input" required /></div>
+ <p class="text-xs text-stone-500">Balances, signed quantity, your user account and date/time are recorded automatically. Products with ingredient recipes use ingredient stock movements instead.</p>
+ <div class="flex gap-2"><button type="submit" class="btn btn-primary">Save Movement</button><a href="/pos/reports/inventory" class="btn btn-light">Cancel</a></div>
+</form>
+{{> app-foot}}

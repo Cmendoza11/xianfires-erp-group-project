@@ -29,7 +29,10 @@ export const Account = sequelize.define("Account", {
   }
 }, {
   tableName: "accounting_account",
-  underscored: true
+  underscored: true,
+  // Soft delete: a deleted account keeps its row (deleted_at) and can be restored from the Recycle Bin.
+  paranoid: true,
+  deletedAt: "deleted_at"
 });
 
 export { sequelize };

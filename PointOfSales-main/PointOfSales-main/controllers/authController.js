@@ -5,11 +5,12 @@
 import bcrypt from "bcrypt";
 import { User } from "../models/index.js";
 import { flashError, flashSuccess } from "../utils/pos.js";
+import { landingPage } from "../utils/access.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const loginPage = (req, res) => {
-  if (req.session?.userId) return res.redirect("/dashboard");
+  if (req.session?.userId) return res.redirect(landingPage(req.session.role));
   return res.render("login", { title: "Sign In" });
 };
 
@@ -52,7 +53,10 @@ export const loginUser = async (req, res, next) => {
       if (error) return next(error);
       req.session.userId = user.id;
       req.session.role = user.role;
-      req.session.save(() => res.redirect("/dashboard"));
+      req.session.save((saveError) => {
+        if (saveError) return next(saveError);
+        return res.redirect(landingPage(user.role));
+      });
     });
   } catch (error) {
     return next(error);
@@ -97,14 +101,15 @@ export const registerUser = async (req, res, next) => {
       if (error) return next(error);
       req.session.userId = user.id;
       req.session.role = user.role;
-      req.session.save(() => {
-        flashSuccess(
-          req,
-          isFirstUser
-            ? "Administrator account created. Welcome to DJYum!"
-            : "Account created. You are signed in as a cashier."
-        );
-        res.redirect("/dashboard");
+      flashSuccess(
+        req,
+        isFirstUser
+          ? "Administrator account created. Welcome to DJYum!"
+          : "Account created. You are signed in as a cashier."
+      );
+      req.session.save((saveError) => {
+        if (saveError) return next(saveError);
+        return res.redirect(landingPage(user.role));
       });
     });
   } catch (error) {
@@ -112,6 +117,9 @@ export const registerUser = async (req, res, next) => {
   }
 };
 
-export const logoutUser = (req, res) => {
-  req.session.destroy(() => res.redirect("/login"));
+export const logoutUser = (req, res, next) => {
+  req.session.destroy((error) => {
+    if (error) return next(error);
+    return res.redirect("/login");
+  });
 };

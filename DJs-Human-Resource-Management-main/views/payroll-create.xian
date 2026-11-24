@@ -16,7 +16,7 @@
 
       {{> flash}}
 
-      <form method="POST" action="/payroll/create" class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6 space-y-5" id="payrollForm">
+      <form method="POST" action="/payroll/create" data-confirm-title="Save payroll?" data-confirm="The payslip for this employee and period will be saved. If Paid is selected, it is posted to Accounting." data-confirm-ok="Save Payroll" data-confirm-tone="success" class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6 space-y-5" id="payrollForm">
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -33,11 +33,11 @@
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Status</label>
             <select name="status" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-sm outline-none focus:border-yellow-400/60">
-              {{#each statuses}}
-              <option value="{{this}}">{{this}}</option>
-              {{/each}}
+              {{#each statuses}}{{#unless (eq this "Paid")}}
+              <option value="{{this}}">{{#if (eq this "Processed")}}Processed (approved){{else}}{{this}}{{/if}}</option>
+              {{/unless}}{{/each}}
             </select>
-            <p class="mt-1 text-[11px] text-gray-500">Draft → Processed (approved) → Paid. Paid payroll is posted to Accounting automatically.</p>
+            <p class="mt-1 text-[11px] text-gray-500">Draft → Processed (approved) → Paid. Accounting releases the salary, and the payroll then becomes Paid.</p>
           </div>
 
           <div>
@@ -59,6 +59,8 @@
         </div>
         <input type="hidden" name="daysWorked" id="daysWorked">
         <input type="hidden" name="overtimeHours" id="overtimeHours">
+        <input type="hidden" name="lateMinutes" id="lateMinutes">
+        <input type="hidden" name="lateDeduction" id="lateDeduction">
 
         <div class="border-t border-white/5 pt-5">
           <h3 class="font-bold mb-4">Earnings</h3>
@@ -126,6 +128,7 @@
       </form>
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 
@@ -162,8 +165,10 @@
         for (const name of ["basicSalary", "overtime", "sssDeduction", "philhealthDeduction", "pagibigDeduction"]) field(name).value = d[name].toFixed(2);
         document.getElementById("daysWorked").value = d.daysWorked;
         document.getElementById("overtimeHours").value = d.overtimeHours;
+        document.getElementById("lateMinutes").value = d.lateMinutes;
+        document.getElementById("lateDeduction").value = d.lateDeduction.toFixed(2);
         info.textContent = d.daysWorked > 0
-          ? `${d.daysWorked} day(s) paid (${d.leaveDays} on paid leave, ${d.absences} absent), ${d.overtimeHours} overtime hour(s), ${d.lateMinutes} late minute(s). You can still change any amount.`
+          ? `${d.daysWorked} day(s) paid (${d.leaveDays} on paid leave, ${d.absences} absent), ${d.overtimeHours} overtime hour(s), ${d.lateMinutes} late minute(s) = ${money(d.lateDeduction)} already taken out of Basic Pay. You can still change any amount.`
           : "No attendance (DTR) or paid leave found for this employee in this period. Record attendance first, or type the basic pay.";
         recalc();
       } catch (error) {

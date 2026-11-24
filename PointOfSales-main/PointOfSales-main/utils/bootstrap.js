@@ -66,15 +66,6 @@ const addMissingEnumValues = async () => {
   }
 };
 
-// Stock items Procurement buys for the kitchen. Procurement links its supplier products to these.
-const KITCHEN_SUPPLIES = [
-  { name: "Yellow Onions", unit: "kg" },
-  { name: "Garlic Bulbs", unit: "kg" },
-  { name: "Ripe Tomatoes", unit: "kg" },
-  { name: "Ground Pork (70/30)", unit: "kg" },
-  { name: "Beef Brisket Cuts", unit: "kg" },
-  { name: "Fresh Tiger Prawns", unit: "kg" },
-];
 
 export const ensureSupplyItem = async ({ name, unit = "pcs", minStockLevel = 10 }, transaction) => {
   const [category] = await Category.findOrCreate({
@@ -170,11 +161,7 @@ export const initializeDatabase = async () => {
     ]);
   }
 
-  // Seed the kitchen supply items once, so Procurement deliveries have stock items to land in.
-  if ((await Product.count({ where: { type: "Supply" } })) === 0) {
-    for (const item of KITCHEN_SUPPLIES) await ensureSupplyItem(item);
-    console.log(`✅ Seeded ${KITCHEN_SUPPLIES.length} kitchen supply items for Procurement deliveries`);
-  }
+  // Supply items are created explicitly through Procurement or product management.
 
   const userCount = await User.count();
   if (userCount === 0) {

@@ -29,10 +29,15 @@
         <div class="card">
           <div class="card-header flex flex-wrap gap-3 justify-between">
             <div class="card-title">{{ entry.description }}</div>
+            <div class="flex flex-wrap gap-2">
+            {{#if can.write}}{{#unless entry.reverseBlockedReason}}
+            <button type="button" class="btn btn-outline" data-modal-target="#reverseModal">Reverse entry</button>
+            {{/unless}}{{/if}}
             {{#if can.write}}{{#unless entry.deleteBlockedReason}}
             <button type="button" class="btn btn-destructive" data-delete-entry="{{ entry.deleteApi }}"
               data-entry-number="{{ entry.entryNumber }}" data-grid-url="{{ urls.accountingJournalGrid }}">Delete entry</button>
             {{/unless}}{{/if}}
+            </div>
           </div>
           <div class="card-content">
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -97,26 +102,24 @@
         </div>
 
         {{#if can.write}}{{#unless entry.reverseBlockedReason}}
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Reverse this entry</div>
-            <p class="card-description">Posts a new entry with every debit and credit swapped, cancelling this one while keeping both in the ledger. Use it to correct a mistake instead of deleting.</p>
-          </div>
-          <div class="card-content">
-            <form id="reverseEntryForm" class="flex flex-wrap items-end gap-3" method="POST" action="{{ entry.reverseApi }}" novalidate
-              data-json-form data-entry-number="{{ entry.entryNumber }}">
-              <label class="grid gap-1 text-sm">
-                <span class="font-medium">Reversal date</span>
-                <input type="date" name="entry_date" class="input" value="{{ reverseDefaultDate }}" min="{{ entry.entryDate }}" data-required="A reversal date is required">
-              </label>
-              <label class="grid gap-1 text-sm grow min-w-[16rem]">
-                <span class="font-medium">Reason (optional)</span>
-                <input type="text" name="reason" class="input" placeholder="e.g. Wrong account used" maxlength="200">
-              </label>
-              <button type="submit" class="btn btn-outline">Reverse entry</button>
-            </form>
-          </div>
-        </div>
+        <template id="reverseModal" data-title="Reverse {{ entry.entryNumber }}">
+          <form method="POST" action="{{ entry.reverseApi }}" novalidate data-json-form data-success-message="Reversing entry posted" data-success-redirect="reload"
+            data-confirm-heading="Reverse {{ entry.entryNumber }}?" data-confirm-content="A new entry with every debit and credit swapped is posted on the selected date. Both stay in the ledger." data-confirm-label="Reverse" class="grid gap-3">
+            <p class="text-sm text-muted">Use this to correct a mistake instead of deleting.</p>
+            <label class="grid gap-1 text-sm">
+              <span class="font-medium">Reversal date</span>
+              <input type="date" name="entry_date" class="input" value="{{ reverseDefaultDate }}" min="{{ entry.entryDate }}" data-required="A reversal date is required">
+            </label>
+            <label class="grid gap-1 text-sm">
+              <span class="font-medium">Reason (optional)</span>
+              <input type="text" name="reason" class="input" placeholder="e.g. Wrong account used" maxlength="200">
+            </label>
+            <div class="flex justify-end gap-2 pt-2">
+              <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+              <button type="submit" class="btn btn-primary">Reverse entry</button>
+            </div>
+          </form>
+        </template>
         {{/unless}}{{/if}}
       </div>
     </div>

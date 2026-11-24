@@ -230,13 +230,19 @@ export const voidTransaction = async (req, res, next) => {
         throw new PosError("The related order has no items to restock.");
       }
 
-      for (const item of sale.order.items) {
+      // Restore exactly what was deducted, even if the recipe has since changed.
+      const deductions = await InventoryMovement.findAll({
+        where: { type: 'Sales Deduction', referenceNumber: sale.orderNumber },
+        order: [['productId', 'ASC']], transaction: t,
+      });
+      const restock = deductions.length ? deductions : sale.order.items;
+      for (const item of restock) {
         const inventory = await Inventory.findOne({
           where: { productId: item.productId },
           transaction: t,
           lock: t.LOCK.UPDATE,
         });
-        if (!inventory) continue;
+        if (!inventory) throw new PosError("Cannot restore stock: inventory record is missing.");
 
         const previousStock = Number(inventory.currentStock);
         const newStock = previousStock + Number(item.quantity);

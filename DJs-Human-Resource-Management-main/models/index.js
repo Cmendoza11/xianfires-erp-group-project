@@ -5,6 +5,8 @@ import Department from "./DepartmentModel.js";
 import Attendance from "./AttendanceModel.js";
 import Leave from "./LeaveModel.js";
 import Payroll from "./PayrollModel.js";
+import PasswordRequest from "./PasswordRequestModel.js";
+import Notification from "./NotificationModel.js";
 
 // Accounts <-> employee records
 User.belongsTo(Employee, { foreignKey: "employeeId", as: "employee" });
@@ -27,6 +29,14 @@ Leave.belongsTo(User, { foreignKey: "reviewedBy", as: "reviewer", onDelete: "SET
 Employee.hasMany(Payroll, { foreignKey: "employeeId", as: "payrolls", onDelete: "CASCADE" });
 Payroll.belongsTo(Employee, { foreignKey: "employeeId", as: "employee" });
 Payroll.belongsTo(User, { foreignKey: "processedBy", as: "processor", onDelete: "SET NULL" });
+
+// Forgot-password requests
+PasswordRequest.belongsTo(User, { foreignKey: "userId", as: "user", onDelete: "CASCADE" });
+
+// Notifications (one per recipient account)
+Notification.belongsTo(User, { foreignKey: "userId", as: "user", onDelete: "CASCADE" });
+User.hasMany(Notification, { foreignKey: "userId", as: "notifications", onDelete: "CASCADE" });
+User.hasMany(PasswordRequest, { foreignKey: "userId", as: "passwordRequests", onDelete: "CASCADE" });
 
 // Adds columns that exist on a model but not yet in its table (e.g. the payroll accounting fields).
 const addMissingColumns = async () => {
@@ -56,4 +66,4 @@ export const syncDatabase = async () => {
   await addMissingColumns();
 };
 
-export { sequelize, User, Employee, Department, Attendance, Leave, Payroll };
+export { sequelize, User, Employee, Department, Attendance, Leave, Payroll, PasswordRequest, Notification };

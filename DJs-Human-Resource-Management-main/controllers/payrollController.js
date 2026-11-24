@@ -1,8 +1,9 @@
 import { Op } from "sequelize";
 import { Payroll, Employee } from "../models/index.js";
-import { asyncHandler, parseId, parseMoney, findEmployeeForUser } from "../utils/helpers.js";
+import { asyncHandler, parseId, parseMoney, findEmployeeForUser, paginate } from "../utils/helpers.js";
 import { isValidDate } from "../utils/hr.js";
-import { startOfMonthISO, endOfMonthISO, localDateISO } from "../utils/format.js";
+import { startOfMonthISO, endOfMonthISO, monthEndISO, localDateISO, formatDate, formatMoney } from "../utils/format.js";
+import { notifyEmployee } from "../services/notify.js";
 import { isLockedByAccounting, postPayroll, queuePayroll } from "../services/accountingSync.js";
 import { computePayroll, dailyRateOf, hourlyRateOf } from "../services/payrollCalc.js";
 
@@ -10,14 +11,24 @@ const PAYROLL_STATUSES = ["Draft", "Processed", "Paid"];
 const BREAKDOWN = ["sssDeduction", "philhealthDeduction", "pagibigDeduction", "cashAdvance"];
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
+// The employee hears about a payslip once it is no longer a Draft (Processed = ready, Paid = paid out).
+const notifyPayslip = (payroll, status) =>
+  notifyEmployee(payroll.employeeId, {
+    type: "payroll", icon: "i-wallet", tone: status === "Paid" ? "green" : "blue",
+    title: status === "Paid" ? "Your salary was paid" : "Your payslip is ready",
+    detail: `${formatDate(payroll.periodStart)} – ${formatDate(payroll.periodEnd)} · net ${formatMoney(payroll.netSalary)}`,
+    href: `/my-payslips/${payroll.id}`
+  });
+
 export const payrollList = asyncHandler(async (req, res) => {
   const status = PAYROLL_STATUSES.includes(req.query.status) ? req.query.status : "";
   const month = /^\d{4}-\d{2}$/.test(req.query.month || "")
     ? req.query.month
     : localDateISO().slice(0, 7);
 
+  const monthEnd = monthEndISO(month);
   const where = {
-    periodStart: { [Op.between]: [`${month}-01`, `${month}-31`] }
+    periodStart: { [Op.between]: [`${month}-01`, monthEnd] }
   };
   if (status) where.status = status;
 
@@ -29,19 +40,23 @@ export const payrollList = asyncHandler(async (req, res) => {
     order: [["periodEnd", "DESC"], ["createdAt", "DESC"]]
   });
 
-  const rows = records.map((r) => r.toJSON());
+  const all = records.map((r) => r.toJSON());
+  // The summary counts the whole month; the table shows 9 per page.
   const summary = {
-    count: rows.length,
-    totalNet: rows.reduce((sum, r) => sum + Number(r.netSalary || 0), 0),
-    draft: rows.filter((r) => r.status === "Draft").length,
-    paid: rows.filter((r) => r.status === "Paid").length
+    count: all.length,
+    totalNet: all.reduce((sum, r) => sum + Number(r.netSalary || 0), 0),
+    draft: all.filter((r) => r.status === "Draft").length,
+    paid: all.filter((r) => r.status === "Paid").length
   };
+  const { rows, pagination } = paginate(req, all);
 
   res.render("payroll", {
     title: "Payroll | DJs HRMS",
     rows,
+    pagination,
     summary,
     month,
+    monthEnd,
     status,
     statuses: PAYROLL_STATUSES
   });
@@ -81,7 +96,8 @@ export const payrollCreate = asyncHandler(async (req, res) => {
   const employee = employeeId ? await Employee.findByPk(employeeId) : null;
   const periodStart = String(body.periodStart || "").trim();
   const periodEnd = String(body.periodEnd || "").trim();
-  const status = PAYROLL_STATUSES.includes(body.status) ? body.status : "Draft";
+  // A new payroll can be Draft or Processed (approved); only Accounting's salary release makes it Paid.
+  const status = ["Draft", "Processed"].includes(body.status) ? body.status : "Draft";
 
   const errors = [];
   if (!employee) errors.push("Select a valid employee.");
@@ -107,6 +123,9 @@ export const payrollCreate = asyncHandler(async (req, res) => {
   const deductions = round2(withBreakdown ? sssDeduction + philhealthDeduction + pagibigDeduction + cashAdvance : parseMoney(body.deductions));
   const daysWorked = has("daysWorked") ? Number(body.daysWorked) || 0 : Number(computed?.daysWorked ?? 0);
   const overtimeHours = has("overtimeHours") ? Number(body.overtimeHours) || 0 : Number(computed?.overtimeHours ?? 0);
+  // Tardiness is already inside basicSalary; these two are kept only to show it on the payslip.
+  const lateMinutes = has("lateMinutes") ? Math.max(parseInt(body.lateMinutes, 10) || 0, 0) : Number(computed?.lateMinutes ?? 0);
+  const lateDeduction = has("lateDeduction") ? parseMoney(body.lateDeduction) : Number(computed?.lateDeduction ?? 0);
 
   if (!errors.length && (!basicSalary || basicSalary < 0)) {
     errors.push(auto
@@ -145,6 +164,8 @@ export const payrollCreate = asyncHandler(async (req, res) => {
     netSalary,
     daysWorked,
     overtimeHours,
+    lateMinutes,
+    lateDeduction,
     sssDeduction,
     philhealthDeduction,
     pagibigDeduction,
@@ -155,6 +176,7 @@ export const payrollCreate = asyncHandler(async (req, res) => {
   });
   // Paid payroll is booked in the Accounting ERP (salaries expense, deductions payable, cash).
   await queuePayroll(payroll);
+  if (status !== "Draft") await notifyPayslip(payroll, status);
 
   req.flash("success_msg", status === "Paid" ? "Payroll record created and sent to Accounting." : "Payroll record created.");
   res.redirect(`/payroll/${payroll.id}`);
@@ -172,12 +194,14 @@ export const payrollShow = asyncHandler(async (req, res) => {
 
   if (res.locals.isLimited) {
     const employee = await findEmployeeForUser(req.user);
-    if (!employee || payroll.employeeId !== employee.id) {
+    if (!employee || payroll.employeeId !== employee.id || payroll.status === "Draft") {
       return res.status(403).render("403", { title: "Access Denied | DJs HRMS" });
     }
   }
 
   const data = payroll.toJSON();
+  // Gross pay for the summary (basic already has any late deduction taken out).
+  data.grossPay = round2(Number(data.basicSalary) + Number(data.allowances) + Number(data.overtime));
   res.render("payslip", {
     title: "Payslip | DJs HRMS",
     payroll: data,
@@ -202,12 +226,18 @@ export const payrollUpdateStatus = asyncHandler(async (req, res) => {
     req.flash("error_msg", "Invalid payroll status.");
     return res.redirect(`/payroll/${payroll.id}`);
   }
+  // Salaries are released by Accounting (Payroll > Release salary), which then marks the payroll Paid here.
+  if (status === "Paid" && payroll.status !== "Paid") {
+    req.flash("error_msg", "Approve the payroll (Processed). Accounting releases the salary and marks it Paid.");
+    return res.redirect(`/payroll/${payroll.id}`);
+  }
   if (status !== "Paid" && isLockedByAccounting(payroll)) {
     const entry = payroll.accountingEntryNumber ? ` (${payroll.accountingEntryNumber})` : "";
     req.flash("error_msg", `This payroll is already booked in Accounting${entry}, so Paid is final. Correct it in Accounting with a reversing entry.`);
     return res.redirect(`/payroll/${payroll.id}`);
   }
 
+  const previous = payroll.status;
   await payroll.update({
     status,
     processedBy: req.user.id,
@@ -216,6 +246,7 @@ export const payrollUpdateStatus = asyncHandler(async (req, res) => {
     ...(status !== "Paid" ? { accountingSyncStatus: null, accountingSyncError: null } : {})
   });
   await queuePayroll(payroll);
+  if (status !== previous && status !== "Draft") await notifyPayslip(payroll, status);
 
   req.flash("success_msg", status === "Paid" ? "Payroll marked as Paid and sent to Accounting." : `Payroll marked as ${status}.`);
   res.redirect(`/payroll/${payroll.id}`);
@@ -251,15 +282,18 @@ export const myPayslips = asyncHandler(async (req, res) => {
     });
   }
 
+  // Draft payroll is still being prepared by HR, so employees see only Processed and Paid.
   const records = await Payroll.findAll({
-    where: { employeeId: employee.id },
+    where: { employeeId: employee.id, status: { [Op.ne]: "Draft" } },
     order: [["periodEnd", "DESC"]]
   });
 
+  const { rows, pagination } = paginate(req, records.map((r) => r.toJSON()));
   res.render("my-payslips", {
     title: "My Payslips | DJs HRMS",
     employee: employee.toJSON(),
-    rows: records.map((r) => r.toJSON()),
+    rows,
+    pagination,
     totalNet: records.reduce((sum, r) => sum + Number(r.netSalary || 0), 0)
   });
 });

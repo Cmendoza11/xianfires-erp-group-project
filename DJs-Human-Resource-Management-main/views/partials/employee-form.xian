@@ -1,4 +1,4 @@
-<form method="POST" action="{{formAction}}" class="space-y-6">
+<form method="POST" action="{{formAction}}" data-confirm-title="{{confirmTitle}}" data-confirm="{{confirmMessage}}" data-confirm-ok="{{submitLabel}}" data-confirm-tone="{{confirmTone}}" class="space-y-6">
 
   <div class="rounded-2xl border border-white/5 bg-[#171717] p-5 sm:p-6">
     <h3 class="font-bold mb-5">Identity</h3>

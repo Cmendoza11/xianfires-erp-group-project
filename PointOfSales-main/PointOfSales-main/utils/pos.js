@@ -30,6 +30,8 @@ export const toInt = (value) => {
   return Number.isFinite(parsed) ? parsed : NaN;
 };
 
+export const productCode = (id) => `POS-${String(id).padStart(4, "0")}`;
+
 export const generateNumber = (prefix) => {
   const now = new Date();
   const stamp = [

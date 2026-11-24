@@ -39,13 +39,19 @@
       </div>
       {{/if}}
 
-      <div class="card">
-        <div class="card-content pt-5 overflow-x-auto">
+      <div class="card" data-list data-page-size="10">
+        {{#> listToolbar placeholder="Search account or date"}}
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Status</span>
+            <select class="select" data-list-filter="state"><option value="">All</option><option value="draft">In progress</option><option value="done">Completed</option></select>
+          </label>
+        {{/listToolbar}}
+        <div class="card-content overflow-x-auto">
           <table class="data-table">
             <thead><tr><th>Account</th><th>Statement date</th><th class="num">Statement balance</th><th>Status</th><th>Completed</th><th></th></tr></thead>
             <tbody>
               {{#each reconciliations}}
-              <tr>
+              <tr data-row data-state="{{#if isDraft}}draft{{else}}done{{/if}}">
                 <td>{{ account }}</td>
                 <td>{{ statementDate }}</td>
                 <td class="num">{{ formatSignedMoney statementBalance }}</td>
@@ -54,10 +60,11 @@
                 <td class="text-right"><a href="{{ viewUrl }}" class="btn btn-link">{{#if isDraft}}Continue{{else}}View{{/if}}</a></td>
               </tr>
               {{else}}
-              <tr><td colspan="6" class="text-center text-muted">No reconciliations yet</td></tr>
+              <tr data-empty-row><td colspan="6" class="text-center text-muted">No reconciliations yet</td></tr>
               {{/each}}
             </tbody>
           </table>
+          <div data-list-pager></div>
         </div>
       </div>
     </div>

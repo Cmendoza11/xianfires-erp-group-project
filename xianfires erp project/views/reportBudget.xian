@@ -1,0 +1,79 @@
+{{> head}}
+<body>
+{{> adminHeader}}
+<div class="flex">
+  {{> adminNav}}
+  <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
+    <div class="max-w-[75rem] mx-auto">
+      <div class="no-print">
+        {{> pageHeading heading="Budget vs Actual" }}
+        <div class="card p-4 mb-5 flex flex-wrap items-end gap-3">
+          <form method="GET" action="{{ urls.reportBudget }}" class="flex flex-wrap items-end gap-3">
+            <label class="grid gap-1 text-sm">
+              <span class="font-medium">Month</span>
+              <input type="month" name="month" class="input" value="{{ month }}">
+            </label>
+            <button type="submit" class="btn btn-primary">Show</button>
+          </form>
+          <button type="button" class="btn btn-outline" data-print>Print</button>
+          {{#if can.write}}
+          <button type="button" class="btn btn-ghost" data-api-action="{{ urls.saveBudget }}"
+            data-payload='{"month":"{{ month }}","copy_from":"{{ previousMonth }}"}'
+            data-confirm-heading="Copy last month's budget?" data-confirm-content="The budget of the previous month replaces this month's budget. You can still change each amount after."
+            data-confirm-label="Copy" data-success-message="Budget copied" data-success-redirect="reload">Copy last month's budget</button>
+          {{/if}}
+        </div>
+        {{#unless report.hasBudgets}}
+        <div class="notice notice-info mb-5">No budget for {{ report.label }} yet. Type the planned amount per account below{{#if can.write}} and click Save budget{{/if}}. Actual figures come from the posted journal entries.</div>
+        {{/unless}}
+      </div>
+
+      <form id="budgetForm" method="POST" action="{{ urls.saveBudget }}" novalidate data-json-form
+        data-success-message="Budget saved" data-success-redirect="reload">
+        <input type="hidden" name="month" value="{{ month }}">
+        <div class="card p-6">
+          {{> reportHeader reportTitle="Budget vs Actual" periodLabel=(concat "For the month of " report.label) }}
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>Account</th><th class="num">Budget</th><th class="num">Actual</th><th class="num">Variance</th><th class="num whitespace-nowrap">% used</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr class="report-section"><td colspan="6">Revenue</td></tr>
+                {{#each report.revenue.accounts}}
+                <tr>
+                  <td class="report-indent whitespace-nowrap"><a href="{{ ledgerUrl }}" class="hover:underline">{{ code }} - {{ name }}</a></td>
+                  <td class="num">{{#if @root.can.write}}<input type="number" step="0.01" min="0" name="{{ field }}" value="{{ budget }}" class="input text-right w-28 ml-auto no-print" aria-label="Budget for {{ code }}"><span class="hidden print:inline">{{ formatMoney budgetAmount }}</span>{{else}}{{#if hasBudget}}{{ formatMoney budgetAmount }}{{/if}}{{/if}}</td>
+                  <td class="num">{{ formatMoney actual }}</td>
+                  <td class="num">{{#if hasBudget}}{{ formatSignedMoney variance }}{{/if}}</td>
+                  <td class="num">{{#if percent}}{{ percent }}%{{/if}}</td>
+                  <td>{{#if status}}<span class="badge {{#if (eq status "bad")}}badge-danger{{else if (eq status "good")}}badge-success{{else}}badge-secondary{{/if}}">{{ statusLabel }}</span>{{/if}}</td>
+                </tr>
+                {{/each}}
+                <tr class="report-row-total"><td>Total Revenue</td><td class="num">{{ formatMoney report.revenue.total.budget }}</td><td class="num">{{ formatMoney report.revenue.total.actual }}</td><td class="num">{{ formatSignedMoney report.revenue.total.variance }}</td><td class="num">{{#if report.revenue.total.percent}}{{ report.revenue.total.percent }}%{{/if}}</td><td></td></tr>
+
+                <tr class="report-section"><td colspan="6">Expenses</td></tr>
+                {{#each report.expense.accounts}}
+                <tr>
+                  <td class="report-indent whitespace-nowrap"><a href="{{ ledgerUrl }}" class="hover:underline">{{ code }} - {{ name }}</a></td>
+                  <td class="num">{{#if @root.can.write}}<input type="number" step="0.01" min="0" name="{{ field }}" value="{{ budget }}" class="input text-right w-28 ml-auto no-print" aria-label="Budget for {{ code }}"><span class="hidden print:inline">{{ formatMoney budgetAmount }}</span>{{else}}{{#if hasBudget}}{{ formatMoney budgetAmount }}{{/if}}{{/if}}</td>
+                  <td class="num">{{ formatMoney actual }}</td>
+                  <td class="num">{{#if hasBudget}}{{ formatSignedMoney variance }}{{/if}}</td>
+                  <td class="num">{{#if percent}}{{ percent }}%{{/if}}</td>
+                  <td>{{#if status}}<span class="badge {{#if (eq status "bad")}}badge-danger{{else if (eq status "good")}}badge-success{{else}}badge-secondary{{/if}}">{{ statusLabel }}</span>{{/if}}</td>
+                </tr>
+                {{/each}}
+                <tr class="report-row-total"><td>Total Expenses</td><td class="num">{{ formatMoney report.expense.total.budget }}</td><td class="num">{{ formatMoney report.expense.total.actual }}</td><td class="num">{{ formatSignedMoney report.expense.total.variance }}</td><td class="num">{{#if report.expense.total.percent}}{{ report.expense.total.percent }}%{{/if}}</td><td></td></tr>
+
+                <tr class="report-row-grand"><td>Net Income</td><td class="num">{{ formatSignedMoney report.net.budget }}</td><td class="num">{{ formatSignedMoney report.net.actual }}</td><td class="num">{{ formatSignedMoney report.net.variance }}</td><td></td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-xs text-muted mt-3">Variance = actual − budget. For revenue a positive variance is good; for expenses, discounts and returns a positive variance means over budget. Leave a budget empty to remove it.</p>
+          {{#if can.write}}
+          <div class="flex justify-end mt-4 no-print"><button type="submit" class="btn btn-primary">Save budget</button></div>
+          {{/if}}
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+{{> footer }}

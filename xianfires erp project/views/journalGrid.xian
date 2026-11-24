@@ -6,9 +6,9 @@
   <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
     <div class="max-w-[75rem] mx-auto">
       {{#if can.write}}
-      {{> pageHeading heading="Journal Entries" actionUrl=urls.accountingJournalNew actionLabel="New journal entry" }}
+      {{> pageHeading heading="Journal Entries" actionUrl=urls.accountingJournalNew actionLabel="New journal entry" exportCsv=true }}
       {{else}}
-      {{> pageHeading heading="Journal Entries" }}
+      {{> pageHeading heading="Journal Entries" exportCsv=true }}
       {{/if}}
       <div class="card">
         <div class="card-header">

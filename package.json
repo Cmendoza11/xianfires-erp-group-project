@@ -9,7 +9,11 @@
     "migrate": "node scripts/migrate-all.js",
     "dev": "node scripts/dev-all.js",
     "check": "node scripts/check-all.js",
-    "accounts": "node scripts/accounts.js"
+    "accounts": "node scripts/accounts.js",
+    "lan": "node scripts/lan.js",
+    "lan-monitor": "node scripts/lan-monitor.js",
+    "host-network": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/host-network-setup.ps1",
+    "test:accounting": "npm --prefix \"xianfires erp project\" test"
   },
   "engines": {
     "node": ">=20.12"

@@ -27,9 +27,15 @@
           </div>
           <p class="text-xs text-gray-400 mt-1">Perform incoming shipment inspection, partition quantities into Accepted vs Damaged, and verify stock eligibility.</p>
         </div>
-        <a href="/goods-receipts" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-bold px-4 py-2.5 rounded-xl transition">
-          <i class="fas fa-arrow-left mr-1.5"></i> Back to Receipts
-        </a>
+        <div class="flex items-center space-x-3">
+          <a href="/goods-receipts" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-gray-300 font-bold px-4 py-2.5 rounded-xl transition">
+            <i class="fas fa-arrow-left mr-1.5"></i> Back to Receipts
+          </a>
+          <!-- Theme Toggle Icon Button -->
+          <button onclick="toggleTheme()" type="button" class="theme-toggle-btn p-2.5 rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition shadow flex items-center justify-center" title="Toggle Theme">
+            <i class="themeToggleIcon fas fa-moon text-yellow-400"></i>
+          </button>
+        </div>
       </div>
 
       <!-- PO Selection / Info Bar -->

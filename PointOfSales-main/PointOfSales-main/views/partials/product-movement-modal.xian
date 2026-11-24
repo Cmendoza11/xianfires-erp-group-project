@@ -1,0 +1,14 @@
+<dialog id="product-movement-modal" class="movement-modal" aria-labelledby="movement-modal-title" data-auto-open="{{openMovement}}">
+  <div class="flex items-center justify-between gap-4 border-b border-white/10 px-6 py-4">
+    <h2 id="movement-modal-title" class="text-lg font-bold">Add Product Movement</h2>
+    <button type="button" data-close-movement class="btn btn-light" aria-label="Close Add Product Movement">Close</button>
+  </div>
+  <form method="POST" action="/pos/inventory/movements" class="space-y-4 p-6" data-submit-once>
+    {{#if openMovement}}{{#each error_msg}}<p role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">{{this}}</p>{{/each}}{{/if}}
+    <div><label class="label" for="modal-product">Product</label><select id="modal-product" name="productId" class="select" required autofocus><option value="">Select product</option>{{#each movementProducts}}<option value="{{this.id}}" {{selected this.id ../movementDraft.productId}}>{{this.name}} - {{int this.inventory.currentStock}} {{this.inventory.unit}} on hand</option>{{/each}}</select></div>
+    <div><label class="label" for="modal-direction">Type</label><select id="modal-direction" name="direction" class="select"><option value="Inbound" {{selected "Inbound" movementDraft.direction}}>Inbound - received stock</option><option value="Outbound" {{selected "Outbound" movementDraft.direction}}>Outbound - removed stock</option></select></div>
+    <div><label class="label" for="modal-quantity">Quantity</label><input id="modal-quantity" name="quantity" value="{{movementDraft.quantity}}" type="number" min="1" max="100000" step="1" class="input" required /></div>
+    <p class="text-xs text-stone-500">Balances, user and date/time are recorded automatically. Products with recipes use ingredient stock movements.</p>
+    <div class="flex justify-end gap-2 pt-2"><button type="button" data-close-movement class="btn btn-light">Cancel</button><button type="submit" class="btn btn-primary">Save Movement</button></div>
+  </form>
+</dialog>

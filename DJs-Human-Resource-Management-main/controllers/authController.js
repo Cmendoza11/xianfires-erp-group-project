@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
-import { User, Employee } from "../models/index.js";
+import { User } from "../models/index.js";
+import { notifyRoles } from "../services/notify.js";
 import { asyncHandler } from "../utils/helpers.js";
 
 const cleanEmail = (value) => String(value || "").trim().toLowerCase();
@@ -26,9 +27,7 @@ export const registerPage = (req, res) => {
   res.render("register", { title: "Register | DJs HRMS" });
 };
 
-export const forgotPasswordPage = (req, res) => {
-  res.render("forgotpassword", { title: "Forgot Password | DJs HRMS" });
-};
+// Forgot password lives in controllers/passwordResetController.js.
 
 export const loginUser = asyncHandler(async (req, res) => {
   const email = cleanEmail(req.body.email);
@@ -74,24 +73,25 @@ export const registerUser = asyncHandler(async (req, res) => {
     return res.redirect("/register");
   }
 
-  // Public sign-ups are always employees; roles are elevated by an administrator.
-  const employee = await Employee.findOne({ where: { email }, order: [["id", "ASC"]] });
+  // Public sign-ups are always employees and are NOT linked to an employee record: anyone can type
+  // an employee's email here, so only an administrator links accounts (User Accounts page).
   const hashed = await bcrypt.hash(password, 10);
   const user = await User.create({
     name,
     email,
     password: hashed,
     role: "employee",
-    employeeId: employee ? employee.id : null
+    employeeId: null
+  });
+  await notifyRoles(["admin"], {
+    type: "account", icon: "i-user", tone: "blue",
+    title: `New account: ${name}`,
+    detail: `${email} registered · link it to an employee record in User Accounts`,
+    href: "/users"
   });
 
   await startSession(req, user);
-  req.flash(
-    "success_msg",
-    employee
-      ? "Account created. Your employee record is now linked."
-      : "Account created. Ask HR to link your employee record."
-  );
+  req.flash("success_msg", "Account created. Ask HR to link your employee record.");
   res.redirect("/dashboard");
 });
 
@@ -150,7 +150,7 @@ export const changePassword = asyncHandler(async (req, res) => {
 
 export const logoutUser = (req, res) => {
   req.session.destroy(() => {
-    res.clearCookie("connect.sid");
+    res.clearCookie("xf_hr.sid"); // the session cookie name set in index.js
     res.redirect("/login");
   });
 };

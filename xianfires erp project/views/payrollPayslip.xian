@@ -1,0 +1,64 @@
+{{> head}}
+<body>
+{{> adminHeader}}
+<div class="flex">
+  {{> adminNav}}
+  <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
+    <div class="max-w-[46rem] mx-auto">
+      <div class="no-print flex flex-wrap items-center justify-between gap-3 mb-5">
+        {{> pageHeading heading=(concat "Payslip #" payslip.id) backUrl=urls.accountingPayroll }}
+        <button type="button" class="btn btn-outline" data-print>Print</button>
+      </div>
+
+      <div class="card p-6">
+        {{> reportHeader reportTitle="Payslip" periodLabel=(concat "Pay period " payslip.periodStart " to " payslip.periodEnd) }}
+
+        <div class="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm mb-6">
+          <div><span class="text-muted">Employee:</span> <b>{{ payslip.employee.name }}</b></div>
+          <div><span class="text-muted">Employee no.:</span> {{ payslip.employee.code }}</div>
+          <div><span class="text-muted">Position:</span> {{#if payslip.employee.position}}{{ payslip.employee.position }}{{else}}—{{/if}}</div>
+          <div><span class="text-muted">Department:</span> {{#if payslip.employee.department}}{{ payslip.employee.department }}{{else}}—{{/if}}</div>
+          <div><span class="text-muted">Days worked:</span> {{#if payslip.daysWorked}}{{ payslip.daysWorked }}{{else}}—{{/if}}{{#if payslip.overtimeHours}} · OT {{ payslip.overtimeHours }} h{{/if}}</div>
+          <div><span class="text-muted">Status:</span> {{#if (eq payslip.status "Paid")}}<span class="badge badge-success">Paid {{ payslip.paidAt }}</span>{{else}}<span class="badge badge-warning">{{ payslip.status }}</span>{{/if}}</div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-6">
+          <table class="data-table">
+            <thead><tr><th>Earnings</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td>Basic pay</td><td class="num">{{ formatMoney payslip.basicSalary }}</td></tr>
+              <tr><td>Allowances</td><td class="num">{{ formatMoney payslip.allowances }}</td></tr>
+              <tr><td>Overtime</td><td class="num">{{ formatMoney payslip.overtime }}</td></tr>
+              <tr class="report-row-grand"><td>Gross pay</td><td class="num">{{ formatMoney payslip.gross }}</td></tr>
+            </tbody>
+          </table>
+          <table class="data-table">
+            <thead><tr><th>Deductions</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td>SSS</td><td class="num">{{ formatMoney payslip.sssDeduction }}</td></tr>
+              <tr><td>PhilHealth</td><td class="num">{{ formatMoney payslip.philhealthDeduction }}</td></tr>
+              <tr><td>Pag-IBIG</td><td class="num">{{ formatMoney payslip.pagibigDeduction }}</td></tr>
+              <tr><td>Cash advance</td><td class="num">{{ formatMoney payslip.cashAdvance }}</td></tr>
+              <tr class="report-row-grand"><td>Total deductions</td><td class="num">{{ formatMoney payslip.deductions }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between border-t-2 border-ink mt-6 pt-4">
+          <div class="text-sm font-semibold uppercase tracking-wider">Net pay</div>
+          <div class="text-2xl font-bold">{{ formatMoney payslip.netSalary }}</div>
+        </div>
+        <p class="text-xs text-muted mt-3">
+          {{#if payslip.entry}}Released by Accounting as journal entry <a href="{{ concat urls.accountingJournalGrid "/view/" payslip.entry.uuid }}" class="font-mono hover:underline">{{ payslip.entry.number }}</a> on {{ payslip.paidAt }}.
+          {{else}}Not released by Accounting yet.{{/if}}
+        </p>
+
+        <div class="grid grid-cols-2 gap-8 mt-12 text-sm text-center">
+          <div><div class="border-t border-border pt-2">Released by (Accounting)</div></div>
+          <div><div class="border-t border-border pt-2">Received by (Employee)</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{{> footer }}

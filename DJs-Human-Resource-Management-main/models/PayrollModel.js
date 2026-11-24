@@ -14,6 +14,9 @@ const Payroll = sequelize.define("Payroll", {
   // From attendance (DTR): days paid (Half Day = 0.5, approved paid leave = 1) and overtime hours.
   daysWorked: { type: DataTypes.DECIMAL(5, 1), allowNull: false, defaultValue: 0 },
   overtimeHours: { type: DataTypes.DECIMAL(6, 2), allowNull: false, defaultValue: 0 },
+  // Tardiness from attendance, already taken out of basicSalary (shown on the payslip).
+  lateMinutes: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  lateDeduction: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
   // Employee share of the government contributions and the cash advance repaid this payroll.
   sssDeduction: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
   philhealthDeduction: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },

@@ -4,6 +4,7 @@ import { urls } from "../routes/urls.js";
 import { logAudit } from "../services/auditService.js";
 import { AccountingValidationError } from "../services/accountTypes.js";
 import { createUser, MIN_PASSWORD_LENGTH } from "../services/userService.js";
+import { clearLoginFailures, loginLockStatus, recordLoginFailure } from "../services/securityService.js";
 
 const INVALID_LOGIN = "Invalid email or password";
 
@@ -30,7 +31,14 @@ function startSession(req, res, userId, failMessage) {
 
 export const loginPage = (req, res) => {
   if (req.adminUser) return res.redirect(urls.dashboard);
-  res.render("login", { title: "Admin Login", urls, signupEnabled: signupEnabled() });
+  res.render("login", { title: "Admin Login", urls, signupEnabled: signupEnabled(), expired: req.query.expired === "1" });
+};
+
+const lockedResponse = (res, retryAfter) => {
+  res.setHeader("Retry-After", String(retryAfter));
+  return res.status(429).json({
+    error: { status: 429, message: `Too many failed attempts. Try again in ${retryAfter} second${retryAfter === 1 ? "" : "s"}.`, retryAfter }
+  });
 };
 
 export const loginUser = async (req, res) => {
@@ -38,17 +46,30 @@ export const loginUser = async (req, res) => {
   if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
     return res.status(400).json({ error: { status: 400, message: INVALID_LOGIN } });
   }
+  if (email.length > 254 || password.length > 200) {
+    return res.status(400).json({ error: { status: 400, message: INVALID_LOGIN } });
+  }
+  // Locked emails or addresses are refused before the password is even checked.
+  const lock = loginLockStatus(email, req.ip);
+  if (lock.locked) return lockedResponse(res, lock.retryAfter);
   // MySQL's default collation compares case-insensitively, matching the old ILIKE email lookup.
   const user = await AdminUser.findOne({ where: { email: email.trim(), status: true } });
   const match = await bcrypt.compare(password, user ? user.password : "");
   if (!user || !match) {
+    const failure = await recordLoginFailure(email, req.ip);
     await logAudit(req, {
-      action: "auth.login_failed",
-      summary: `Failed login attempt for ${email.trim()}`,
+      action: failure.locked ? "auth.locked" : "auth.login_failed",
+      summary: failure.locked
+        ? `Login locked for ${failure.retryAfter} seconds after too many failed attempts for ${email.trim()}`
+        : `Failed login attempt for ${email.trim()} (${failure.attemptsLeft} left)`,
       user: { admin_user_id: user?.admin_user_id ?? null, email: email.trim() }
     });
-    return res.status(401).json({ error: { status: 401, message: INVALID_LOGIN } });
+    if (failure.locked) return lockedResponse(res, failure.retryAfter);
+    return res.status(401).json({
+      error: { status: 401, message: `${INVALID_LOGIN}. ${failure.attemptsLeft} attempt${failure.attemptsLeft === 1 ? "" : "s"} left.`, attemptsLeft: failure.attemptsLeft }
+    });
   }
+  clearLoginFailures(email);
   await logAudit(req, {
     action: "auth.login",
     summary: `${user.full_name || user.email} logged in`,
@@ -73,11 +94,14 @@ export const signupUser = async (req, res) => {
     if (body.password !== body.confirm_password) {
       throw new AccountingValidationError("Passwords do not match");
     }
+    // Only the very first account may make itself an admin; anyone else who signs up can only read,
+    // until an admin raises the role in Users. Otherwise anyone on the Wi-Fi could create an admin.
+    const hasUsers = (await AdminUser.count({ paranoid: false })) > 0;
     user = await createUser({
       full_name: body.full_name,
       email: body.email,
       password: body.password,
-      role: "admin"
+      role: hasUsers ? "viewer" : "admin"
     });
   } catch (e) {
     if (e instanceof AccountingValidationError) {

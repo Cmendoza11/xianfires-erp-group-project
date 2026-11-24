@@ -12,6 +12,10 @@
       <h2 class="text-sm font-bold uppercase tracking-wider text-stone-500">Product Information</h2>
       <div class="mt-4 grid gap-4">
         <div>
+          <label class="label" for="product-code">Product code</label>
+          <input id="product-code" class="input" value="{{#if code}}{{code}}{{else}}Assigned when saved{{/if}}" readonly />
+        </div>
+        <div>
           <label class="label" for="name">Product name *</label>
           <input id="name" name="name" required minlength="2" maxlength="160" class="input" placeholder="e.g. Chicken Adobo Rice Meal"
             value="{{product.name}}" />
@@ -42,6 +46,16 @@
           <label class="label" for="description">Description</label>
           <textarea id="description" name="description" rows="3" maxlength="1000" class="textarea" placeholder="Short description shown on the POS">{{product.description}}</textarea>
         </div>
+        <fieldset id="product-add-ons" class="space-y-2" {{#unless (eq product.type "Beverage")}}hidden disabled{{/unless}}>
+          <legend class="label">Add-ons</legend>
+          <p class="text-xs text-stone-500">Leave the price blank to hide an option. Enter 0 for a free add-on.</p>
+          {{#each addOnFields}}
+          <label class="flex items-center justify-between gap-3 text-sm">
+            {{name}}
+            <input class="input w-28" type="number" min="0" max="99999.99" step="0.01" name="addOn{{id}}" value="{{price}}" />
+          </label>
+          {{/each}}
+        </fieldset>
       </div>
     </section>
 
@@ -60,7 +74,7 @@
         </div>
         <div>
           <label class="label" for="minStockLevel">Minimum stock level *</label>
-          <input id="minStockLevel" name="minStockLevel" type="number" min="0" step="1" required class="input"
+          <input id="minStockLevel" name="minStockLevel" type="number" min="0" step="1" required class="input" {{#if (eq mode "edit")}}{{#if (eq product.type "Supply")}}readonly{{/if}}{{/if}}
             value="{{#if product.inventory}}{{product.inventory.minStockLevel}}{{else}}5{{/if}}" />
           <p class="mt-1 text-[11px] text-stone-400">Products at or below this level are flagged as Low Stock.</p>
         </div>
@@ -99,9 +113,9 @@
     <section class="card p-5">
       <h2 class="text-sm font-bold uppercase tracking-wider text-stone-500">Product Image</h2>
       <div class="mt-4">
-        <div id="image-preview" class="flex h-44 w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-stone-300 bg-stone-50">
+        <div id="image-preview" class="relative mx-auto flex aspect-square w-full max-w-sm items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-stone-300 bg-stone-50">
           {{#if product.image}}
-            <img id="preview-img" src="{{product.image}}" alt="{{product.name}}" class="h-full w-full object-cover" />
+            <img src="{{product.image}}" alt="{{product.name}}" class="absolute inset-0 h-full w-full object-scale-down" />
           {{else}}
             <span id="preview-placeholder" class="text-center text-xs text-stone-400">JPG, PNG, WEBP or GIF<br />up to 2 MB</span>
           {{/if}}
@@ -131,6 +145,18 @@
 </form>
 
 <script>
+  const productType = document.getElementById("type");
+  const addOnSettings = document.getElementById("product-add-ons");
+
+  function updateAddOnVisibility() {
+    const isBeverage = productType.value === "Beverage";
+    addOnSettings.hidden = !isBeverage;
+    addOnSettings.disabled = !isBeverage;
+  }
+
+  productType.addEventListener("change", updateAddOnVisibility);
+  updateAddOnVisibility();
+
   const fileInput = document.getElementById("image-file");
   const imageData = document.getElementById("image-data");
   const preview = document.getElementById("image-preview");
@@ -159,7 +185,11 @@
       const reader = new FileReader();
       reader.onload = () => {
         imageData.value = reader.result;
-        preview.innerHTML = `<img src="${reader.result}" alt="Preview" class="h-full w-full object-cover" />`;
+        const image = new Image();
+        image.src = reader.result;
+        image.alt = "Product image preview";
+        image.className = "absolute inset-0 h-full w-full object-scale-down";
+        preview.replaceChildren(image);
       };
       reader.readAsDataURL(file);
     });

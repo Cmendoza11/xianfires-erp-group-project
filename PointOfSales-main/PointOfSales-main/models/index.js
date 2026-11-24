@@ -3,6 +3,7 @@
   All associations live here so every controller sees the same relationship graph.
 */
 import { sequelize } from "./db.js";
+import { Recipe } from './recipeModel.js';
 import { User } from "./userModel.js";
 import { Category } from "./categoryModel.js";
 import { Product } from "./productModel.js";
@@ -16,6 +17,7 @@ import { RestaurantTable } from "./restaurantTableModel.js";
 import { Discount } from "./discountModel.js";
 import { TransactionDiscount } from "./transactionDiscountModel.js";
 import { Setting } from "./settingModel.js";
+import { PosSession } from "./sessionModel.js";
 import { IntegrationOutbox } from "./integrationOutboxModel.js";
 
 /* Menu ---------------------------------------------------------------- */
@@ -73,6 +75,7 @@ Transaction.hasMany(IntegrationOutbox, { foreignKey: "transactionId", as: "outbo
 IntegrationOutbox.belongsTo(Transaction, { foreignKey: "transactionId", as: "transaction", constraints: false });
 
 export {
+  Recipe,
   sequelize,
   User,
   Category,
@@ -87,5 +90,6 @@ export {
   Discount,
   TransactionDiscount,
   Setting,
+  PosSession,
   IntegrationOutbox,
 };

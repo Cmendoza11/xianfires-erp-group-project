@@ -1,0 +1,4 @@
+{{!-- Page footer: goes at the end of <main> so it stays beside the sidebar and at the bottom of short pages. --}}
+<footer class="app-footer mt-auto px-6 pb-5 text-center text-xs text-gray-600 no-print">
+  © 2026 DJs Human Resource Management System · Powered by XianFire Framework
+</footer>

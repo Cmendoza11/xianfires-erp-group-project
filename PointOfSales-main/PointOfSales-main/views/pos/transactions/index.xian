@@ -1,13 +1,13 @@
 {{> app-head title="Transaction History" active="transactions" subtitle="Every recorded sale, payment and void"}}
 
-<section class="grid grid-cols-3 gap-3">
+<section class="grid grid-cols-1 gap-3 sm:grid-cols-3">
   <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Transactions</p><p class="stat-value mt-1 text-xl">{{int summary.count}}</p></div>
   <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Completed sales</p><p class="stat-value mt-1 text-xl text-emerald-700">{{money summary.completedSales}}</p></div>
   <div class="card p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Voided / refunded</p><p class="stat-value mt-1 text-xl text-red-600">{{money summary.voidedSales}}</p></div>
 </section>
 
 <section class="card p-4">
-  <form method="GET" action="/pos/transactions" class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_150px_150px_150px_160px_150px_auto]">
+  <form method="GET" action="/pos/transactions" class="transaction-filters">
     <input type="search" name="q" value="{{filters.q}}" class="input" placeholder="Transaction or order number…" />
     <input type="date" name="from" value="{{filters.from}}" class="input" />
     <input type="date" name="to" value="{{filters.to}}" class="input" />
@@ -39,26 +39,33 @@
 
 <section class="card overflow-hidden">
   <div class="table-wrap">
-    <table class="data-table">
+    <table class="data-table transactions-table">
       <thead><tr><th>Transaction</th><th>Order</th><th>Cashier</th><th>Method</th><th>Subtotal</th><th>Discount</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th class="text-right">Actions</th></tr></thead>
       <tbody>
         {{#each transactions}}
           <tr>
-            <td class="font-mono text-[11px] font-bold text-charcoal">{{this.transactionNumber}}</td>
-            <td class="text-stone-500">{{this.orderNumber}}</td>
-            <td class="text-stone-600">{{this.cashierName}}</td>
-            <td>
+            <td data-label="Transaction" class="font-mono text-[11px] font-bold text-charcoal" title="{{this.transactionNumber}}"><span class="transaction-ref-part">{{referenceHead this.transactionNumber}}</span><span class="transaction-ref-part">{{referenceTail this.transactionNumber}}</span></td>
+            <td data-label="Order" class="text-stone-500" title="{{this.orderNumber}}"><span class="transaction-ref-part">{{referenceHead this.orderNumber}}</span><span class="transaction-ref-part">{{referenceTail this.orderNumber}}</span></td>
+            <td data-label="Cashier" class="text-stone-600">{{this.cashierName}}</td>
+            <td data-label="Method">
               {{#each this.payments}}
                 <span class="badge bg-stone-100 text-stone-600">{{this.method}}</span>
               {{/each}}
             </td>
-            <td class="text-stone-600">{{money this.subtotal}}</td>
-            <td class="text-stone-600">−{{money this.discountAmount}}</td>
-            <td class="font-bold">{{money this.totalAmount}}</td>
-            <td><span class="badge {{statusBadge this.paymentStatus}}">{{this.paymentStatus}}</span></td>
-            <td><span class="badge {{statusBadge this.status}}">{{this.status}}</span></td>
-            <td class="whitespace-nowrap text-stone-500">{{datetime this.createdAt}}</td>
-            <td class="text-right">
+            <td data-label="Subtotal" class="text-stone-600">{{money this.subtotal}}</td>
+            <td data-label="Discount" class="text-stone-600">
+              <div>
+                <span>−{{money this.discountAmount}}</span>
+                {{#if this.promoCode}}
+                  <small class="transaction-promo">Promo {{this.promoCode}}<br>−{{money this.promoDiscountAmount}}</small>
+                {{/if}}
+              </div>
+            </td>
+            <td data-label="Total" class="font-bold">{{money this.totalAmount}}</td>
+            <td data-label="Payment"><span class="badge {{statusBadge this.paymentStatus}}">{{this.paymentStatus}}</span></td>
+            <td data-label="Status"><span class="badge {{statusBadge this.status}}">{{this.status}}</span></td>
+            <td data-label="Date" class="whitespace-nowrap text-stone-500"><span class="transaction-ref-part">{{date this.createdAt}}</span><span class="transaction-ref-part">{{time this.createdAt}}</span></td>
+            <td data-label="Actions" class="text-right">
               <div class="flex justify-end gap-1.5">
                 <a href="/pos/transactions/{{this.id}}" class="btn btn-light px-2.5 py-1 text-[11px]">View</a>
                 <a href="/pos/receipts/{{this.id}}" target="_blank" class="btn btn-light px-2.5 py-1 text-[11px]">Receipt</a>

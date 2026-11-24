@@ -3,6 +3,7 @@ import { sequelize, Contact, Invoice } from "../models/index.js";
 import { urls } from "../routes/urls.js";
 import { UUID_PATTERN } from "./accountService.js";
 import { AccountingValidationError } from "./accountTypes.js";
+import { assertFormat, assertSafeText, FORMATS } from "./securityService.js";
 
 export const CONTACT_TYPES = {
   customer: { label: "Customer", plural: "Customers", documentKind: "invoice" },
@@ -38,7 +39,7 @@ export async function listContacts(type, { includeInactive = true } = {}) {
        COALESCE(SUM(CASE WHEN i.status = 'open' THEN 1 ELSE 0 END), 0) AS open_documents
      FROM contact c
      LEFT JOIN invoice i ON i.contact_id = c.contact_id
-     WHERE c.type = ? ${includeInactive ? "" : "AND c.status = 1"}
+     WHERE c.type = ? AND c.deleted_at IS NULL ${includeInactive ? "" : "AND c.status = 1"}
      GROUP BY c.contact_id
      ORDER BY c.name`,
     { replacements: [type], type: QueryTypes.SELECT }
@@ -57,10 +58,15 @@ function normalize(type, data, current) {
   if (!name) {
     throw new AccountingValidationError(`${CONTACT_TYPES[type].label} name is required`);
   }
+  if (name.length < 2 || name.length > 150) throw new AccountingValidationError("Name must be 2 to 150 characters");
+  assertSafeText(name, "Name");
   const email = String(data.email ?? current?.email ?? "").trim();
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new AccountingValidationError("Enter a valid email address");
-  }
+  // Only fields sent in this request are checked, so older records can still be updated.
+  if (data.email && email) assertFormat(email, FORMATS.email, "Enter a valid email address, e.g. name@company.com");
+  const sent = (key) => data[key] !== undefined && String(data[key]).trim() !== "";
+  if (sent("tin")) assertFormat(String(data.tin).trim(), FORMATS.tin, "TIN must look like 000-000-000 or 000-000-000-000");
+  if (sent("phone")) assertFormat(String(data.phone).trim(), FORMATS.phone, "Phone may only contain digits, spaces, + ( ) and -, e.g. 0917 123 4567");
+  if (sent("address")) assertSafeText(data.address, "Address");
   const text = (key) => {
     const value = data[key] === undefined ? current?.[key] : data[key];
     return value ? String(value).trim() || null : null;

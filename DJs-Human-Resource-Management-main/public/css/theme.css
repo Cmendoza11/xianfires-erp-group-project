@@ -40,6 +40,9 @@ html.light .hover\:bg-white\/10:hover { background-color: #EDEDE4; }
 html.light .text-yellow-300,
 html.light .text-yellow-400 { color: #A16207; }
 html.light .text-yellow-400\/80 { color: #A16207; }
+/* Pale yellow text on the yellow info boxes (e.g. "Waiting for HR approval") */
+html.light .text-yellow-200,
+html.light .text-yellow-200\/90 { color: #854D0E; }
 html.light .hover\:text-yellow-300:hover,
 html.light .hover\:text-yellow-400:hover { color: #854D0E; }
 
@@ -50,6 +53,7 @@ html.light .bg-gradient-to-r .bg-black.text-yellow-400 { color: #FACC15; }
 html.light .text-green-400 { color: #15803D; }
 html.light .text-orange-400 { color: #C2410C; }
 html.light .text-red-400 { color: #B91C1C; }
+html.light .text-blue-400 { color: #1D4ED8; }
 html.light .hover\:text-red-400:hover { color: #991B1B; }
 
 /* Sidebar: the black panel becomes a light panel */

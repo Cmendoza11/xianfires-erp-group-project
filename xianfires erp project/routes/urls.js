@@ -45,6 +45,28 @@ export const urls = {
   voidDocument: (id) => `/api/documents/${id}/void`,
   voidPayment: (id) => `/api/payments/${id}/void`,
 
+  expenseVoucherGrid: "/admin/purchases/expense-vouchers",
+  expenseVoucherView: (id) => `/admin/purchases/expense-vouchers/view/${id}`,
+  createExpenseVoucher: "/api/expense-vouchers",
+  voidExpenseVoucher: (id) => `/api/expense-vouchers/${id}/void`,
+  updateExpenseVoucher: (id) => `/api/expense-vouchers/${id}`,
+  expenseVoucherReceiptApi: (id) => `/api/expense-vouchers/${id}/receipt`,
+  expenseVoucherReceipt: (id) => `/admin/purchases/expense-vouchers/receipt/${id}`,
+
+  fixedAssetGrid: "/admin/accounting/fixed-assets",
+  createFixedAsset: "/api/fixed-assets",
+  updateFixedAsset: (id) => `/api/fixed-assets/${id}`,
+  deleteFixedAsset: (id) => `/api/fixed-assets/${id}`,
+
+  recycleBin: "/admin/recycle-bin",
+  restoreDeleted: (kind, id) => `/api/recycle-bin/${kind}/${id}/restore`,
+  deleteUser: (id) => `/api/users/${id}`,
+  runDepreciation: "/api/fixed-assets/depreciation",
+  undoDepreciation: "/api/fixed-assets/depreciation/undo",
+
+  reportBudget: "/admin/accounting/reports/budget-vs-actual",
+  saveBudget: "/api/budgets",
+
   reconciliationGrid: "/admin/banking/reconciliations",
   reconciliationView: (id) => `/admin/banking/reconciliations/${id}`,
   startReconciliation: "/api/banking/reconciliations",
@@ -69,6 +91,14 @@ export const urls = {
   changePasswordApi: "/api/account/password",
 
   accountingPayroll: "/admin/accounting/payroll",
+  payrollReport: "/admin/accounting/payroll/report",
+  payrollPayslip: (id) => `/admin/accounting/payroll/payslip/${id}`,
+  backups: "/admin/backups",
+  backupDownload: (name) => `/admin/backups/download/${encodeURIComponent(name)}`,
+  createBackupApi: "/api/backups",
+  backupRestoreApi: (name) => `/api/backups/${encodeURIComponent(name)}/restore`,
+  backupDeleteApi: (name) => `/api/backups/${encodeURIComponent(name)}`,
+  releasePayroll: (id) => `/api/payroll/${id}/release`,
 
   periodClosing: "/admin/accounting/period-closing",
   closePeriod: "/api/accounting/periods/close",

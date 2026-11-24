@@ -16,6 +16,8 @@ import * as transactions from "../controllers/posTransactionController.js";
 import * as reports from "../controllers/posReportController.js";
 import * as settings from "../controllers/posSettingsController.js";
 
+import * as stockSetup from '../controllers/stockSetupController.js';
+
 const router = express.Router();
 router.use(requireAuth);
 
@@ -29,6 +31,7 @@ router.post("/orders/:id/status", allow("admin", "staff"), orders.updateOrderSta
 router.post("/orders/:id/cancel", allow("admin", "cashier"), orders.cancelOrder);
 
 /* Checkout & payment --------------------------------------------------- */
+router.get("/checkout/gcash-qr", allow("admin", "cashier"), checkout.gcashQrImage);
 router.get("/checkout/:orderId", allow("admin", "cashier"), checkout.checkoutPage);
 router.post("/checkout/:orderId/details", allow("admin", "cashier"), checkout.saveOrderDetails);
 router.post("/checkout/:orderId/pay", allow("admin", "cashier"), checkout.processPayment);
@@ -64,9 +67,15 @@ router.post("/categories/:id/archive", allow("admin"), categories.categoryArchiv
 router.post("/categories/:id/restore", allow("admin"), categories.categoryRestore);
 
 /* Inventory ------------------------------------------------------------ */
+router.get('/inventory/setup', allow('admin', 'inventory'), stockSetup.setupPage);
+router.post('/inventory/ingredients', allow('admin', 'inventory'), stockSetup.addIngredient);
+router.post('/inventory/ingredients/:id/archive', allow('admin', 'inventory'), stockSetup.archiveIngredient);
+router.post('/inventory/recipes', allow('admin'), stockSetup.saveRecipe);
 router.get("/inventory", allow("admin", "inventory"), inventory.inventoryOverview);
 router.get("/inventory/low-stock", allow("admin", "inventory"), inventory.lowStockPage);
 router.get("/inventory/out-of-stock", allow("admin", "inventory"), inventory.outOfStockPage);
+router.get('/inventory/movements/new', allow('admin', 'inventory'), inventory.productMovementPage);
+router.post('/inventory/movements', allow('admin', 'inventory'), inventory.recordProductMovement);
 router.get("/inventory/movements", allow("admin", "inventory"), inventory.movementList);
 router.get("/inventory/stock-in", allow("admin", "inventory"), inventory.stockInPage);
 router.post("/inventory/stock-in", allow("admin", "inventory"), inventory.stockIn);
@@ -74,11 +83,6 @@ router.get("/inventory/stock-out", allow("admin", "inventory"), inventory.stockO
 router.post("/inventory/stock-out", allow("admin", "inventory"), inventory.stockOut);
 router.get("/inventory/adjustment", allow("admin", "inventory"), inventory.adjustmentPage);
 router.post("/inventory/adjustment", allow("admin", "inventory"), inventory.adjustment);
-router.post(
-  "/inventory/:productId/min-level",
-  allow("admin", "inventory"),
-  inventory.updateMinLevel
-);
 router.get("/inventory/:productId", allow("admin", "inventory"), inventory.inventoryDetail);
 
 /* Tables --------------------------------------------------------------- */

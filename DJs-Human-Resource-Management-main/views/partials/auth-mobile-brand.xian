@@ -1,0 +1,8 @@
+{{!-- Maliit na logo sa itaas ng form (phone at tablet; nakatago kapag may brand panel) --}}
+<a href="/login" class="lg:hidden mb-10 flex w-fit items-center gap-3">
+  <img src="/images/djs-logo.svg" alt="DJ's FoodHub logo" class="h-11 w-11 rounded-xl ring-1 ring-yellow-500/30">
+  <div>
+    <p class="font-extrabold tracking-tight text-yellow-400">DJs HRMS</p>
+    <p class="text-xs text-gray-500">FoodHub · XianFire ERP</p>
+  </div>
+</a>

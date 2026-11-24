@@ -47,7 +47,7 @@
           <tbody>
             {{#each order.items}}
               <tr>
-                <td class="font-semibold text-stone-800">{{this.productName}}</td>
+                <td class="font-semibold text-stone-800">{{this.productName}}{{#each this.addOns}}<div class="text-xs font-normal">+ {{name}}</div>{{/each}}</td>
                 <td class="text-stone-600">{{money this.unitPrice}}</td>
                 <td>{{int this.quantity}}</td>
                 <td class="text-right font-bold">{{money this.subtotal}}</td>

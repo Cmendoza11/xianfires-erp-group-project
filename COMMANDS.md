@@ -97,6 +97,30 @@ npm run dev -- --only=crm     # Customer Logs    -> port 3004
 
 Puwede rin ang dalawa o higit pa nang sabay: `npm run dev -- --only=erp,pos`
 
+### 4b. LAN mode (defense: bawat member sa sariling laptop, iisang Wi-Fi)
+
+Buong gabay: [docs/LAN-SETUP.md](docs/LAN-SETUP.md).
+Kung Accounting lang ang tatakbo sa laptop mo (host) at nasa ibang laptop ang 4 na system: [docs/ACCOUNTING-HOST.md](docs/ACCOUNTING-HOST.md) (`npm run lan -- host --erp-only`).
+
+```powershell
+# DB host (laptop ni CJ): pinakamadali, i-double-click ang DJs-ERP-Host.bat (tatanungin ang IP ng bawat member)
+# o sa terminal:
+npm run lan -- host --erp-only --pos=<ip> --hr=<ip> --scm=<ip> --crm=<ip>
+npm run dev -- --only=erp
+# Ipadala nang private sa bawat member ang lan/connect-<module>.txt + lan/test-<module>.bat (huwag i-commit)
+
+# Bawat member (sa group repo):
+npm run lan -- import "C:\path\connect-hr.txt"   # isinusulat sa root .env at sa .env ng module
+npm run lan -- check
+npm run dev -- --only=hr        # o pos / scm / crm
+
+# Host: tingnan kung sino na ang nakakonekta (refresh tuwing 15 s)
+npm run lan-monitor             # o i-double-click ang DJs-ERP-Monitor.bat
+
+# Balik sa isang laptop lang (lahat sa localhost)
+npm run lan -- reset
+```
+
 ---
 
 ## 5. Mga link at login

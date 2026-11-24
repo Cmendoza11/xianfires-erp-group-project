@@ -6,12 +6,22 @@
   <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
     <div class="max-w-[75rem] mx-auto">
       {{#if can.write}}
-      {{> pageHeading heading=typeInfo.plural actionUrl=page.newUrl actionLabel=(concat "New " typeInfo.label) }}
+      {{> pageHeading heading=typeInfo.plural actionUrl=page.newUrl actionLabel=(concat "New " typeInfo.label) actionModal=true exportCsv=true }}
       {{else}}
-      {{> pageHeading heading=typeInfo.plural }}
+      {{> pageHeading heading=typeInfo.plural exportCsv=true }}
       {{/if}}
-      <div class="card">
-        <div class="card-content pt-5 overflow-x-auto">
+      <div class="card" data-list data-page-size="15">
+        {{#> listToolbar placeholder="Search name, TIN, email or phone"}}
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Status</span>
+            <select class="select" data-list-filter="status"><option value="">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Balance</span>
+            <select class="select" data-list-filter="balance"><option value="">All</option><option value="open">With unpaid balance</option><option value="clear">Fully paid</option></select>
+          </label>
+        {{/listToolbar}}
+        <div class="card-content overflow-x-auto">
           <table class="data-table">
             <thead>
               <tr>
@@ -27,8 +37,8 @@
             </thead>
             <tbody>
               {{#each contacts}}
-              <tr>
-                <td class="font-medium">{{#if @root.can.write}}<a href="{{ editUrl }}" class="hover:underline">{{ name }}</a>{{else}}{{ name }}{{/if}}</td>
+              <tr data-row data-status="{{#if (eq status 1)}}active{{else}}inactive{{/if}}" data-balance="{{#if (gt outstanding 0)}}open{{else}}clear{{/if}}">
+                <td class="font-medium">{{#if @root.can.write}}<a href="{{ editUrl }}" data-modal class="hover:underline">{{ name }}</a>{{else}}{{ name }}{{/if}}</td>
                 <td>{{#if tin}}{{ tin }}{{else}}-{{/if}}</td>
                 <td>{{#if email}}{{ email }}{{else}}-{{/if}}</td>
                 <td>{{#if phone}}{{ phone }}{{else}}-{{/if}}</td>
@@ -37,17 +47,20 @@
                 <td>{{#if (eq status 1)}}<span class="badge badge-success">Active</span>{{else}}<span class="badge badge-secondary">Inactive</span>{{/if}}</td>
                 <td class="text-right">
                   {{#if @root.can.write}}
+                  <a href="{{ editUrl }}" class="btn btn-link mr-3">Details</a>
+                  <a href="{{ editUrl }}" data-modal class="btn btn-link mr-3">Edit</a>
                   <button type="button" class="btn btn-link" data-api-action="{{ deleteApi }}" data-method="DELETE"
-                    data-confirm-heading="Delete {{ name }}" data-confirm-content="This removes the contact. Contacts with invoices or bills cannot be deleted."
+                    data-confirm-heading="Delete {{ name }}" data-confirm-content="The contact moves to the Recycle Bin, where an administrator can restore it. Contacts with invoices or bills cannot be deleted."
                     data-confirm-label="Delete" data-success-message="Deleted" data-success-redirect="reload">Delete</button>
                   {{/if}}
                 </td>
               </tr>
               {{else}}
-              <tr><td colspan="8" class="text-center text-muted">There is no {{ lowercase typeInfo.label }} yet</td></tr>
+              <tr data-empty-row><td colspan="8" class="text-center text-muted">There is no {{ lowercase typeInfo.label }} yet</td></tr>
               {{/each}}
             </tbody>
           </table>
+          <div data-list-pager></div>
         </div>
       </div>
     </div>

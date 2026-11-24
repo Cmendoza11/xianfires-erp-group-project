@@ -1,82 +1,80 @@
 {{> head}}
 
-<body class="min-h-screen bg-[#0A0A0A] text-white">
+<body class="min-h-screen bg-[#0A0A0A] text-white antialiased">
 
-<div class="min-h-screen grid lg:grid-cols-2">
+<div class="min-h-screen grid lg:grid-cols-[1.1fr_1fr]">
 
-  <div class="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-300 text-black">
-    <div class="flex items-center gap-3">
-      <img src="/images/djs-logo.svg" alt="DJ's FoodHub logo" class="h-14 w-14 rounded-xl ring-1 ring-black/40">
-      <div>
-        <p class="font-black text-xl leading-tight">DJs HRMS</p>
-        <p class="text-xs font-semibold uppercase tracking-widest opacity-70">FoodHub · XianFire ERP</p>
-      </div>
-    </div>
+  {{> auth-brand}}
 
-    <div>
-      <h1 class="text-4xl font-black leading-tight">Human resources,<br>organized.</h1>
-      <p class="mt-4 max-w-sm text-sm font-medium opacity-80">
-        Employees, departments, attendance, leaves, payroll and reports — one secure workspace for your team.
-      </p>
+  <main class="flex items-center justify-center px-6 py-12 sm:px-10">
+    <div class="w-full max-w-[400px]">
 
-      <ul class="mt-8 space-y-3 text-sm font-semibold">
-        <li class="flex items-center gap-2">✓ Role-based access for HR and employees</li>
-        <li class="flex items-center gap-2">✓ Real-time attendance and leave tracking</li>
-        <li class="flex items-center gap-2">✓ Printable payroll payslips and reports</li>
-      </ul>
-    </div>
+      {{> auth-mobile-brand}}
 
-    <p class="text-xs opacity-70">© 2026 DJs Human Resource Management System</p>
-  </div>
-
-  <div class="flex items-center justify-center p-6 sm:p-10">
-    <div class="w-full max-w-md">
-
-      <div class="lg:hidden flex items-center gap-3 mb-8">
-        <img src="/images/djs-logo.svg" alt="DJ's FoodHub logo" class="h-11 w-11 rounded-xl ring-1 ring-yellow-500/30">
-        <div>
-          <p class="font-bold text-yellow-400">DJs HRMS</p>
-          <p class="text-xs text-gray-500">FoodHub · XianFire ERP</p>
-        </div>
+      <div class="mb-8">
+        <h2 class="text-3xl font-bold tracking-tight">Welcome back</h2>
+        <p class="mt-2 text-sm text-gray-400">Sign in to your HRMS account to continue.</p>
       </div>
 
-      <h2 class="text-2xl font-bold">Welcome back</h2>
-      <p class="text-sm text-gray-500 mt-1 mb-6">Sign in to your HRMS account.</p>
+      <div class="mb-6 space-y-3 [&:not(:has(div))]:hidden">{{> flash}}</div>
 
-      <div class="space-y-4 mb-5">{{> flash}}</div>
-
-      <form method="POST" action="/login" class="space-y-4">
+      <form method="POST" action="/login" class="space-y-5">
         <div>
-          <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Email address</label>
-          <input id="email" type="email" name="email" required autofocus autocomplete="email"
-                 placeholder="you@company.com"
-                 class="w-full rounded-xl border border-white/10 bg-[#171717] px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+          <label for="email" class="mb-2 block text-sm font-medium text-gray-300">Email address</label>
+          <div class="relative">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.24a2.25 2.25 0 0 1-1.07 1.92l-7.5 4.61a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.92V6.75"/></svg>
+            </span>
+            <input id="email" type="email" name="email" required autofocus autocomplete="email"
+                   placeholder="you@company.com"
+                   class="w-full rounded-xl border border-white/10 bg-[#171717] py-3 pl-12 pr-4 text-sm text-white placeholder-gray-600 outline-none transition focus:border-yellow-400/70 focus:ring-4 focus:ring-yellow-400/15">
+          </div>
         </div>
 
         <div>
-          <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Password</label>
-          <input id="password" type="password" name="password" required autocomplete="current-password"
-                 placeholder="••••••••"
-                 class="w-full rounded-xl border border-white/10 bg-[#171717] px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-yellow-400/60 focus:ring-2 focus:ring-yellow-400/20">
+          <label for="password" class="mb-2 block text-sm font-medium text-gray-300">Password</label>
+          <div class="relative">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+            </span>
+            <input id="password" type="password" name="password" required autocomplete="current-password"
+                   placeholder="Enter your password"
+                   class="w-full rounded-xl border border-white/10 bg-[#171717] py-3 pl-12 pr-12 text-sm text-white placeholder-gray-600 outline-none transition focus:border-yellow-400/70 focus:ring-4 focus:ring-yellow-400/15">
+            {{> eye-button}}
+          </div>
+          <div class="mt-2 text-right">
+            <a href="/forgot-password" class="text-sm font-medium text-yellow-400 hover:text-yellow-300">Forgot password?</a>
+          </div>
         </div>
 
-        <button type="submit" class="w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-bold text-black transition hover:bg-yellow-300">
-          Sign in
+        <button type="submit" data-submit
+                class="group flex w-full items-center justify-center gap-2 rounded-xl bg-yellow-400 px-4 py-3 text-sm font-bold text-black shadow-lg shadow-yellow-500/20 transition hover:bg-yellow-300 focus:outline-none focus:ring-4 focus:ring-yellow-400/30 disabled:cursor-wait disabled:opacity-80">
+          <span data-label>Sign in</span>
+          <svg data-arrow class="h-4 w-4 transition group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
         </button>
       </form>
 
-      <div class="mt-6 flex items-center justify-between text-sm">
-        <a href="/forgot-password" class="text-gray-500 hover:text-yellow-400">Forgot password?</a>
-        <a href="/register" class="font-semibold text-yellow-400 hover:text-yellow-300">Create an account</a>
+      <div class="my-8 flex items-center gap-4" aria-hidden="true">
+        <div class="h-px flex-1 bg-white/10"></div>
+        <span class="text-xs uppercase tracking-wider text-gray-600">New here?</span>
+        <div class="h-px flex-1 bg-white/10"></div>
       </div>
 
-      <p class="mt-8 text-center text-[11px] text-gray-600">
-        Protected by session-based authentication and bcrypt password hashing.
+      <a href="/register"
+         class="flex w-full items-center justify-center rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-yellow-400/40 hover:bg-white/5">
+        Create an account
+      </a>
+
+      <p class="mt-10 flex items-center justify-center gap-2 text-xs text-gray-600">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.04A11.96 11.96 0 0 1 3.6 6 12 12 0 0 0 3 9.75c0 5.6 3.82 10.3 9 11.62 5.18-1.33 9-6.03 9-11.62 0-1.31-.21-2.57-.6-3.75h-.15c-3.2 0-6.1-1.25-8.25-3.29Z"/></svg>
+        Secured with session authentication and bcrypt password hashing
       </p>
     </div>
-  </div>
+  </main>
 
 </div>
 
+{{> password-toggle}}
+{{> auth-submit}}
 </body>
 </html>

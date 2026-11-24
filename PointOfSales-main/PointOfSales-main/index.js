@@ -36,6 +36,7 @@ import { registerHelpers } from "./utils/hbsHelpers.js";
 import { initializeDatabase } from "./utils/bootstrap.js";
 import { erpModules } from "./middleware/erpModules.js";
 import { startSyncWorker } from "./utils/erpSync.js";
+import { PosSessionStore, SESSION_MAX_AGE } from "./utils/sessionStore.js";
 import inventoryApi from "./routes/inventoryApi.js";
 import erpApi from "./routes/erpApi.js";
 
@@ -50,15 +51,17 @@ app.use(express.urlencoded({ extended: true, limit: "8mb" }));
 app.use(express.static(path.join(process.cwd(), "public")));
 
 // Own cookie name: the 5 ERP modules share localhost, and cookies are not separated by port.
+const sessionStore = new PosSessionStore();
 app.use(session({
   name: "xf_pos.sid",
   secret: process.env.SESSION_SECRET || "djyum-pos-session-secret",
+  store: sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
     sameSite: "lax",
-    maxAge: 1000 * 60 * 60 * 8
+    maxAge: SESSION_MAX_AGE
   }
 }));
 app.use(flash());
@@ -138,7 +141,7 @@ app.use((err, req, res, next) => {
     title: "Something Went Wrong",
     status: 500,
     message:
-      err.message || "An unexpected error occurred. Please try again or contact the administrator.",
+      "An unexpected error occurred. Please try again or contact the administrator.",
   });
 });
 
@@ -148,8 +151,13 @@ const databaseReady = await initializeDatabase().catch((error) => {
   return false;
 });
 
-// Retries sales/voids that could not reach Accounting or Customer Logs yet.
-if (databaseReady) startSyncWorker();
+if (databaseReady) {
+  const cleanup = () => sessionStore.pruneExpired()
+    .catch((error) => console.error("POS session cleanup failed:", error.message));
+  await cleanup();
+  setInterval(cleanup, 60 * 60 * 1000).unref();
+  startSyncWorker();
+}
 
 export default app;
 

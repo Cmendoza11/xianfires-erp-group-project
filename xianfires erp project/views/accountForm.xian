@@ -12,7 +12,8 @@
       {{/if}}
       <form id="accountingAccountForm" method="POST" action="{{ form.action }}" novalidate
         data-json-form data-method="{{ form.method }}"
-        data-mode="{{#if account}}edit{{else}}new{{/if}}" data-grid-url="{{ urls.accountingAccountGrid }}">
+        data-mode="{{#if account}}edit{{else}}new{{/if}}" data-grid-url="{{ urls.accountingAccountGrid }}"
+        data-confirm-heading="{{#if account}}Save changes to this account?{{else}}Create this account?{{/if}}" data-confirm-label="Save">
         <div class="card">
           <div class="card-header">
             <div class="card-title">Account Information</div>
@@ -22,11 +23,11 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="field-label" for="code">Account Code<span class="required">*</span></label>
-                <input id="code" name="code" class="input" placeholder="1000" value="{{ values.code }}" data-required="Account code is required">
+                <input id="code" name="code" class="input" placeholder="1000" value="{{ values.code }}" maxlength="10" inputmode="numeric" data-required="Account code is required" data-pattern="^\d{3,10}$" data-pattern-message="Use 3 to 10 digits, e.g. 6800">
               </div>
               <div>
                 <label class="field-label" for="name">Account Name<span class="required">*</span></label>
-                <input id="name" name="name" class="input" placeholder="Cash on Hand" value="{{ values.name }}" data-required="Account name is required">
+                <input id="name" name="name" class="input" placeholder="Cash on Hand" value="{{ values.name }}" maxlength="100" data-required="Account name is required">
               </div>
               <div>
                 <label class="field-label" for="type">Account Type<span class="required">*</span></label>

@@ -7,6 +7,7 @@ export const Product = sequelize.define(
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     name: { type: DataTypes.STRING(160), allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: true },
+    addOns: { type: DataTypes.JSON },
     categoryId: { type: DataTypes.INTEGER, allowNull: false },
     image: { type: DataTypes.TEXT("long"), allowNull: true },
     price: {

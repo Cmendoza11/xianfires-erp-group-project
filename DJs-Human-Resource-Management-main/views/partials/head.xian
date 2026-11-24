@@ -6,6 +6,7 @@
   <title>{{#if title}}{{title}}{{else}}DJs HRMS{{/if}}</title>
   <link rel="icon" type="image/svg+xml" href="/images/djs-logo.svg">
   <script>
+    // Apply the saved light/dark choice before the page paints (toggle code is in partials/footer.xian).
     (function () {
       try {
         if (localStorage.getItem("hrms-theme") === "light") {

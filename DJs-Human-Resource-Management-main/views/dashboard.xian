@@ -19,17 +19,13 @@
         {{#unless personal}}
           <form method="GET" action="/employees" class="hidden lg:flex items-center gap-2 rounded-xl border border-white/10 bg-[#171717] px-3 py-2">
             <svg class="h-4 w-4 text-gray-500" aria-hidden="true"><use href="#i-search"></use></svg>
-            <input type="search" name="search" placeholder="Search employees, department"
+            <input type="search" name="q" placeholder="Search employees, department"
                    class="w-56 bg-transparent text-sm text-gray-200 placeholder-gray-600 outline-none">
           </form>
 
-          <a href="/leaves?status=Pending" class="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-[#171717] text-gray-400 hover:text-yellow-400" aria-label="Pending leave requests">
-            <svg class="h-[18px] w-[18px]" aria-hidden="true"><use href="#i-bell"></use></svg>
-            {{#if stats.pendingLeaves}}
-            <span class="absolute -right-1 -top-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-yellow-400 px-1 text-[10px] font-bold text-black">{{stats.pendingLeaves}}</span>
-            {{/if}}
-          </a>
         {{/unless}}
+
+        {{> notification-bell}}
 
         <button type="button" data-theme-toggle aria-pressed="false" aria-label="Switch to light mode" title="Switch to light mode"
                 class="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-[#171717] text-gray-400 transition hover:text-yellow-400">
@@ -68,10 +64,10 @@
             <p class="mt-1 text-sm opacity-80">{{employee.department}} · {{employee.employeeCode}}</p>
 
             <div class="mt-5 flex flex-wrap gap-3">
-              <form method="POST" action="/attendance/check-in">
+              <form method="POST" action="/attendance/check-in" data-confirm-title="Check in now?" data-confirm="Your time in is recorded with the current time. After 8:00 AM it counts as late." data-confirm-ok="Check In" data-confirm-tone="success">
                 <button class="rounded-xl bg-black px-4 py-2.5 text-xs font-bold text-yellow-400 hover:bg-black/80">Check In</button>
               </form>
-              <form method="POST" action="/attendance/check-out">
+              <form method="POST" action="/attendance/check-out" data-confirm-title="Check out now?" data-confirm="Your time out is recorded with the current time." data-confirm-ok="Check Out" data-confirm-tone="info">
                 <button class="rounded-xl bg-black/10 px-4 py-2.5 text-xs font-bold text-black hover:bg-black/20">Check Out</button>
               </form>
               <a href="/leaves/create" class="rounded-xl bg-black/10 px-4 py-2.5 text-xs font-bold text-black hover:bg-black/20">File Leave</a>
@@ -123,7 +119,7 @@
                       <td class="px-5 py-3 text-gray-400">{{formatTime checkIn}}</td>
                       <td class="px-5 py-3 text-gray-400">{{formatTime checkOut}}</td>
                       <td class="px-5 py-3">
-                        <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Late")}}bg-orange-500/10 text-orange-400{{else}}{{#if (eq status "Absent")}}bg-red-500/10 text-red-400{{else}}bg-green-500/10 text-green-400{{/if}}{{/if}}">{{status}}</span>
+                        <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Late")}}bg-orange-500/10 text-orange-400{{else}}{{#if (eq status "Absent")}}bg-red-500/10 text-red-400{{else}}bg-green-500/10 text-green-400{{/if}}{{/if}}">{{status}}</span>
                       </td>
                     </tr>
                     {{else}}
@@ -150,7 +146,7 @@
                       <td class="px-5 py-3 font-medium">{{type}}</td>
                       <td class="px-5 py-3 text-gray-400 text-xs">{{formatDate startDate}} → {{formatDate endDate}}</td>
                       <td class="px-5 py-3">
-                        <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Approved")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Rejected")}}bg-red-500/10 text-red-400{{else}}bg-yellow-500/10 text-yellow-400{{/if}}{{/if}}">{{status}}</span>
+                        <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Approved")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "Rejected")}}bg-red-500/10 text-red-400{{else}}bg-yellow-500/10 text-yellow-400{{/if}}{{/if}}">{{status}}</span>
                       </td>
                     </tr>
                     {{else}}
@@ -338,7 +334,7 @@
                     </td>
                     <td class="px-5 py-4 text-gray-400">{{department}}</td>
                     <td class="px-5 py-4">
-                      <span class="rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Active")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "On Leave")}}bg-orange-500/10 text-orange-400{{else}}bg-red-500/10 text-red-400{{/if}}{{/if}}">{{status}}</span>
+                      <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] {{#if (eq status "Active")}}bg-green-500/10 text-green-400{{else}}{{#if (eq status "On Leave")}}bg-orange-500/10 text-orange-400{{else}}bg-red-500/10 text-red-400{{/if}}{{/if}}">{{status}}</span>
                     </td>
                   </tr>
                   {{else}}
@@ -415,6 +411,7 @@
       {{/if}}
 
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

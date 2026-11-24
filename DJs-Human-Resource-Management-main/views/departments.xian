@@ -17,14 +17,14 @@
       {{> flash}}
 
       {{#if isAdmin}}
-      <form method="POST" action="/departments" class="rounded-2xl border border-white/5 bg-[#171717] p-5">
+      <form method="POST" action="/departments" data-confirm-title="Add department?" data-confirm="A new department will be created." data-confirm-ok="Add Department" data-confirm-tone="success" class="rounded-2xl border border-white/5 bg-[#171717] p-5">
         <h3 class="font-bold mb-4">Create Department</h3>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 [&>*]:min-w-0">
           <input name="name" required placeholder="Department name"
-                 class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+                 class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
           <input name="code" placeholder="Code (e.g. HR)"
-                 class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
-          <select name="headId" class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+                 class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+          <select name="headId" class="w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
             <option value="">Department head (optional)</option>
             {{#each employees}}
             <option value="{{id}}">{{firstName}} {{lastName}} — {{position}}</option>
@@ -32,8 +32,8 @@
           </select>
           <div class="flex gap-2">
             <input name="description" placeholder="Description"
-                   class="flex-1 rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
-            <button type="submit" class="rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Add</button>
+                   class="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+            <button type="submit" class="shrink-0 rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Add</button>
           </div>
         </div>
       </form>
@@ -67,7 +67,7 @@
             <a href="/employees?department={{urlEncode name}}" class="rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-300 hover:bg-white/10">View employees</a>
             {{#if ../isAdmin}}
             <a href="/departments/{{id}}/edit" class="rounded-lg bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400 hover:bg-yellow-400 hover:text-black">Edit</a>
-            <form action="/departments/{{id}}/delete" method="POST" onsubmit="return confirm('Delete this department?');">
+            <form action="/departments/{{id}}/delete" method="POST" data-confirm-title="Delete department?" data-confirm="The {{name}} department will be deleted." data-confirm-ok="Delete">
               <button type="submit" class="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 hover:bg-red-500 hover:text-white">Delete</button>
             </form>
             {{/if}}
@@ -82,7 +82,14 @@
         {{/each}}
       </div>
 
+      {{#if pagination.count}}
+      <div class="rounded-2xl border border-white/5 bg-[#171717] overflow-hidden [&>div]:border-t-0">
+        {{> pagination pagination=pagination label="department(s)"}}
+      </div>
+      {{/if}}
+
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

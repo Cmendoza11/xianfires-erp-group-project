@@ -11,19 +11,20 @@
       {{> pageHeading heading="New user" backUrl=urls.userGrid }}
       {{/if}}
       <form id="userForm" method="POST" action="{{ form.action }}" novalidate data-json-form data-method="{{ form.method }}"
-        {{#if user}}data-success-message="User saved"{{else}}data-success-message="User created" data-success-redirect="{{ urls.userGrid }}"{{/if}}>
+        {{#if user}}data-success-message="User saved"{{else}}data-success-message="User created" data-success-redirect="{{ urls.userGrid }}"{{/if}}
+        data-confirm-heading="{{#if user}}Save changes to this user?{{else}}Create this user?{{/if}}" data-confirm-label="Save">
         <div class="card">
           <div class="card-content pt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="field-label" for="full_name">Full name<span class="required">*</span></label>
-              <input id="full_name" name="full_name" class="input" value="{{ user.fullName }}" data-required="Full name is required">
+              <input id="full_name" name="full_name" class="input" value="{{ user.fullName }}" maxlength="100" data-required="Full name is required" data-pattern="^[A-Za-zÀ-ÖØ-öø-ÿÑñ][A-Za-zÀ-ÖØ-öø-ÿÑñ .&#39;-]{1,99}$" data-pattern-message="Letters, spaces, dots, apostrophes and hyphens only (2-100)">
             </div>
             <div>
               <label class="field-label" for="email">Email{{#unless user}}<span class="required">*</span>{{/unless}}</label>
               {{#if user}}
               <input id="email" class="input bg-gray-50" value="{{ user.email }}" disabled>
               {{else}}
-              <input id="email" name="email" type="email" class="input" autocomplete="off" data-required="Email is required">
+              <input id="email" name="email" type="email" class="input" autocomplete="off" maxlength="254" data-required="Email is required">
               {{/if}}
             </div>
             <div>
@@ -43,9 +44,9 @@
             {{/if}}
             <div class="sm:col-span-2">
               <label class="field-label" for="password">{{#if user}}New password (leave blank to keep){{else}}Password<span class="required">*</span>{{/if}}</label>
-              <input id="password" name="password" type="password" class="input" autocomplete="new-password"
+              <input id="password" name="password" type="password" class="input" autocomplete="new-password" data-password-policy
                 {{#unless user}}data-required="Password is required"{{/unless}}>
-              <p class="field-help">At least {{ minPasswordLength }} characters</p>
+              {{> passwordRules }}
             </div>
           </div>
         </div>

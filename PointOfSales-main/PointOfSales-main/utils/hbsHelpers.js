@@ -67,12 +67,12 @@ export const registerHelpers = (hbs) => {
     Preparing: "bg-sky-100 text-sky-700 ring-sky-200",
     Ready: "bg-indigo-100 text-indigo-700 ring-indigo-200",
     Completed: "bg-emerald-100 text-emerald-700 ring-emerald-200",
-    Cancelled: "bg-red-100 text-red-700 ring-red-200",
+    Cancelled: "bg-red-100 badge-cancelled ring-red-200",
     Paid: "bg-emerald-100 text-emerald-700 ring-emerald-200",
     Refunded: "bg-amber-100 text-amber-800 ring-amber-200",
     Failed: "bg-red-100 text-red-700 ring-red-200",
     Synced: "bg-emerald-100 text-emerald-700 ring-emerald-200",
-    Voided: "bg-red-100 text-red-700 ring-red-200",
+    Voided: "bg-red-100 badge-voided ring-red-200",
     Available: "bg-emerald-100 text-emerald-700 ring-emerald-200",
     Occupied: "bg-orange-100 text-orange-700 ring-orange-200",
     Reserved: "bg-sky-100 text-sky-700 ring-sky-200",
@@ -120,6 +120,16 @@ export const registerHelpers = (hbs) => {
     return can(user, capability) ? options.fn(this) : options.inverse(this);
   });
 
+  hbs.registerHelper('referenceHead', value => {
+    const text = String(value || '');
+    const index = text.lastIndexOf('-');
+    return index > 0 ? text.slice(0, index) : text;
+  });
+  hbs.registerHelper('referenceTail', value => {
+    const text = String(value || '');
+    const index = text.lastIndexOf('-');
+    return index > 0 ? '-' + text.slice(index + 1) : '';
+  });
   hbs.registerHelper("checked", (value) => (value ? "checked" : ""));
   hbs.registerHelper("selected", (a, b) =>
     String(a) === String(b) ? "selected" : ""

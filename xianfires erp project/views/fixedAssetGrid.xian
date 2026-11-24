@@ -1,0 +1,179 @@
+{{> head}}
+<body>
+{{> adminHeader}}
+<div class="flex">
+  {{> adminNav}}
+  <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
+    <div class="max-w-[75rem] mx-auto space-y-4">
+      <div class="pb-2">
+        <h1 class="text-[1.375rem] font-semibold tracking-tight">Fixed Assets</h1>
+        <p class="text-[13px] text-muted mt-0.5">Kitchen equipment, furniture and computers. Straight-line depreciation each month: (cost − salvage value) ÷ useful life, posted Dr 6500 Depreciation Expense, Cr 1510 Accumulated Depreciation.</p>
+      </div>
+
+      <section class="card metric-band" aria-label="Asset figures">
+        <div class="metric">
+          <div class="metric-label">Total cost</div>
+          <div class="metric-value">{{ formatMoney assets.totals.cost }}</div>
+          <div class="metric-sub">{{ assets.items.length }} asset(s) · 1500</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Accumulated depreciation</div>
+          <div class="metric-value">{{ formatMoney assets.totals.accumulated }}</div>
+          <div class="metric-sub">1510</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Book value</div>
+          <div class="metric-value is-gold">{{ formatMoney assets.totals.bookValue }}</div>
+          <div class="metric-sub">cost − accumulated</div>
+        </div>
+      </section>
+
+      {{#if can.write}}
+      <template id="assetModal" data-title="Add a fixed asset">
+        <form method="POST" action="{{ urls.createFixedAsset }}" novalidate data-json-form data-success-message="Asset saved"
+          data-confirm-heading="Save this asset?" data-confirm-content="If a Paid from account is chosen, the purchase is posted to the ledger." data-confirm-label="Save"
+          class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+          <p class="sm:col-span-3 text-[13px] text-muted" data-only-new>Choose "Paid from" to also post the purchase (Dr 1500, Cr cash or bank). Leave it on "Already in the books" for equipment you already recorded.</p>
+          <p class="sm:col-span-3 notice notice-info" data-only-edit>Once the purchase or depreciation is posted, the cost and date (and then the salvage value and life) are locked.</p>
+          <label class="grid gap-1 text-sm sm:col-span-2">
+            <span class="font-medium">Asset name</span>
+            <input type="text" name="name" class="input" maxlength="150" placeholder="e.g. Commercial refrigerator" data-required="Asset name is required">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Acquired on</span>
+            <input type="date" name="acquisition_date" class="input" value="{{ today }}" max="{{ today }}" data-required="A date is required">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Cost</span>
+            <input type="number" step="0.01" min="0.01" max="999999999" name="cost" class="input text-right" data-required="Enter the cost">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Salvage value</span>
+            <input type="number" step="0.01" min="0" name="salvage_value" class="input text-right" value="0">
+          </label>
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Useful life (months)</span>
+            <input type="number" step="1" min="1" max="600" name="useful_life_months" class="input text-right" value="60" data-required="Enter the useful life" data-pattern="^\d+$" data-pattern-message="Use a whole number of months">
+          </label>
+          <label class="grid gap-1 text-sm sm:col-span-3" data-only-new>
+            <span class="font-medium">Paid from</span>
+            <select name="paid_from" class="select">
+              <option value="">Already in the books (no entry)</option>
+              {{#each cashAccounts}}<option value="{{ uuid }}">{{ label }}</option>{{/each}}
+            </select>
+          </label>
+          <div class="sm:col-span-3 flex justify-end gap-2 pt-2">
+            <button type="button" class="btn btn-secondary" data-modal-cancel>Cancel</button>
+            <button type="submit" class="btn btn-primary">Save asset</button>
+          </div>
+        </form>
+      </template>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <section class="card lg:col-span-2">
+          <div class="card-header">
+            <h2 class="card-title">Add an asset</h2>
+            <p class="card-description">Kitchen equipment, furniture, POS terminals and computers the restaurant owns.</p>
+          </div>
+          <div class="card-content">
+            <button type="button" class="btn btn-primary" data-modal-target="#assetModal">+ Add fixed asset</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">Monthly depreciation</h2>
+            <p class="card-description">Run once per month, usually at month end. Each asset is charged only once per month.</p>
+          </div>
+          <div class="card-content space-y-3">
+            <form id="depForm" class="grid gap-3" novalidate onsubmit="return false">
+              <label class="grid gap-1 text-sm">
+                <span class="font-medium">Month</span>
+                <input type="month" name="month" class="input" value="{{ suggestedMonth }}" max="{{ currentMonth }}" data-required="Choose a month">
+              </label>
+            </form>
+            <button type="button" class="btn btn-primary w-full" data-api-action="{{ urls.runDepreciation }}" data-payload-from="depForm"
+              data-confirm-heading="Run depreciation?" data-confirm-content="One journal entry is posted on the last day of the month for every asset owned then." data-confirm-label="Run"
+              data-success-message="Depreciation posted" data-success-redirect="reload">Run depreciation</button>
+          </div>
+        </section>
+      </div>
+      {{/if}}
+
+      <section class="card" data-list data-page-size="10">
+        <div class="card-header pb-0"><h2 class="card-title">Asset register</h2></div>
+        {{#> listToolbar placeholder="Search asset name"}}
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Status</span>
+            <select class="select" data-list-filter="state"><option value="">All</option><option value="in-use">In use</option><option value="done">Fully depreciated</option></select>
+          </label>
+        {{/listToolbar}}
+        <div class="card-content overflow-x-auto">
+          <table class="data-table">
+            <thead><tr><th>Asset</th><th>Acquired</th><th class="num">Cost</th><th class="num">Salvage</th><th class="num">Life</th><th class="num">Monthly</th><th class="num">Accumulated</th><th class="num">Book value</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              {{#each assets.items}}
+              <tr data-row data-state="{{#if fullyDepreciated}}done{{else}}in-use{{/if}}">
+                <td class="font-medium">{{ name }}{{#if entry}}<div class="text-xs"><a href="{{ entry.url }}" class="text-muted hover:underline">Purchase {{ entry.number }}</a></div>{{/if}}</td>
+                <td>{{ acquisitionDate }}</td>
+                <td class="num">{{ formatMoney cost }}</td>
+                <td class="num">{{ formatMoney salvageValue }}</td>
+                <td class="num">{{ monthsDone }}/{{ usefulLifeMonths }} mo</td>
+                <td class="num">{{ formatMoney monthly }}</td>
+                <td class="num">{{ formatMoney accumulated }}</td>
+                <td class="num font-medium">{{ formatMoney bookValue }}</td>
+                <td>{{#if fullyDepreciated}}<span class="badge badge-secondary">Fully depreciated</span>{{else}}<span class="badge badge-success">In use</span>{{/if}}</td>
+                <td class="text-right whitespace-nowrap">
+                  {{#if @root.can.write}}
+                  <button type="button" class="btn btn-link mr-3" data-modal-target="#assetModal" data-modal-title="Edit {{ name }}"
+                    data-modal-action="{{ updateApi }}" data-modal-method="PATCH" data-modal-values="{{ toJson editValues }}"
+                    data-modal-lock="{{ lockedFields }}" data-modal-success="Asset updated">Edit</button>
+                  {{#unless monthsDone}}
+                  <button type="button" class="btn btn-link" data-api-action="{{ deleteApi }}" data-method="DELETE"
+                    data-confirm-heading="Delete {{ name }}?" data-confirm-content="The asset moves to the Recycle Bin. If its purchase was posted, a reversing entry cancels it."
+                    data-confirm-label="Delete" data-success-message="Asset moved to the Recycle Bin" data-success-redirect="reload">Delete</button>
+                  {{/unless}}
+                  {{/if}}
+                </td>
+              </tr>
+              {{else}}
+              <tr data-empty-row><td colspan="10" class="text-center text-muted">No fixed assets yet</td></tr>
+              {{/each}}
+            </tbody>
+          </table>
+          <div data-list-pager></div>
+        </div>
+      </section>
+
+      <section class="card" data-list data-page-size="12">
+        <div class="card-header"><h2 class="card-title">Depreciation history</h2></div>
+        <div class="card-content overflow-x-auto">
+          <table class="data-table">
+            <thead><tr><th>Month</th><th class="num">Assets</th><th class="num">Amount</th><th>Journal entry</th><th></th></tr></thead>
+            <tbody>
+              {{#each runs}}
+              <tr data-row>
+                <td>{{ label }}</td>
+                <td class="num">{{ assets }}</td>
+                <td class="num">{{ formatMoney total }}</td>
+                <td><a href="{{ entry.url }}" class="hover:underline">{{ entry.number }}</a></td>
+                <td class="text-right">
+                  {{#if isLatest}}{{#if @root.can.write}}
+                  <button type="button" class="btn btn-link" data-api-action="{{ @root.urls.undoDepreciation }}" data-payload="{}"
+                    data-confirm-heading="Undo {{ label }}?" data-confirm-content="A reversing entry cancels this month's depreciation so it can be run again." data-confirm-label="Undo"
+                    data-success-message="Depreciation undone" data-success-redirect="reload">Undo</button>
+                  {{/if}}{{/if}}
+                </td>
+              </tr>
+              {{else}}
+              <tr data-empty-row><td colspan="5" class="text-center text-muted">No depreciation run yet</td></tr>
+              {{/each}}
+            </tbody>
+          </table>
+          <div data-list-pager></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+{{> footer }}

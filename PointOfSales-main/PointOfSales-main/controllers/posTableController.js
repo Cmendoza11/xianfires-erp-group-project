@@ -31,7 +31,10 @@ export const tableList = async (req, res, next) => {
       activeOrder: activeMap.get(table.id) || null,
     }));
 
+    const tableDraft = req.session.tableDraft || {};
+    delete req.session.tableDraft;
     return res.render("pos/tables", {
+      tableDraft, openTable: req.query.add === "table",
       title: "Table Management",
       active: "tables",
       tables: rows,
@@ -49,23 +52,27 @@ export const tableList = async (req, res, next) => {
 
 export const tableCreate = async (req, res, next) => {
   const name = String(req.body.name || "").trim();
-  const capacity = toInt(req.body.capacity);
+  const capacity = Number(req.body.capacity);
   const location = String(req.body.location || "").trim();
 
+  const retry = () => {
+    req.session.tableDraft = { name: name.slice(0, 60), capacity: String(req.body.capacity || '').slice(0, 3), location: location.slice(0, 80) };
+    return res.redirect('/pos/tables?add=table');
+  };
   if (name.length < 1 || name.length > 60) {
     flashError(req, "Table name is required (maximum 60 characters).");
-    return res.redirect("/pos/tables");
+    return retry();
   }
-  if (!Number.isFinite(capacity) || capacity < 1 || capacity > 40) {
+  if (!Number.isSafeInteger(capacity) || capacity < 1 || capacity > 40) {
     flashError(req, "Capacity must be between 1 and 40 seats.");
-    return res.redirect("/pos/tables");
+    return retry();
   }
 
   try {
     const existing = await RestaurantTable.findOne({ where: { name } });
     if (existing) {
       flashError(req, `A table named "${name}" already exists.`);
-      return res.redirect("/pos/tables");
+      return retry();
     }
     await RestaurantTable.create({
       name,

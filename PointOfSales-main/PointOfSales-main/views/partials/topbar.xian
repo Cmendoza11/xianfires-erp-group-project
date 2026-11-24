@@ -3,7 +3,7 @@
     <button type="button" class="rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-stone-600 lg:hidden" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
     <div class="min-w-0">
       <h1 class="truncate text-xl font-extrabold tracking-tight text-charcoal sm:text-2xl">{{title}}</h1>
-      <p class="mt-0.5 truncate text-xs text-stone-500">{{#if subtitle}}{{subtitle}}{{else}}DJYum · DJ's Restaurant{{/if}}</p>
+      <p class="mt-0.5 truncate text-xs text-stone-500">{{#if subtitle}}{{subtitle}}{{else}}DJs POS &amp; Inventory · DJ's Restaurant{{/if}}</p>
     </div>
     <div class="ml-auto flex items-center gap-2">
       {{#can "pos"}}

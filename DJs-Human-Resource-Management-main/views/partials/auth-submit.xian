@@ -1,0 +1,20 @@
+{{!-- Loading state ng button pagka-submit (iwas dobleng pindot). Isama nang isang beses sa dulo ng page.
+      Button: <button type="submit" data-submit> <span data-label>...</span> </button> --}}
+<script>
+  document.querySelectorAll("form").forEach(function (form) {
+    form.addEventListener("submit", function () {
+      var button = form.querySelector("[data-submit]");
+      if (!button || button.disabled) return;
+      // Hintayin muna ang ibang submit handler (hal. pagtago ng password)
+      setTimeout(function () {
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+        var label = button.querySelector("[data-label]");
+        if (label) label.insertAdjacentHTML("beforebegin",
+          '<svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" class="opacity-25"/><path fill="currentColor" class="opacity-75" d="M12 3a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6V3Z"/></svg>');
+        var arrow = button.querySelector("[data-arrow]");
+        if (arrow) arrow.classList.add("hidden");
+      }, 0);
+    });
+  });
+</script>

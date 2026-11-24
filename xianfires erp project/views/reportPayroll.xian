@@ -1,0 +1,89 @@
+{{> head}}
+<body>
+{{> adminHeader}}
+<div class="flex">
+  {{> adminNav}}
+  <main class="flex-1 min-w-0 px-4 md:px-8 py-8">
+    <div class="max-w-[75rem] mx-auto">
+      <div class="no-print">
+        {{> pageHeading heading="Payroll Summary" backUrl=urls.accountingPayroll }}
+        <form method="GET" action="{{ urls.payrollReport }}" class="card p-4 mb-5 flex flex-wrap items-end gap-3">
+          <label class="grid gap-1 text-sm">
+            <span class="font-medium">Pay period</span>
+            <select name="period" class="select min-w-[14rem]">
+              {{#each report.periods}}<option value="{{ key }}" {{#if selected}}selected{{/if}}>{{ label }}</option>{{else}}<option value="">No paid payroll yet</option>{{/each}}
+            </select>
+          </label>
+          <button type="submit" class="btn btn-primary">Generate</button>
+          <button type="button" class="btn btn-outline" data-print>Print</button>
+        </form>
+        {{#if report.hrError}}<div class="notice notice-warning mb-5">HR cannot be reached, so its payroll cannot be listed right now: {{ report.hrError }}</div>{{/if}}
+      </div>
+
+      <div class="card p-6">
+        {{> reportHeader reportTitle="Payroll Summary" periodLabel=(concat "Pay period " report.period.label) }}
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th><th class="num">Days</th><th class="num">Basic</th><th class="num">Allowances</th><th class="num">Overtime</th>
+                <th class="num">Gross</th><th class="num">SSS</th><th class="num">PhilHealth</th><th class="num">Pag-IBIG</th><th class="num">Cash adv.</th>
+                <th class="num">Net pay</th><th>Paid on</th><th>Entry</th><th class="no-print"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each report.rows}}
+              <tr>
+                <td><div class="font-medium">{{ employee.name }}</div><div class="text-xs text-muted">{{ employee.code }}{{#if employee.position}} · {{ employee.position }}{{/if}}</div></td>
+                <td class="num">{{#if daysWorked}}{{ daysWorked }}{{else}}—{{/if}}</td>
+                <td class="num">{{ formatMoney basicSalary }}</td>
+                <td class="num">{{ formatMoney allowances }}</td>
+                <td class="num">{{ formatMoney overtime }}</td>
+                <td class="num">{{ formatMoney gross }}</td>
+                <td class="num">{{ formatMoney sssDeduction }}</td>
+                <td class="num">{{ formatMoney philhealthDeduction }}</td>
+                <td class="num">{{ formatMoney pagibigDeduction }}</td>
+                <td class="num">{{ formatMoney cashAdvance }}</td>
+                <td class="num font-semibold">{{ formatMoney netSalary }}</td>
+                <td class="whitespace-nowrap">{{ paidAt }}</td>
+                <td class="font-mono whitespace-nowrap">{{#if entry}}<a href="{{ concat ../urls.accountingJournalGrid "/view/" entry.uuid }}" class="hover:underline">{{ entry.number }}</a>{{else}}—{{/if}}</td>
+                <td class="no-print text-right" data-no-export><a href="{{ payslipUrl }}" class="btn btn-link">Payslip</a></td>
+              </tr>
+              {{else}}
+              <tr><td colspan="14" class="text-center text-muted">No paid payroll for this period</td></tr>
+              {{/each}}
+              <tr class="report-row-grand">
+                <td>Total ({{ report.totals.count }} employee(s))</td>
+                <td></td>
+                <td class="num">{{ formatMoney report.totals.basic }}</td>
+                <td class="num">{{ formatMoney report.totals.allowances }}</td>
+                <td class="num">{{ formatMoney report.totals.overtime }}</td>
+                <td class="num">{{ formatMoney report.totals.gross }}</td>
+                <td class="num">{{ formatMoney report.totals.sss }}</td>
+                <td class="num">{{ formatMoney report.totals.philhealth }}</td>
+                <td class="num">{{ formatMoney report.totals.pagibig }}</td>
+                <td class="num">{{ formatMoney report.totals.cashAdvance }}</td>
+                <td class="num">{{ formatMoney report.totals.net }}</td>
+                <td colspan="2"></td>
+                <td class="no-print" data-no-export></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-4 mt-6 text-sm">
+          <div class="card p-4"><div class="text-muted">Salaries expense (Dr 6000)</div><div class="text-lg font-semibold">{{ formatMoney report.totals.gross }}</div></div>
+          <div class="card p-4"><div class="text-muted">SSS, PhilHealth, Pag-IBIG to remit (Cr 2400)</div><div class="text-lg font-semibold">{{ formatMoney report.totals.government }}</div></div>
+          <div class="card p-4"><div class="text-muted">Net pay released (Cr cash or bank)</div><div class="text-lg font-semibold">{{ formatMoney report.totals.net }}</div></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-8 mt-12 text-sm text-center">
+          <div><div class="border-t border-border pt-2">Prepared by (HR)</div></div>
+          <div><div class="border-t border-border pt-2">Released by (Accounting)</div></div>
+          <div><div class="border-t border-border pt-2">Approved by</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{{> footer }}

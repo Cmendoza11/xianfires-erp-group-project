@@ -1,7 +1,9 @@
 {{> app-head title="Inventory Reports" active="reports-inventory" subtitle="Stock position and movement activity"}}
 
+<nav class="flex flex-wrap gap-2"><a href="/pos/reports/inventory" class="btn btn-light">Product Movement Report</a><a href="/pos/reports/inventory?view=stock" class="btn btn-primary">Current Stock Report</a></nav>
+
 <section class="card p-4">
-  <form method="GET" action="/pos/reports/inventory" class="flex flex-wrap items-end gap-3">
+  <form method="GET" action="/pos/reports/inventory" class="flex flex-wrap items-end gap-3"><input type="hidden" name="view" value="stock" />
     <div>
       <label class="label" for="period">Movement period</label>
       <select id="period" name="period" class="select w-40">
@@ -53,7 +55,7 @@
   </div>
   <div class="table-wrap">
     <table class="data-table">
-      <thead><tr><th>Product</th><th>Category</th><th>On hand</th><th>Minimum</th><th>Status</th><th>Unit price</th><th class="text-right">Stock value</th></tr></thead>
+      <thead><tr><th>Product</th><th>Category</th><th>On hand</th><th>Minimum</th><th class="stock-status-cell">Status</th><th>Unit price</th><th class="text-right">Stock value</th></tr></thead>
       <tbody>
         {{#each rows}}
           <tr>
@@ -61,7 +63,7 @@
             <td class="text-stone-500">{{#if this.categoryName}}{{this.categoryName}}{{else}}—{{/if}}</td>
             <td class="font-bold">{{int this.currentStock}} <span class="text-[11px] font-normal text-stone-400">{{this.unit}}</span></td>
             <td class="text-stone-500">{{int this.minStockLevel}}</td>
-            <td><span class="badge {{statusBadge this.status}}">{{this.status}}</span></td>
+            <td class="stock-status-cell"><span class="badge {{statusBadge this.status}}">{{this.status}}</span></td>
             <td class="text-stone-600">{{money this.price}}</td>
             <td class="text-right font-bold">{{money this.value}}</td>
           </tr>
@@ -80,7 +82,7 @@
   </div>
   <div class="table-wrap">
     <table class="data-table">
-      <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Qty</th><th>Stock</th><th>Reference</th><th>By</th></tr></thead>
+      <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Qty</th><th>Stock</th><th>By</th></tr></thead>
       <tbody>
         {{#each movements}}
           <tr>
@@ -89,15 +91,33 @@
             <td><span class="badge bg-stone-100 text-stone-600">{{this.type}}</span></td>
             <td class="font-bold">{{int this.quantity}}</td>
             <td class="text-stone-500">{{int this.previousStock}} → {{int this.newStock}}</td>
-            <td class="font-mono text-[11px] text-stone-500">{{this.referenceNumber}}</td>
             <td class="text-stone-500">{{this.performedByName}}</td>
           </tr>
         {{else}}
-          <tr><td colspan="7" class="py-10 text-center text-sm text-stone-500">No movements in this period.</td></tr>
+          <tr><td colspan="6" class="py-10 text-center text-sm text-stone-500">No movements in this period.</td></tr>
         {{/each}}
       </tbody>
     </table>
   </div>
 </section>
+
+<script>
+  const reportPeriod = document.getElementById('period');
+  const reportFrom = document.getElementById('from');
+  const reportTo = document.getElementById('to');
+
+  reportPeriod.addEventListener('change', function () {
+    if (this.value !== 'custom') this.form.requestSubmit();
+  });
+
+  for (const dateField of [reportFrom, reportTo]) {
+    dateField.addEventListener('change', function () {
+      reportPeriod.value = 'custom';
+      if (reportFrom.value && reportTo.value && reportFrom.value <= reportTo.value) {
+        this.form.requestSubmit();
+      }
+    });
+  }
+</script>
 
 {{> app-foot}}

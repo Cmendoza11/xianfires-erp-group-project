@@ -85,6 +85,16 @@ export async function postPayroll(payrollId) {
       accountingSyncAttempts: attempts,
       accountingNextAttemptAt: retryable ? new Date(Date.now() + backoffMs(attempts)) : null
     }).catch((e) => console.error("[accounting-sync] could not save sync result:", e.message));
+    // Tell the admins once, when HR gives up retrying (Failed needs a person to fix the cause).
+    if (payroll && !retryable) {
+      const { notifyRoles } = await import("./notify.js");
+      await notifyRoles(["admin"], {
+        type: "accounting", icon: "i-alert", tone: "red",
+        title: "Payroll could not be posted to Accounting",
+        detail: `Payslip #${payroll.id}: ${String(error.message || error).slice(0, 140)}`,
+        href: `/payroll/${payroll.id}`
+      });
+    }
   } finally {
     inFlight.delete(payrollId);
   }

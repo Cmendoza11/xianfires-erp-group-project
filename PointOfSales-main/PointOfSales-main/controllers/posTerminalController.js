@@ -3,6 +3,8 @@
   price, stock check and total is recomputed from the database on submit.
 */
 import { Op } from "sequelize";
+import { recipeStock, stockRequirements } from '../utils/recipes.js';
+import { validQuantity } from "../utils/access.js";
 import {
   sequelize,
   Product,
@@ -25,6 +27,8 @@ import {
   toInt,
 } from "../utils/pos.js";
 
+const availableAddOns = (product) => product.type === "Beverage" ? product.addOns || [] : [];
+
 export const terminalPage = async (req, res, next) => {
   try {
     const [products, categories, discounts, settings] = await Promise.all([
@@ -44,6 +48,7 @@ export const terminalPage = async (req, res, next) => {
       getSettings(),
     ]);
 
+    const preparedStock = await recipeStock(products.map(product => product.id));
     const catalog = products.map((product) => {
       const record = product.toJSON();
       return {
@@ -53,9 +58,10 @@ export const terminalPage = async (req, res, next) => {
         image: record.image || null,
         categoryId: record.categoryId,
         category: record.category?.name || "Uncategorized",
-        stock: Number(record.inventory?.currentStock ?? 0),
-        unit: record.inventory?.unit || "pcs",
+        stock: preparedStock.get(record.id)?.available ?? Number(record.inventory?.currentStock ?? 0),
+        unit: preparedStock.get(record.id)?.unit || record.inventory?.unit || "pcs",
         type: record.type,
+        addOns: availableAddOns(record),
       };
     });
 
@@ -96,25 +102,30 @@ const parseCart = (raw) => {
 
   const merged = new Map();
   for (const line of parsed) {
-    const productId = toInt(line?.productId);
-    const quantity = toInt(line?.quantity);
-    if (!Number.isFinite(productId) || productId <= 0) {
+    const productId = Number(line?.productId);
+    const quantity = Number(line?.quantity);
+    if (!Number.isSafeInteger(productId) || productId <= 0) {
       throw new PosError("The cart contains an invalid product.");
     }
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      throw new PosError("Every order quantity must be greater than zero.");
+    if (!validQuantity(quantity)) {
+      throw new PosError("Every order quantity must be a whole number between 1 and 999.");
     }
-    merged.set(productId, (merged.get(productId) || 0) + quantity);
+    const selected = line.addOnIds ?? [];
+    if (!Array.isArray(selected) || selected.length > 5 || !selected.every(Number.isSafeInteger)) {
+      throw new PosError("The cart contains invalid add-ons.");
+    }
+    const addOnIds = [...new Set(selected)].sort((a, b) => a - b);
+    const key = [productId, ...addOnIds].join(":");
+    merged.set(key, { productId, addOnIds, quantity: (merged.get(key)?.quantity || 0) + quantity });
   }
 
-  for (const [productId, quantity] of merged) {
+  for (const { quantity } of merged.values()) {
     if (quantity > 999) {
       throw new PosError("A single item quantity cannot exceed 999.");
     }
-    merged.set(productId, quantity);
   }
 
-  return [...merged].map(([productId, quantity]) => ({ productId, quantity }));
+  return [...merged.values()];
 };
 
 /** Validates cart lines against live products, availability and stock. */
@@ -127,6 +138,7 @@ export const resolveCart = async ({ rawItems, transaction }) => {
     include: [{ model: Inventory, as: "inventory", required: false }],
     transaction,
   });
+  const preparedStock = await recipeStock(ids, transaction);
   const byId = new Map(products.map((product) => [product.id, product]));
 
   const items = lines.map((line) => {
@@ -140,26 +152,38 @@ export const resolveCart = async ({ rawItems, transaction }) => {
     }
 
     const inventory = product.inventory;
-    const stock = Number(inventory?.currentStock ?? 0);
-    if (!inventory) {
+    const stock = preparedStock.get(product.id)?.available ?? Number(inventory?.currentStock ?? 0);
+    if (!inventory && !preparedStock.has(product.id)) {
       throw new PosError(`No inventory record exists for "${product.name}".`);
     }
     if (stock < line.quantity) {
       throw new PosError(
-        `Insufficient stock for "${product.name}". Only ${stock} ${inventory.unit || "pcs"} left.`
+        `Insufficient stock for "${product.name}". Only ${stock} ${preparedStock.get(product.id)?.unit || inventory?.unit || "pcs"} left.`
       );
     }
 
-    const unitPrice = round2(product.price);
+    const options = availableAddOns(product);
+    const addOns = line.addOnIds.map((id) => {
+      const option = options.find((entry) => entry.id === id);
+      if (!option) throw new PosError(`An add-on for "${product.name}" is no longer available.`);
+      return { name: option.name, price: option.price };
+    });
+    const unitPrice = round2(Number(product.price) + addOns.reduce((sum, option) => sum + option.price, 0));
     return {
       productId: product.id,
       productName: product.name,
+      addOns: addOns.length ? addOns : null,
       unitPrice,
       quantity: line.quantity,
       subtotal: round2(unitPrice * line.quantity),
     };
   });
 
+  const requirements = await stockRequirements(items, transaction);
+  for (const item of requirements) {
+    const inventory = await Inventory.findOne({ where: { productId: item.productId }, transaction });
+    if (!inventory || Number(inventory.currentStock) < item.quantity) throw new PosError('Insufficient combined ingredient stock for ' + item.productName + '.');
+  }
   return { items, lines };
 };
 
@@ -203,6 +227,9 @@ export const createOrder = async (req, res, next) => {
       orderId = order.id;
     });
 
+    const preferences = req.session.orderPaymentMethods || {};
+    preferences[orderId] = req.body.paymentMethod === 'GCash' ? 'GCash' : 'Cash';
+    req.session.orderPaymentMethods = Object.fromEntries(Object.entries(preferences).slice(-32));
     flashSuccess(req, "Order created. Assign a table (for dine-in) and process payment.");
     return res.redirect(`/pos/checkout/${orderId}`);
   } catch (error) {

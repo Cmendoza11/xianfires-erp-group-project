@@ -32,7 +32,12 @@ import {
 
 const router = express.Router();
 
-router.get("/", homePage);
+router.get("/", (req, res) => {
+    if (req.session && req.session.userId) {
+        return res.redirect("/dashboard");
+    }
+    return res.redirect("/login");
+});
 
 // --- Authentication Routes ---
 router.get("/login", loginPage);

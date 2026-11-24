@@ -13,9 +13,11 @@ import {
   parseMoney,
   generateEmployeeCode,
   getDepartmentNames,
-  findEmployeeForUser
+  findEmployeeForUser,
+  pageInfo
 } from "../utils/helpers.js";
 import { EMPLOYMENT_STATUSES, isValidDate } from "../utils/hr.js";
+import { notifyRoles } from "../services/notify.js";
 import { dailyRateOf, hourlyRateOf } from "../services/payrollCalc.js";
 
 const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -56,16 +58,6 @@ const readEmployeeForm = (body) => {
   return { data, errors };
 };
 
-// Links a matching unlinked account (same email) to an employee record.
-const linkAccount = async (employee) => {
-  if (!employee || !employee.email) return;
-  const account = await User.findOne({
-    where: { email: employee.email, employeeId: null },
-    order: [["id", "ASC"]]
-  });
-  if (account) await account.update({ employeeId: employee.id });
-};
-
 const ensureUnique = async (data, ignoreId = null) => {
   const errors = [];
   const codeWhere = { employeeCode: data.employeeCode };
@@ -89,8 +81,6 @@ export const employeeList = asyncHandler(async (req, res) => {
   const q = String(req.query.q || "").trim();
   const department = String(req.query.department || "").trim();
   const status = EMPLOYMENT_STATUSES.includes(req.query.status) ? req.query.status : "";
-  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-  const limit = 10;
 
   const where = {};
   if (status) where.status = status;
@@ -101,18 +91,19 @@ export const employeeList = asyncHandler(async (req, res) => {
       { lastName: { [Op.like]: `%${q}%` } },
       { email: { [Op.like]: `%${q}%` } },
       { employeeCode: { [Op.like]: `%${q}%` } },
-      { position: { [Op.like]: `%${q}%` } }
+      { position: { [Op.like]: `%${q}%` } },
+      { department: { [Op.like]: `%${q}%` } }
     ];
   }
 
-  const { count, rows } = await Employee.findAndCountAll({
+  // 9 per page; a page number past the end shows the last page.
+  const pagination = pageInfo(req, await Employee.count({ where }));
+  const rows = await Employee.findAll({
     where,
     order: [["createdAt", "DESC"]],
-    limit,
-    offset: (page - 1) * limit
+    limit: pagination.limit,
+    offset: pagination.offset
   });
-
-  const totalPages = Math.max(1, Math.ceil(count / limit));
 
   res.render("employees", {
     title: "Employees | DJs HRMS",
@@ -120,15 +111,7 @@ export const employeeList = asyncHandler(async (req, res) => {
     departments: await getDepartmentNames(),
     statuses: EMPLOYMENT_STATUSES,
     filters: { q, department, status },
-    pagination: {
-      page,
-      count,
-      totalPages,
-      hasPrev: page > 1,
-      hasNext: page < totalPages,
-      prevPage: Math.max(1, page - 1),
-      nextPage: Math.min(totalPages, page + 1)
-    }
+    pagination
   });
 });
 
@@ -158,7 +141,12 @@ export const employeeCreate = asyncHandler(async (req, res) => {
   }
 
   const employee = await Employee.create(data);
-  await linkAccount(employee);
+  await notifyRoles(["admin", "staff"], {
+    type: "employee", icon: "i-user-plus", tone: "green",
+    title: `New employee: ${employee.firstName} ${employee.lastName}`,
+    detail: `${employee.employeeCode} · ${employee.position}, ${employee.department}`,
+    href: `/employees/${employee.id}`
+  }, { except: req.user.id });
 
   req.flash("success_msg", `Employee ${employee.firstName} ${employee.lastName} was added.`);
   res.redirect(`/employees/${employee.id}`);
@@ -234,7 +222,6 @@ export const employeeUpdate = asyncHandler(async (req, res) => {
   }
 
   await employee.update(data);
-  await linkAccount(employee);
 
   req.flash("success_msg", "Employee record updated.");
   res.redirect(`/employees/${employee.id}`);
@@ -249,6 +236,20 @@ export const employeeDelete = asyncHandler(async (req, res) => {
   }
 
   const name = `${employee.firstName} ${employee.lastName}`;
+
+  // Deleting cascades to payroll. Payroll already booked in Accounting must stay, so the
+  // employee is kept too: set the status to Resigned instead.
+  const booked = await Payroll.count({
+    where: { employeeId: employee.id, accountingSyncStatus: { [Op.in]: ["Pending", "Synced"] } }
+  });
+  if (booked) {
+    req.flash(
+      "error_msg",
+      `${name} has ${booked} payroll record(s) posted to Accounting, so the record cannot be deleted. Set the status to Resigned instead.`
+    );
+    return res.redirect(`/employees/${employee.id}`);
+  }
+
   await employee.destroy();
 
   req.flash("success_msg", `${name} and their HR records were deleted.`);

@@ -34,11 +34,16 @@ const ENTRY_TYPE_LABELS = {
   invoice: "Sales invoice",
   bill: "Supplier bill",
   receipt: "Payment received",
-  disbursement: "Payment made"
+  disbursement: "Payment made",
+  voucher: "Expense voucher",
+  asset: "Fixed asset"
 };
 
-// Entries owned by an invoice, bill or payment: they change only through that document.
-export const DOCUMENT_ENTRY_TYPES = ["invoice", "bill", "receipt", "disbursement"];
+// Expense voucher numbers: EV-000001.
+export const VOUCHER_PREFIX = "EV-";
+
+// Entries owned by an invoice, bill, payment, expense voucher or fixed asset: they change only there.
+export const DOCUMENT_ENTRY_TYPES = ["invoice", "bill", "receipt", "disbursement", "voucher", "asset"];
 
 function toEntry(row, entryPrefix) {
   if (!row) return null;
@@ -70,12 +75,15 @@ function toEntry(row, entryPrefix) {
   };
 }
 
+const DOCUMENT_ENTRY_MESSAGE =
+  "This entry belongs to an invoice, bill, payment, expense voucher or fixed asset. Change it from there instead.";
+
 // Why an entry may not be deleted or reversed; null means the action is allowed.
 function deleteBlocker(entry, lockDate) {
+  // Audit trail: posted entries are never deleted, only reversed (closing entries go with Period Closing).
+  if (!entry.isClosing) return "Posted journal entries are never deleted. Use Reverse to cancel this entry; both stay on record.";
   if (entry.isClosing) return "Closing entries are removed by reopening the fiscal year in Period Closing.";
-  if (entry.isDocumentEntry) {
-    return "This entry belongs to an invoice, bill or payment. Void that document instead.";
-  }
+  if (entry.isDocumentEntry) return DOCUMENT_ENTRY_MESSAGE;
   if (entry.reconciled) {
     return "This entry has lines cleared in a completed bank reconciliation. Record a reversing entry instead.";
   }
@@ -88,9 +96,7 @@ function deleteBlocker(entry, lockDate) {
 
 function reverseBlocker(entry) {
   if (entry.isClosing) return "Closing entries cannot be reversed. Reopen the fiscal year instead.";
-  if (entry.isDocumentEntry) {
-    return "This entry belongs to an invoice, bill or payment. Void that document instead.";
-  }
+  if (entry.isDocumentEntry) return DOCUMENT_ENTRY_MESSAGE;
   if (entry.reversalOf) return "This entry is itself a reversal and cannot be reversed again.";
   if (entry.reversedBy) return `This entry was already reversed by ${entry.reversedBy.number}.`;
   return null;
@@ -159,7 +165,25 @@ async function findSourceDocument(entryId) {
      LIMIT 1`,
     { replacements: { id: entryId }, type: QueryTypes.SELECT }
   );
-  if (!row) return null;
+  if (!row) {
+    const [voucher] = await sequelize.query(
+      `SELECT uuid, expense_voucher_id FROM expense_voucher WHERE journal_entry_id = :id OR void_entry_id = :id LIMIT 1`,
+      { replacements: { id: entryId }, type: QueryTypes.SELECT }
+    );
+    if (voucher) {
+      return { label: "Expense voucher", number: formatEntryNumber(voucher.expense_voucher_id, VOUCHER_PREFIX), url: urls.expenseVoucherView(voucher.uuid) };
+    }
+    const [asset] = await sequelize.query(
+      `SELECT 1 FROM fixed_asset WHERE journal_entry_id = :id
+       UNION ALL SELECT 1 FROM fixed_asset_depreciation WHERE journal_entry_id = :id
+       UNION ALL SELECT 1 FROM accounting_journal_entry r
+         INNER JOIN fixed_asset_depreciation d ON d.journal_entry_id = r.reversal_of_id
+         WHERE r.accounting_journal_entry_id = :id
+       LIMIT 1`,
+      { replacements: { id: entryId }, type: QueryTypes.SELECT }
+    );
+    return asset ? { label: "Fixed asset", number: "register", url: urls.fixedAssetGrid } : null;
+  }
   const { invoicePrefix, billPrefix } = await getSalesPurchaseSettings();
   const isInvoice = row.kind === "invoice";
   return {

@@ -22,11 +22,14 @@
       </div>
     </header>
 
-    <section class="p-6 max-w-3xl space-y-6">
+    <section class="p-6 space-y-6">
 
       {{> flash}}
 
-      <div class="print-card rounded-2xl border border-white/5 bg-white text-black p-8">
+      {{!-- Wide screens: payslip on the left, the admin panel on the right (sticky). Print: payslip only. --}}
+      <div class="grid grid-cols-1 gap-6 items-start {{#if canManage}}xl:grid-cols-[minmax(0,1fr)_22rem]{{else}}max-w-5xl{{/if}} print:block">
+
+      <div class="print-card rounded-2xl border border-white/5 bg-white text-black p-8 lg:p-10">
 
         <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 pb-5">
           <div class="flex items-center gap-3">
@@ -42,55 +45,79 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 py-5 text-sm">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-5 text-sm border-b border-gray-200">
           <div>
             <p class="text-[11px] uppercase tracking-widest text-gray-500">Employee</p>
             <p class="font-semibold">{{#if employee}}{{employee.firstName}} {{employee.lastName}}{{else}}—{{/if}}</p>
-            <p class="text-xs text-gray-500">{{#if employee}}{{employee.employeeCode}} · {{employee.position}}{{/if}}</p>
+            <p class="text-xs text-gray-500">{{#if employee}}{{employee.employeeCode}}{{/if}}</p>
+          </div>
+          <div>
+            <p class="text-[11px] uppercase tracking-widest text-gray-500">Position</p>
+            <p class="font-semibold">{{#if employee}}{{employee.position}}{{else}}—{{/if}}</p>
             <p class="text-xs text-gray-500">{{#if employee}}{{employee.department}}{{/if}}</p>
           </div>
-          <div class="text-right">
+          <div>
             <p class="text-[11px] uppercase tracking-widest text-gray-500">Pay Period</p>
             <p class="font-semibold">{{formatDate payroll.periodStart}} – {{formatDate payroll.periodEnd}}</p>
             <p class="text-xs text-gray-500">Issued {{formatDate payroll.updatedAt}}</p>
           </div>
+          <div class="md:text-right">
+            <p class="text-[11px] uppercase tracking-widest text-gray-500">Attendance</p>
+            <p class="font-semibold">{{#if hasDtr}}{{payroll.daysWorked}} day(s){{else}}—{{/if}}</p>
+            <p class="text-xs text-gray-500">{{#if hasDtr}}{{payroll.overtimeHours}} h overtime{{#if (gt payroll.lateMinutes 0)}} · {{payroll.lateMinutes}} min late{{/if}}{{/if}}</p>
+          </div>
         </div>
 
-        <table class="w-full text-sm border-t border-gray-200">
-          <thead>
-            <tr class="text-left text-[11px] uppercase tracking-widest text-gray-500">
-              <th class="py-3">Earnings</th>
-              <th class="py-3 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr><td class="py-2.5">Basic Salary{{#if hasDtr}} <span class="text-xs text-gray-500">({{payroll.daysWorked}} day(s) from attendance)</span>{{/if}}</td><td class="py-2.5 text-right">{{formatMoney payroll.basicSalary}}</td></tr>
-            <tr><td class="py-2.5">Allowances</td><td class="py-2.5 text-right">{{formatMoney payroll.allowances}}</td></tr>
-            <tr><td class="py-2.5">Overtime{{#if hasDtr}} <span class="text-xs text-gray-500">({{payroll.overtimeHours}} hour(s) at 125%)</span>{{/if}}</td><td class="py-2.5 text-right">{{formatMoney payroll.overtime}}</td></tr>
-          </tbody>
-        </table>
+        {{!-- Earnings and deductions side by side on wide screens --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-[11px] uppercase tracking-widest text-gray-500">
+                <th class="py-3">Earnings</th>
+                <th class="py-3 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr><td class="py-2.5">Basic Salary{{#if hasDtr}}<span class="block text-xs text-gray-500">{{payroll.daysWorked}} day(s) from attendance{{#if (gt payroll.lateDeduction 0)}}, less {{formatMoney payroll.lateDeduction}} for {{payroll.lateMinutes}} late minute(s){{/if}}</span>{{/if}}</td><td class="py-2.5 text-right align-top">{{formatMoney payroll.basicSalary}}</td></tr>
+              <tr><td class="py-2.5">Allowances</td><td class="py-2.5 text-right">{{formatMoney payroll.allowances}}</td></tr>
+              <tr><td class="py-2.5">Overtime{{#if hasDtr}}<span class="block text-xs text-gray-500">{{payroll.overtimeHours}} hour(s) at 125%</span>{{/if}}</td><td class="py-2.5 text-right align-top">{{formatMoney payroll.overtime}}</td></tr>
+              <tr><td class="py-2.5 font-semibold">Gross Pay</td><td class="py-2.5 text-right font-semibold">{{formatMoney payroll.grossPay}}</td></tr>
+            </tbody>
+          </table>
 
-        <table class="w-full text-sm border-t border-gray-200 mt-4">
-          <thead>
-            <tr class="text-left text-[11px] uppercase tracking-widest text-gray-500">
-              <th class="py-3">Deductions</th>
-              <th class="py-3 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {{#if hasBreakdown}}
-            <tr><td class="py-2.5">SSS (employee share)</td><td class="py-2.5 text-right">{{formatMoney payroll.sssDeduction}}</td></tr>
-            <tr><td class="py-2.5">PhilHealth (employee share)</td><td class="py-2.5 text-right">{{formatMoney payroll.philhealthDeduction}}</td></tr>
-            <tr><td class="py-2.5">Pag-IBIG (employee share)</td><td class="py-2.5 text-right">{{formatMoney payroll.pagibigDeduction}}</td></tr>
-            <tr><td class="py-2.5">Cash Advance</td><td class="py-2.5 text-right">{{formatMoney payroll.cashAdvance}}</td></tr>
-            {{/if}}
-            <tr><td class="py-2.5 font-semibold">Total Deductions</td><td class="py-2.5 text-right font-semibold">{{formatMoney payroll.deductions}}</td></tr>
-          </tbody>
-        </table>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-[11px] uppercase tracking-widest text-gray-500">
+                <th class="py-3">Deductions</th>
+                <th class="py-3 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              {{#if hasBreakdown}}
+              <tr><td class="py-2.5">SSS (employee share)</td><td class="py-2.5 text-right">{{formatMoney payroll.sssDeduction}}</td></tr>
+              <tr><td class="py-2.5">PhilHealth (employee share)</td><td class="py-2.5 text-right">{{formatMoney payroll.philhealthDeduction}}</td></tr>
+              <tr><td class="py-2.5">Pag-IBIG (employee share)</td><td class="py-2.5 text-right">{{formatMoney payroll.pagibigDeduction}}</td></tr>
+              <tr><td class="py-2.5">Cash Advance</td><td class="py-2.5 text-right">{{formatMoney payroll.cashAdvance}}</td></tr>
+              {{/if}}
+              <tr><td class="py-2.5 font-semibold">Total Deductions</td><td class="py-2.5 text-right font-semibold">{{formatMoney payroll.deductions}}</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-        <div class="mt-6 flex items-center justify-between border-t-2 border-black pt-4">
-          <p class="font-bold uppercase tracking-wider text-sm">Net Pay</p>
-          <p class="text-xl font-black">{{formatMoney payroll.netSalary}}</p>
+        {{!-- Summary: gross − deductions = net --}}
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 overflow-hidden rounded-xl border-2 border-black text-sm">
+          <div class="px-4 py-3 sm:border-r border-gray-300">
+            <p class="text-[11px] uppercase tracking-widest text-gray-500">Gross Pay</p>
+            <p class="text-lg font-bold">{{formatMoney payroll.grossPay}}</p>
+          </div>
+          <div class="px-4 py-3 sm:border-r border-gray-300">
+            <p class="text-[11px] uppercase tracking-widest text-gray-500">Less Deductions</p>
+            <p class="text-lg font-bold">− {{formatMoney payroll.deductions}}</p>
+          </div>
+          <div class="bg-yellow-400 px-4 py-3">
+            <p class="text-[11px] font-bold uppercase tracking-widest">Net Pay</p>
+            <p class="text-2xl font-black">{{formatMoney payroll.netSalary}}</p>
+          </div>
         </div>
 
         <p class="mt-6 text-[10px] text-gray-500">
@@ -99,32 +126,38 @@
       </div>
 
       {{#if canManage}}
-      <div class="no-print rounded-2xl border border-white/5 bg-[#171717] p-5 space-y-4">
-        <h3 class="font-bold">Manage Payroll Record</h3>
-
-        <form method="POST" action="/payroll/{{payroll.id}}/status" class="flex flex-wrap items-end gap-3">
-          <div>
-            <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Status</label>
-            <select name="status" class="rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
-              {{#each statuses}}
-              <option value="{{this}}" {{#if (eq this ../payroll.status)}}selected{{/if}}>{{this}}</option>
-              {{/each}}
-            </select>
+      <aside class="no-print space-y-4 xl:sticky xl:top-6">
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold">Manage Payroll Record</h3>
+            <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] {{#if (eq payroll.status "Paid")}}bg-green-500/10 text-green-400{{else}}{{#if (eq payroll.status "Processed")}}bg-blue-500/10 text-blue-400{{else}}bg-white/5 text-gray-300{{/if}}{{/if}}">{{payroll.status}}</span>
           </div>
-          <button type="submit" class="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Update Status</button>
-        </form>
-        {{#unless (eq payroll.status "Paid")}}
-        <form method="POST" action="/payroll/{{payroll.id}}/status">
-          <input type="hidden" name="status" value="Paid">
-          <button type="submit" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-emerald-400" onclick="return confirm('Mark this payroll as Paid? It is posted to Accounting and becomes final.');">Mark as Paid</button>
-        </form>
-        {{/unless}}
 
-        <form action="/payroll/{{payroll.id}}/delete" method="POST" onsubmit="return confirm('Delete this payroll record?');">
-          <button type="submit" class="rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500 hover:text-white">Delete Record</button>
-        </form>
+          {{#unless (eq payroll.status "Paid")}}
+          <form method="POST" action="/payroll/{{payroll.id}}/status" data-confirm-title="Update payroll status?" data-confirm="The status of this payslip will be changed to the one selected. Processed (approved) lets Accounting release the salary." data-confirm-ok="Update Status" data-confirm-tone="info" class="space-y-2">
+            <label class="block text-xs uppercase tracking-wider text-gray-500">Status</label>
+            <div class="flex gap-2">
+              <select name="status" class="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-2.5 text-sm outline-none focus:border-yellow-400/60">
+                {{#each statuses}}{{#unless (eq this "Paid")}}
+                <option value="{{this}}" {{#if (eq this ../payroll.status)}}selected{{/if}}>{{#if (eq this "Processed")}}Processed (approved){{else}}{{this}}{{/if}}</option>
+                {{/unless}}{{/each}}
+              </select>
+              <button type="submit" class="shrink-0 rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-bold text-black hover:bg-yellow-300">Update</button>
+            </div>
+          </form>
 
-        <div class="border-t border-white/5 pt-4">
+          <p class="text-sm text-gray-400">
+            {{#if (eq payroll.status "Processed")}}<span class="text-yellow-400 font-semibold">Approved.</span> Waiting for Accounting to release the salary; it becomes Paid automatically.
+            {{else}}Set the status to <b>Processed (approved)</b> so Accounting can release the salary.{{/if}}
+          </p>
+          {{/unless}}
+
+          <form action="/payroll/{{payroll.id}}/delete" method="POST" data-confirm-title="Delete payroll record?" data-confirm="This payslip will be deleted." data-confirm-ok="Delete">
+            <button type="submit" class="w-full rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500 hover:text-white">Delete Record</button>
+          </form>
+        </div>
+
+        <div class="rounded-2xl border border-white/5 bg-[#171717] p-5">
           <h3 class="font-bold">Accounting (DJ's ERP)</h3>
           {{#if payroll.accountingSyncStatus}}
             <p class="mt-1 text-sm">
@@ -134,18 +167,21 @@
             </p>
             {{#unless (eq payroll.accountingSyncStatus "Synced")}}
               {{#if payroll.accountingSyncError}}<p class="mt-1 text-xs text-red-400">{{payroll.accountingSyncError}}</p>{{/if}}
-              <form method="POST" action="/payroll/{{payroll.id}}/sync" class="mt-3">
-                <button type="submit" class="rounded-xl border border-yellow-400/40 px-4 py-2 text-sm text-yellow-400 hover:bg-yellow-400 hover:text-black">Retry posting now</button>
+              <form method="POST" action="/payroll/{{payroll.id}}/sync" data-confirm-title="Retry posting to Accounting?" data-confirm="HR will send this paid payroll to Accounting again." data-confirm-ok="Retry" data-confirm-tone="info" class="mt-3">
+                <button type="submit" class="w-full rounded-xl border border-yellow-400/40 px-4 py-2 text-sm text-yellow-400 hover:bg-yellow-400 hover:text-black">Retry posting now</button>
               </form>
             {{/unless}}
           {{else}}
-            <p class="mt-1 text-sm text-gray-500">Posted to Accounting automatically when this payroll is marked Paid.</p>
+            <p class="mt-1 text-sm text-gray-500">Accounting releases the salary (Accounting &gt; Payroll &gt; Release salary); this payroll then shows Paid with its journal entry.</p>
           {{/if}}
         </div>
-      </div>
+      </aside>
       {{/if}}
 
+      </div>
+
     </section>
+    {{> page-footer}}
   </main>
 </div>
 

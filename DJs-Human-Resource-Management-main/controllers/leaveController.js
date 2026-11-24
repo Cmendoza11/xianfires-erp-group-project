@@ -1,6 +1,8 @@
 import { Op } from "sequelize";
 import { Leave, Employee } from "../models/index.js";
-import { asyncHandler, parseId, findEmployeeForUser } from "../utils/helpers.js";
+import { asyncHandler, parseId, findEmployeeForUser, paginate, pageInfo } from "../utils/helpers.js";
+import { formatDate } from "../utils/format.js";
+import { notifyRoles, notifyEmployee } from "../services/notify.js";
 import {
   LEAVE_TYPES,
   LEAVE_ALLOCATION,
@@ -8,13 +10,11 @@ import {
   isValidDate
 } from "../utils/hr.js";
 
-const currentYearRange = () => {
-  const year = new Date().getFullYear();
-  return [`${year}-01-01`, `${year}-12-31`];
-};
+const yearRange = (year = new Date().getFullYear()) => [`${year}-01-01`, `${year}-12-31`];
 
-export const computeBalances = async (employeeId) => {
-  const [start, end] = currentYearRange();
+// Approved days used per leave type in one calendar year (rest days not counted).
+export const computeBalances = async (employeeId, year) => {
+  const [start, end] = yearRange(year);
   const approved = await Leave.findAll({
     where: {
       employeeId,
@@ -36,6 +36,23 @@ export const computeBalances = async (employeeId) => {
     const allocation = LEAVE_ALLOCATION[type] ?? 0;
     return { type, allocation, used, remaining: Math.max(0, allocation - used) };
   });
+};
+
+// Error message when a leave needs more days than are left in the balance, else null.
+// Unpaid leave has no balance. A leave that crosses New Year is checked against each year.
+const balanceProblem = async (employeeId, type, startDate, endDate) => {
+  if (type === "Unpaid") return null;
+  const startYear = Number(String(startDate).slice(0, 4));
+  const endYear = Number(String(endDate).slice(0, 4));
+  for (let year = startYear; year <= endYear; year += 1) {
+    const [ys, ye] = yearRange(year);
+    const needed = leaveDays(startDate > ys ? startDate : ys, endDate < ye ? endDate : ye);
+    const balance = (await computeBalances(employeeId, year)).find((b) => b.type === type);
+    if (needed > balance.remaining) {
+      return `Not enough ${type} leave for ${year}: ${needed} day(s) requested, ${balance.remaining} of ${balance.allocation} left. File the extra days as Unpaid leave.`;
+    }
+  }
+  return null;
 };
 
 const employeeName = (employee) =>
@@ -60,6 +77,7 @@ export const leaveList = asyncHandler(async (req, res) => {
       return res.render("leaves", {
         title: "Leave Management | DJs HRMS",
         leaves: [],
+        pagination: pageInfo(req, 0),
         balances: null,
         employee: null,
         types: LEAVE_TYPES,
@@ -86,15 +104,18 @@ export const leaveList = asyncHandler(async (req, res) => {
     order: [["createdAt", "DESC"]]
   });
 
+  // The summary counts every request; the table shows 9 per page.
   const summary = {
     pending: leaves.filter((l) => l.status === "Pending").length,
     approved: leaves.filter((l) => l.status === "Approved").length,
     rejected: leaves.filter((l) => l.status === "Rejected").length
   };
+  const { rows: pageLeaves, pagination } = paginate(req, leaves.map((l) => l.toJSON()));
 
   res.render("leaves", {
     title: "Leave Management | DJs HRMS",
-    leaves: leaves.map((l) => l.toJSON()),
+    leaves: pageLeaves,
+    pagination,
     balances,
     employee: employee ? employee.toJSON() : null,
     types: LEAVE_TYPES,
@@ -164,6 +185,16 @@ export const leaveCreate = asyncHandler(async (req, res) => {
   }
 
   const days = leaveDays(startDate, endDate);
+  if (days === 0) {
+    req.flash("error_msg", "Those dates are all rest days, so there is nothing to file.");
+    return res.redirect("/leaves/create");
+  }
+
+  const problem = await balanceProblem(employeeId, type, startDate, endDate);
+  if (problem) {
+    req.flash("error_msg", problem);
+    return res.redirect("/leaves/create");
+  }
 
   await Leave.create({
     employeeId,
@@ -174,6 +205,14 @@ export const leaveCreate = asyncHandler(async (req, res) => {
     reason,
     status: "Pending"
   });
+
+  const filer = await Employee.findByPk(employeeId, { attributes: ["firstName", "lastName"] });
+  await notifyRoles(["admin", "staff"], {
+    type: "leave", icon: "i-calendar", tone: "yellow",
+    title: `${employeeName(filer)} filed ${type} leave`,
+    detail: `${formatDate(startDate)}${endDate !== startDate ? ` – ${formatDate(endDate)}` : ""} · ${days} day(s) · waiting for review`,
+    href: "/leaves?status=Pending"
+  }, { except: req.user.id });
 
   req.flash("success_msg", `Leave request submitted for ${days} day(s).`);
   res.redirect("/leaves");
@@ -194,11 +233,24 @@ export const leaveApprove = asyncHandler(async (req, res) => {
     return res.redirect("/leaves");
   }
 
+  // Checked again here: other leaves may have been approved since this one was filed.
+  const problem = await balanceProblem(leave.employeeId, leave.type, String(leave.startDate), String(leave.endDate));
+  if (problem) {
+    req.flash("error_msg", problem);
+    return res.redirect("/leaves");
+  }
+
   await leave.update({
     status: "Approved",
     reviewedBy: req.user.id,
     reviewedAt: new Date(),
     remarks: String(req.body.remarks || "").trim() || leave.remarks
+  });
+  await notifyEmployee(leave.employeeId, {
+    type: "leave", icon: "i-check", tone: "green",
+    title: `Your ${leave.type} leave was approved`,
+    detail: `${formatDate(leave.startDate)}${leave.endDate !== leave.startDate ? ` – ${formatDate(leave.endDate)}` : ""} · ${leave.days} day(s)${leave.remarks ? ` · “${leave.remarks}”` : ""}`,
+    href: "/leaves"
   });
 
   req.flash("success_msg", `Approved ${employeeName(leave.employee)}'s ${leave.type} leave.`);
@@ -225,6 +277,12 @@ export const leaveReject = asyncHandler(async (req, res) => {
     reviewedBy: req.user.id,
     reviewedAt: new Date(),
     remarks: String(req.body.remarks || "").trim() || null
+  });
+  await notifyEmployee(leave.employeeId, {
+    type: "leave", icon: "i-alert", tone: "red",
+    title: `Your ${leave.type} leave was rejected`,
+    detail: `${formatDate(leave.startDate)}${leave.endDate !== leave.startDate ? ` – ${formatDate(leave.endDate)}` : ""}${leave.remarks ? ` · “${leave.remarks}”` : " · contact HR for details"}`,
+    href: "/leaves"
   });
 
   req.flash("success_msg", `Rejected ${employeeName(leave.employee)}'s ${leave.type} leave.`);

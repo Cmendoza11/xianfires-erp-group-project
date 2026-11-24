@@ -27,6 +27,7 @@ import {
 } from "../controllers/apiV1Controller.js";
 import { apiCors, requireApiKey, requireScope } from "../middleware/apiKey.js";
 import { requireJson } from "../middleware/auth.js";
+import { pingDatabase } from "../services/databaseHealth.js";
 
 const router = express.Router();
 
@@ -34,8 +35,14 @@ const h = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(
 const write = (scope) => [requireScope(scope), requireJson];
 
 router.use(apiCors);
-// Liveness check for monitors and load balancers: no key needed, and nothing about the ledger is revealed.
-router.get("/health", (req, res) => res.json({ data: { status: "ok" } }));
+// Health check for monitors and the other modules: no key needed, and nothing about the ledger is revealed.
+// It also asks MySQL, so "ok" means the books can really be read and written.
+router.get("/health", h(async (req, res) => {
+  const databaseUp = await pingDatabase();
+  res.status(databaseUp ? 200 : 503).json({
+    data: { status: databaseUp ? "ok" : "degraded", database: databaseUp ? "online" : "offline" }
+  });
+}));
 router.use(requireApiKey);
 router.use(requireScope("read"));
 

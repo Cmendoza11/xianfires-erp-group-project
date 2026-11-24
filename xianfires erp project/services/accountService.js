@@ -7,6 +7,7 @@ import {
   defaultNormalBalance,
   isAccountType
 } from "./accountTypes.js";
+import { assertFormat, assertSafeText, FORMATS } from "./securityService.js";
 
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -55,14 +56,14 @@ export function toAccount(row) {
 export async function getAccount(uuid) {
   if (!uuid || !UUID_PATTERN.test(uuid)) return null;
   const rows = await sequelize.query(
-    `${ACCOUNT_SQL} WHERE a.uuid = ? GROUP BY a.accounting_account_id`,
+    `${ACCOUNT_SQL} WHERE a.uuid = ? AND a.deleted_at IS NULL GROUP BY a.accounting_account_id`,
     { replacements: [uuid], type: QueryTypes.SELECT }
   );
   return toAccount(rows[0]);
 }
 
 export async function listAccounts({ includeInactive = true } = {}) {
-  const where = includeInactive ? "" : "WHERE a.status = 1";
+  const where = includeInactive ? "WHERE a.deleted_at IS NULL" : "WHERE a.deleted_at IS NULL AND a.status = 1";
   const rows = await sequelize.query(
     `${ACCOUNT_SQL} ${where} GROUP BY a.accounting_account_id ORDER BY ${TYPE_ORDER}, a.code`,
     { type: QueryTypes.SELECT }
@@ -80,6 +81,10 @@ function normalize(data, current) {
   if (!name) {
     throw new AccountingValidationError("Account name is required");
   }
+  if (data.code !== undefined) assertFormat(code, FORMATS.accountCode, "Account code must be 3 to 10 digits, e.g. 6800");
+  if (name.length > 100) throw new AccountingValidationError("Account name must be 100 characters or fewer");
+  assertSafeText(name, "Account name");
+  if (data.description) assertSafeText(data.description, "Description");
   if (!isAccountType(type)) {
     throw new AccountingValidationError("Invalid account type");
   }
@@ -126,8 +131,14 @@ async function assertCodeAvailable(code, exceptId) {
   if (exceptId) {
     where.accounting_account_id = { [Op.ne]: exceptId };
   }
-  if (await Account.findOne({ where, attributes: ["accounting_account_id"] })) {
-    throw new AccountingValidationError(`Account code ${code} is already used by another account`);
+  // Deleted accounts still hold their code, so they are checked too (restore them instead).
+  const taken = await Account.findOne({ where, attributes: ["accounting_account_id", "deleted_at"], paranoid: false });
+  if (taken) {
+    throw new AccountingValidationError(
+      taken.deleted_at
+        ? `Account code ${code} belongs to a deleted account. Restore it from the Recycle Bin instead.`
+        : `Account code ${code} is already used by another account`
+    );
   }
 }
 

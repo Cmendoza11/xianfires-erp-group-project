@@ -3,27 +3,35 @@
     <a href="{{ urls.dashboard }}" class="rail-logo" aria-label="DJ's ERP Accounting home">{{> logo class="w-8 h-8" }}</a>
     <a href="{{ urls.dashboard }}" class="rail-item {{#if (eq (navSection activeMenu) "home")}}active{{/if}}" data-tip="Dashboard" aria-label="Dashboard">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+      <span class="rail-label">Home</span>
     </a>
     <button type="button" class="rail-item {{#if (eq (navSection activeMenu) "accounting")}}active{{/if}}" data-nav-section="accounting" data-tip="Accounting" aria-label="Accounting">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+      <span class="rail-label">Books</span>
     </button>
     <button type="button" class="rail-item {{#if (eq (navSection activeMenu) "sales")}}active{{/if}}" data-nav-section="sales" data-tip="Sales" aria-label="Sales">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>
+      <span class="rail-label">Sales</span>
     </button>
     <button type="button" class="rail-item {{#if (eq (navSection activeMenu) "purchases")}}active{{/if}}" data-nav-section="purchases" data-tip="Purchases" aria-label="Purchases">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <span class="rail-label">Purchases</span>
     </button>
     <button type="button" class="rail-item {{#if (eq (navSection activeMenu) "banking")}}active{{/if}}" data-nav-section="banking" data-tip="Banking" aria-label="Banking">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="m12 2 8 5H4z"/></svg>
+      <span class="rail-label">Banking</span>
     </button>
     <button type="button" class="rail-item {{#if (eq (navSection activeMenu) "reports")}}active{{/if}}" data-nav-section="reports" data-tip="Reports" aria-label="Reports">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+      <span class="rail-label">Reports</span>
     </button>
     {{#if can.admin}}
     <button type="button" class="rail-item {{#if (eq (navSection activeMenu) "admin")}}active{{/if}}" data-nav-section="admin" data-tip="Administration" aria-label="Administration">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/></svg>
+      <span class="rail-label">Admin</span>
     </button>
     {{/if}}
+    <div class="rail-theme">{{> themeToggle class="rail-item" label=true }}</div>
     <div class="rail-account">{{> accountMenu placement="rail" }}</div>
   </div>
 
@@ -60,7 +68,10 @@
         <ul>
           <li><a href="{{ urls.accountingJournalGrid }}" class="nav-item">Journal Entries</a></li>
           <li><a href="{{ urls.invoiceGrid }}" class="nav-item">Sales Invoices</a></li>
+          <li><a href="{{ urls.customerGrid }}" class="nav-item">Customers</a></li>
           <li><a href="{{ urls.billGrid }}" class="nav-item">Bills</a></li>
+          <li><a href="{{ urls.supplierGrid }}" class="nav-item">Suppliers</a></li>
+          <li><a href="{{ urls.expenseVoucherGrid }}" class="nav-item">Expense Vouchers</a></li>
           <li><a href="{{ urls.accountingPayroll }}" class="nav-item">Payroll</a></li>
           <li><a href="{{ urls.reportTrialBalance }}" class="nav-item">Trial Balance</a></li>
           <li><a href="{{ urls.reportIncomeStatement }}" class="nav-item">Income Statement</a></li>
@@ -80,6 +91,7 @@
         <ul>
           <li><a href="{{ urls.accountingAccountGrid }}" class="nav-item {{#if (eq activeMenu "accounts")}}active{{/if}}">Chart of Accounts</a></li>
           <li><a href="{{ urls.accountingJournalGrid }}" class="nav-item {{#if (eq activeMenu "journal")}}active{{/if}}">Journal Entries</a></li>
+          <li><a href="{{ urls.fixedAssetGrid }}" class="nav-item {{#if (eq activeMenu "fixedAssets")}}active{{/if}}">Fixed Assets</a></li>
         </ul>
       </div>
     </div>
@@ -110,7 +122,9 @@
         <ul>
           <li><a href="{{ urls.supplierGrid }}" class="nav-item {{#if (eq activeMenu "suppliers")}}active{{/if}}">Suppliers</a></li>
           <li><a href="{{ urls.billGrid }}" class="nav-item {{#if (eq activeMenu "bills")}}active{{/if}}">Bills</a></li>
+          <li><a href="{{ urls.expenseVoucherGrid }}" class="nav-item {{#if (eq activeMenu "expenseVouchers")}}active{{/if}}">Expense Vouchers</a></li>
           <li><a href="{{ urls.accountingPayroll }}" class="nav-item {{#if (eq activeMenu "payroll")}}active{{/if}}">Payroll</a></li>
+          <li><a href="{{ urls.payrollReport }}" class="nav-item {{#if (eq activeMenu "payrollReport")}}active{{/if}}">Payroll Summary</a></li>
         </ul>
       </div>
     </div>
@@ -133,6 +147,7 @@
           <li><a href="{{ urls.reportIncomeStatement }}" class="nav-item {{#if (eq activeMenu "incomeStatement")}}active{{/if}}">Income Statement</a></li>
           <li><a href="{{ urls.reportBalanceSheet }}" class="nav-item {{#if (eq activeMenu "balanceSheet")}}active{{/if}}">Balance Sheet</a></li>
           <li><a href="{{ urls.reportCashFlow }}" class="nav-item {{#if (eq activeMenu "cashFlow")}}active{{/if}}">Cash Flow Statement</a></li>
+          <li><a href="{{ urls.reportBudget }}" class="nav-item {{#if (eq activeMenu "budget")}}active{{/if}}">Budget vs Actual</a></li>
         </ul>
       </div>
       <div>
@@ -154,6 +169,8 @@
         <ul>
           <li><a href="{{ urls.periodClosing }}" class="nav-item {{#if (eq activeMenu "periodClosing")}}active{{/if}}">Period Closing</a></li>
           <li><a href="{{ urls.auditLog }}" class="nav-item {{#if (eq activeMenu "auditLog")}}active{{/if}}">Audit Log</a></li>
+          <li><a href="{{ urls.recycleBin }}" class="nav-item {{#if (eq activeMenu "recycleBin")}}active{{/if}}">Recycle Bin</a></li>
+          <li><a href="{{ urls.backups }}" class="nav-item {{#if (eq activeMenu "backups")}}active{{/if}}">Backup and Restore</a></li>
           <li><a href="{{ urls.userGrid }}" class="nav-item {{#if (eq activeMenu "users")}}active{{/if}}">Users</a></li>
           <li><a href="{{ urls.integrationGrid }}" class="nav-item {{#if (eq activeMenu "integrations")}}active{{/if}}">ERP Integrations</a></li>
           <li><a href="{{ urls.accountingSetting }}" class="nav-item {{#if (eq activeMenu "setting")}}active{{/if}}">Accounting Settings</a></li>

@@ -33,10 +33,14 @@
           </div>
           <p class="text-xs text-gray-400 mt-1">Multi-factor vendor evaluations: On-time delivery, fulfillment accuracy, defect rates, and purchasing recommendations.</p>
         </div>
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-3 no-print">
           <button onclick="window.print()" class="bg-zinc-800 hover:bg-zinc-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition border border-zinc-700 flex items-center space-x-2">
             <i class="fas fa-print"></i>
             <span>Print Scorecard</span>
+          </button>
+          <!-- Theme Toggle Icon Button -->
+          <button onclick="toggleTheme()" type="button" class="theme-toggle-btn p-2.5 rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition shadow flex items-center justify-center" title="Toggle Theme">
+            <i class="themeToggleIcon fas fa-moon text-yellow-400"></i>
           </button>
         </div>
       </div>
@@ -55,7 +59,7 @@
         <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-2xl flex items-center justify-between">
           <div>
             <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Total Spend Audited</p>
-            <h3 class="text-2xl font-bold text-emerald-400 mt-1 font-mono">₱{{formatCurrency totalNetworkSpend}}</h3>
+            <h3 class="text-2xl font-bold text-emerald-400 mt-1 font-mono">{{formatCurrency totalNetworkSpend}}</h3>
           </div>
           <div class="w-10 h-10 rounded-xl bg-emerald-400/10 text-emerald-400 flex items-center justify-center">
             <i class="fas fa-coins text-base"></i>
@@ -135,7 +139,7 @@
                 <div class="flex items-center space-x-3 shrink-0">
                   <div class="text-right">
                     <span class="text-[10px] text-gray-500 uppercase block font-semibold">Total Purchases</span>
-                    <span class="text-sm font-bold text-white font-mono">₱{{formatCurrency totalSpend}}</span>
+                    <span class="text-sm font-bold text-white font-mono">{{formatCurrency totalSpend}}</span>
                   </div>
                   <a href="/purchase-history?supplierId={{id}}" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-yellow-400 text-xs font-bold transition flex items-center space-x-1.5">
                     <i class="fas fa-clock-rotate-left"></i>

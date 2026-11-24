@@ -1,7 +1,11 @@
 {{> head}}
 <body class="bg-gray-50">
   <div class="text-center mt-20 px-4">
-    <h1 class="text-2xl font-semibold text-destructive">{{ message }}</h1>
-    <a href="{{ urls.dashboard }}" class="btn btn-outline mt-6">Back to Dashboard</a>
+    <h1 class="text-2xl font-semibold text-destructive">{{#if heading}}{{ heading }}{{else}}{{ message }}{{/if}}</h1>
+    {{#if heading}}<p class="mt-3 text-muted-foreground">{{ message }}</p>{{/if}}
+    <div class="mt-6 flex justify-center gap-3">
+      {{#if retry}}<a href="" class="btn btn-primary">Try again</a>{{/if}}
+      <a href="{{ urls.dashboard }}" class="btn btn-outline">Back to Dashboard</a>
+    </div>
   </div>
 {{> footer }}

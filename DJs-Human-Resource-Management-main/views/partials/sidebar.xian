@@ -18,6 +18,11 @@
       <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-dashboard"></use></svg><span>Dashboard</span>
     </a>
 
+    <a href="/notifications" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (eq currentPath "/notifications")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
+      <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-bell"></use></svg><span>Notifications</span>
+      {{#if unreadCount}}<span class="ml-auto grid h-5 min-w-[20px] place-items-center rounded-full {{#if (eq currentPath "/notifications")}}bg-black text-yellow-400{{else}}bg-yellow-400 text-black{{/if}} px-1.5 text-[10px] font-bold">{{unreadCount}}</span>{{/if}}
+    </a>
+
     {{#if isAdmin}}
       <a href="/employees" class="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm transition {{#if (startsWith currentPath "/employees")}}bg-yellow-400 text-black font-semibold{{else}}text-gray-400 hover:bg-yellow-400/10 hover:text-yellow-400{{/if}}">
         <svg class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><use href="#i-users"></use></svg><span>Employees</span>
@@ -93,14 +98,8 @@
       </span>
     </a>
 
-    <button type="button" data-theme-toggle aria-pressed="false"
-            class="mt-3 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-400 transition hover:bg-white/5 hover:text-yellow-400">
-      <svg class="h-4 w-4" data-theme-icon="sun" aria-hidden="true"><use href="#i-sun"></use></svg>
-      <svg class="hidden h-4 w-4" data-theme-icon="moon" aria-hidden="true"><use href="#i-moon"></use></svg>
-      <span data-theme-label>Light mode</span>
-    </button>
-
-    <a href="/logout" class="mt-1 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition">
+    {{!-- Light/dark mode is switched with the icon in the dashboard header (and in the user menu). --}}
+    <a href="/logout" class="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition">
       <svg class="h-4 w-4" aria-hidden="true"><use href="#i-logout"></use></svg> Logout
     </a>
   </div>

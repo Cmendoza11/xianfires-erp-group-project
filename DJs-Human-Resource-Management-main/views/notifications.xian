@@ -1,0 +1,81 @@
+{{> head}}
+
+<body class="min-h-screen bg-[#0A0A0A] text-white">
+<div class="flex flex-col md:flex-row min-h-screen">
+
+  {{> sidebar}}
+
+  <main class="flex-1 min-w-0">
+
+    <header class="bg-[#111111] border-b border-yellow-500/20 px-6 py-5 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h2 class="text-xl md:text-2xl font-bold">Notifications</h2>
+        <p class="text-sm text-gray-500 mt-1">Updates about leaves, payslips, employees, accounts and more.</p>
+      </div>
+      <div class="flex items-center gap-2 no-print">
+        <form method="POST" action="/notifications/read-all">
+          <button type="submit" class="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40" {{#unless unreadCount}}disabled{{/unless}}>Mark all as read</button>
+        </form>
+        <form method="POST" action="/notifications/delete-all"
+              data-confirm-title="Delete all notifications?" data-confirm="All your notifications will be removed. The leaves, payroll and other records are not affected." data-confirm-ok="Delete all">
+          <button type="submit" class="rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40" {{#unless totalCount}}disabled{{/unless}}>Delete all</button>
+        </form>
+      </div>
+    </header>
+
+    <section class="p-6 space-y-6">
+
+      {{> flash}}
+
+      <div class="rounded-2xl border border-white/5 bg-[#171717] overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 px-5 py-4">
+          <nav class="flex gap-2 text-sm" aria-label="Filter notifications">
+            <a href="/notifications" class="rounded-lg px-3 py-1.5 {{#if (eq show "all")}}bg-yellow-400 font-bold text-black{{else}}text-gray-400 hover:bg-white/5{{/if}}">All <span class="opacity-70">({{totalCount}})</span></a>
+            <a href="/notifications?show=unread" class="rounded-lg px-3 py-1.5 {{#if (eq show "unread")}}bg-yellow-400 font-bold text-black{{else}}text-gray-400 hover:bg-white/5{{/if}}">Unread <span class="opacity-70">({{unreadCount}})</span></a>
+          </nav>
+          <p class="text-xs text-gray-500">Newest first</p>
+        </div>
+
+        <div class="divide-y divide-white/5">
+          {{#each rows}}
+          <div class="flex flex-wrap items-start gap-4 px-5 py-4 {{#unless readAt}}bg-yellow-400/[0.04]{{/unless}}">
+            <a href="/notifications/{{id}}/open" class="flex min-w-[14rem] flex-1 items-start gap-3">
+              <span class="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg
+                {{#if (eq tone "red")}}bg-red-500/10 text-red-400{{else}}{{#if (eq tone "orange")}}bg-orange-500/10 text-orange-400{{else}}{{#if (eq tone "blue")}}bg-blue-500/10 text-blue-400{{else}}{{#if (eq tone "green")}}bg-green-500/10 text-green-400{{else}}bg-yellow-400/10 text-yellow-400{{/if}}{{/if}}{{/if}}{{/if}}">
+                <svg class="h-4 w-4" aria-hidden="true"><use href="#{{icon}}"></use></svg>
+              </span>
+              <span class="min-w-0">
+                <span class="flex items-center gap-2 text-sm {{#if readAt}}text-gray-300{{else}}font-semibold text-white{{/if}}">
+                  {{#unless readAt}}<span class="h-2 w-2 shrink-0 rounded-full bg-yellow-400" title="Unread"></span>{{/unless}}{{title}}
+                </span>
+                {{#if detail}}<span class="mt-0.5 block text-xs text-gray-500">{{detail}}</span>{{/if}}
+                <span class="mt-0.5 block text-[11px] text-gray-600">{{formatDateTime createdAt}}</span>
+              </span>
+            </a>
+            <div class="flex items-center gap-2 no-print">
+              <form method="POST" action="/notifications/{{id}}/read">
+                <input type="hidden" name="read" value="{{#if readAt}}0{{else}}1{{/if}}">
+                <button type="submit" class="whitespace-nowrap rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-300 hover:bg-white/10">{{#if readAt}}Mark as unread{{else}}Mark as read{{/if}}</button>
+              </form>
+              <form method="POST" action="/notifications/{{id}}/delete">
+                <button type="submit" class="whitespace-nowrap rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 hover:bg-red-500 hover:text-white">Delete</button>
+              </form>
+            </div>
+          </div>
+          {{else}}
+          <div class="px-5 py-14 text-center">
+            <svg class="mx-auto h-7 w-7 text-gray-600" aria-hidden="true"><use href="#i-bell"></use></svg>
+            <p class="mt-3 text-gray-400">{{#if (eq show "unread")}}No unread notifications.{{else}}No notifications yet.{{/if}}</p>
+            <p class="mt-1 text-xs text-gray-600">Leave requests, payslips, new employees and other updates show up here.</p>
+          </div>
+          {{/each}}
+        </div>
+        {{> pagination pagination=pagination label="notification(s)"}}
+      </div>
+
+    </section>
+    {{> page-footer}}
+  </main>
+</div>
+
+{{> footer}}

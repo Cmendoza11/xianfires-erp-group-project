@@ -14,6 +14,10 @@ import { Payment } from "./Payment.js";
 import { BankReconciliation } from "./BankReconciliation.js";
 import { ApiClient } from "./ApiClient.js";
 import { IntegrationReference } from "./IntegrationReference.js";
+import { ExpenseVoucher } from "./ExpenseVoucher.js";
+import { FixedAsset, FixedAssetDepreciation } from "./FixedAsset.js";
+import { Budget } from "./Budget.js";
+import { AdminSession } from "./AdminSession.js";
 
 JournalEntry.hasMany(JournalLine, { foreignKey: "journal_entry_id", as: "lines", onDelete: "CASCADE" });
 JournalLine.belongsTo(JournalEntry, { foreignKey: "journal_entry_id", onDelete: "CASCADE" });
@@ -48,7 +52,19 @@ JournalLine.belongsTo(BankReconciliation, { foreignKey: "cleared_reconciliation_
 IntegrationReference.belongsTo(ApiClient, { foreignKey: "api_client_id", onDelete: "RESTRICT" });
 ApiClient.hasMany(IntegrationReference, { foreignKey: "api_client_id", onDelete: "RESTRICT" });
 
+// Expense vouchers, fixed assets and budgets keep their journal entries the same way documents do.
+ExpenseVoucher.belongsTo(Account, { foreignKey: "expense_account_id", as: "expenseAccount", onDelete: "RESTRICT" });
+ExpenseVoucher.belongsTo(Account, { foreignKey: "payment_account_id", as: "paymentAccount", onDelete: "RESTRICT" });
+ExpenseVoucher.belongsTo(JournalEntry, { foreignKey: "journal_entry_id", as: "entry", onDelete: "RESTRICT" });
+ExpenseVoucher.belongsTo(JournalEntry, { foreignKey: "void_entry_id", as: "voidEntry", onDelete: "RESTRICT" });
+FixedAsset.belongsTo(JournalEntry, { foreignKey: "journal_entry_id", as: "entry", onDelete: "RESTRICT" });
+FixedAsset.hasMany(FixedAssetDepreciation, { foreignKey: "fixed_asset_id", as: "depreciations", onDelete: "RESTRICT" });
+FixedAssetDepreciation.belongsTo(FixedAsset, { foreignKey: "fixed_asset_id", onDelete: "RESTRICT" });
+FixedAssetDepreciation.belongsTo(JournalEntry, { foreignKey: "journal_entry_id", onDelete: "RESTRICT" });
+Budget.belongsTo(Account, { foreignKey: "account_id", as: "account", onDelete: "CASCADE" });
+
 export {
   sequelize, AdminUser, Account, JournalEntry, JournalLine, Setting, Migration, PeriodClose, AuditLog,
-  Contact, Invoice, InvoiceLine, Payment, BankReconciliation, ApiClient, IntegrationReference
+  Contact, Invoice, InvoiceLine, Payment, BankReconciliation, ApiClient, IntegrationReference,
+  ExpenseVoucher, FixedAsset, FixedAssetDepreciation, Budget, AdminSession
 };
