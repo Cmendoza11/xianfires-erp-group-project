@@ -87,6 +87,8 @@ Needs Laragon MySQL running and ports 3010 to 3012 free. The real books are neve
 | File | For |
 |---|---|
 | [COMMANDS.md](COMMANDS.md) | Every command (Taglish cheat sheet) |
+| [docs/GIT-WORKFLOW.md](docs/GIT-WORKFLOW.md) | Branches, pull requests, merging, conflict resolution and the merge log |
+| [docs/TEST-TRANSACTIONS.txt](docs/TEST-TRANSACTIONS.txt) | 23 test transactions across all five systems |
 | [docs/ERP-INTEGRATION.md](docs/ERP-INTEGRATION.md) | How the modules share data and which accounts each flow posts to |
 | [xianfires erp project/docs/ERP-API.md](xianfires%20erp%20project/docs/ERP-API.md) | The Accounting API the other modules use |
 | [docs/ACCOUNTING-HOST.md](docs/ACCOUNTING-HOST.md) | Host laptop setup for the defense |

@@ -1,0 +1,312 @@
+=====================================================================
+  DJ's ERP - TEST TRANSACTIONS (lahat ng 5 system)
+  Para i-test kung gumagana at nagsi-share ng data ang system
+=====================================================================
+
+PAALALA BAGO MAGSIMULA
+  - Lahat ay CONNECTED sa DJs-ERP-Monitor.bat (4 of 4).
+  - Totoong data ito. Kapag test lang, i-void/reverse pagkatapos.
+  - Lagyan ng [x] ang bawat check na pumasa. Kapag may [ ] na hindi
+    pumasa, i-screenshot at ipadala kay CJ (o kay Claude: "check TC#").
+  - Ang mga pangalan at presyo ay ang totoong laman ng system ninyo.
+
+  Sino ang gagawa:
+    POS = kagrupong POS     HR  = kagrupong HR
+    SCM = kagrupong Procurement   CRM = kagrupong Customer Logs
+    ACC = CJ (Accounting)
+
+
+=====================================================================
+ A. POS + CUSTOMER LOGS + ACCOUNTING (BENTA)
+=====================================================================
+
+TC1. Simpleng cash sale (walang customer)                    [POS]
+  Terminal:  1 x Chicken Adobo (165)  +  2 x Iced Tea (45)
+  Total:     P255.00      Payment: Cash
+  Tandaan ang transaction number: ______________
+
+  Expected:
+  [ ] POS > Transactions: may bagong benta, P255.00
+  [ ] POS > Inventory: bumaba ang stock ng Chicken Adobo at Iced Tea
+  [ ] ACC > Journal Entries: bagong POS-<number>, Dr Cash / Cr Sales
+  [ ] ACC > Dashboard: tumaas ang Revenue at Cash
+  [ ] Monitor: "Last call" ng POS = just now
+
+
+TC2. Bagong customer                                         [CRM]
+  Customer Logs > Customers > Add
+    Name:  Juan Dela Paz
+    Phone: 09181234567
+    Email: juan.delapaz@test.com
+
+  Expected:
+  [ ] Lumabas si Juan sa Customers list
+
+
+TC3. Benta sa customer na may promo WELCOME10              [POS]
+  Terminal:  2 x Sizzling Sisig (195)  +  1 x Pork Sinigang (185)
+  Subtotal:  P575.00
+  Customer:  i-type "Juan" -> piliin ang Juan Dela Paz
+             (patunay na nakakausap ng POS ang Customer Logs)
+  Promo:     WELCOME10  (10% off, minimum P500)
+  Total:     P517.50      Payment: Cash
+
+  Expected:
+  [ ] POS: tinanggap ang promo, P57.50 ang bawas
+  [ ] CRM > Logs: purchase ni Juan Dela Paz
+  [ ] CRM > Loyalty: may points na si Juan
+  [ ] CRM > Promos: may redemption ang WELCOME10
+  [ ] ACC > Journal Entries: bagong POS-<number>
+
+
+TC4. Promo na hindi dapat tanggapin (NEGATIVE TEST)          [POS]
+  Terminal:  1 x Chicken Adobo (165)  +  2 x Iced Tea (45) = P255.00
+  Promo:     WELCOME10  (minimum P500)
+
+  Expected:
+  [ ] TINANGGIHAN ang promo (kulang sa minimum na P500)
+  (I-cancel ang sale o ituloy nang walang promo.)
+
+
+TC5. Malaking order, promo FAMILY15                          [POS]
+  Terminal:  4 x Chicken Adobo (165)  = 660
+             4 x Pork Sinigang (185)  = 740
+             4 x Leche Flan (75)      = 300
+  Subtotal:  P1,700.00
+  Customer:  Juan Dela Paz
+  Promo:     FAMILY15  (15% off, minimum P1,500)  -> bawas P255.00
+  Total:     P1,445.00     Payment: GCash o Card (kung mayroon)
+
+  Expected:
+  [ ] POS: tama ang total na P1,445.00
+  [ ] CRM: dagdag na purchase at points kay Juan
+  [ ] ACC: bagong POS entry (Dr Bank/E-wallet kung GCash)
+
+
+TC6. I-void ang benta ng TC1                                 [POS]
+  POS > Transactions > buksan ang TC1 > Void
+
+  Expected:
+  [ ] POS: Void na ang transaction, bumalik ang stock
+  [ ] ACC > Journal Entries: may REVERSAL entry (baligtad ng TC1)
+  [ ] ACC > Trial Balance: pantay pa rin
+
+
+=====================================================================
+ B. PROCUREMENT + POS + ACCOUNTING (BILI SA SUPPLIER)
+=====================================================================
+
+TC7. Bumili ng sibuyas (may sira sa delivery)                [SCM]
+  1. Purchase Requests > New
+       Department: Kitchen   (galing ito sa HR - patunay ng koneksyon)
+       Item:       Yellow Onions, 10 kg
+       -> Approve
+  2. Purchase Orders > gumawa mula sa PR
+       Supplier:   Fresh Harvest Farms Co.  (P120.00 / kg)
+       -> Approve -> Send
+  3. Goods Receiving > i-record
+       Delivered: 10 kg     Damaged: 2 kg     Accepted: 8 kg
+  4. Supplier Invoices > New para sa PO
+       8 kg x P120.00 = P960.00
+       Tandaan ang invoice number: ______________
+
+  Expected:
+  [ ] POS > Inventory: tumaas ng 8 ang Yellow Onions
+  [ ] ACC > Bills: bagong bill SINV-<number>, P960.00
+      (Dr Inventory / Cr Accounts Payable)
+  [ ] ACC > AP Aging: lumabas ang utang sa Fresh Harvest Farms
+
+
+TC8. Bayaran ang supplier                                    [ACC]
+  ACC > Bills > buksan ang SINV ng TC7 > Record payment
+    Amount:     960.00
+    Paid from:  1010 - Cash in Bank
+    Reference:  BDO-TEST-0960
+
+  Expected:
+  [ ] ACC: Paid na ang bill (Dr Accounts Payable / Cr Cash in Bank)
+  [ ] SCM > Supplier Invoices: Paid na (hintayin ~1 minuto)
+
+
+TC9. Ibalik ang 2 kg na sira                                 [SCM]
+  Supplier Returns > New para sa delivery ng TC7
+    Item: Yellow Onions, 2 kg, reason: damaged
+    -> Approve -> Mark returned -> Resolve as REFUNDED (P240.00)
+
+  Expected:
+  [ ] ACC > Journal Entries: SRET-<number>, Dr Cash / Cr Inventory, P240
+  [ ] Trial Balance: pantay pa rin
+
+
+TC10. Restock ng inumin, VAT-inclusive                       [SCM]
+  PR -> PO -> Receive -> Invoice
+    Supplier:  Mindoro Beverage Distributors
+    Item:      Coke Mismo, 24 bottles x P18.00 = P432.00
+    Invoice:   lagyan ng check ang "VAT inclusive"
+
+  Expected:
+  [ ] POS > Inventory: +24 Coke Mismo
+  [ ] ACC > Bills: bill na P432.00 na may Input VAT na hiwalay
+      (P385.71 + VAT P46.29)
+
+
+=====================================================================
+ C. HR + ACCOUNTING (PASAHOD)
+=====================================================================
+
+TC11. Payroll ni Maria Santos                                [HR]
+  HR > Payroll > Create
+    Employee: EMP-0001 Maria Santos (Kitchen)
+    Period:   2026-11-16 to 2026-11-30
+    Status:   Processed (approved)
+
+  Expected:
+  [ ] HR: may computed na gross, SSS, PhilHealth, Pag-IBIG, net
+  [ ] HR: WALANG "Mark as Paid" (Accounting ang magbabayad)
+  [ ] ACC > Payroll: lumabas sa "Approved, ready to release"
+
+
+TC12. Ipasweldo si Maria                                     [ACC]
+  ACC > Payroll > Release salary (Maria Santos)
+    Payment date: ngayon
+    Paid from:    1010 - Cash in Bank
+    Reference:    PAYROLL-NOV16-30
+
+  Expected:
+  [ ] ACC > Journal: Dr 6000 Salaries / Cr 2400 SSS-PhilHealth-
+      Pag-IBIG / Cr 1010 Cash in Bank (pantay)
+  [ ] HR > Payroll: PAID na, may journal number
+  [ ] HR: makikita ni Maria sa My Payslips (kung may account siya)
+  [ ] ACC > Payroll > Payslip: printable
+  [ ] ACC > Payroll Summary: kasama sa period na Nov 16-30
+
+
+TC13. Bayaran ulit ang parehong payroll (NEGATIVE TEST)      [ACC]
+  Subukang i-Release ulit ang payroll ni Maria (kung lalabas pa)
+
+  Expected:
+  [ ] TINANGGIHAN: "This payroll is already paid" (walang doble)
+
+
+=====================================================================
+ D. ACCOUNTING LANG
+=====================================================================
+
+TC14. Kuryente (expense voucher na may resibo)               [ACC]
+  Purchases > Expense Vouchers > New voucher
+    Payee:       Oriental Mindoro Electric Cooperative
+    Amount:      3,500.00
+    Expense:     6200 - Utilities Expense
+    Paid from:   1000 - Cash on Hand
+    Description: Electricity bill November
+    Receipt:     kahit anong JPG/PNG (2 MB pababa)
+
+  Expected:
+  [ ] EV-<number> naka-post: Dr 6200 / Cr 1000
+  [ ] Makikita at mada-download ang resibo
+
+
+TC15. Subukang mag-upload ng masamang file (NEGATIVE TEST)   [ACC]
+  Sa voucher ng TC14 > Replace receipt > pumili ng .txt, .php o .exe
+
+  Expected:
+  [ ] TINANGGIHAN ang file (image o PDF lang ang tinatanggap)
+
+
+TC16. Catering invoice na may partial payment                [ACC]
+  Sales > Sales Invoices > New
+    Customer:  Calapan City Hall (Catering)
+    Line:      4000 Sales Revenue, "Catering 80 pax", 1 x 12,000.00
+    VAT:       naka-check (12%)  -> Total P13,440.00
+  Pagkatapos: Record payment
+    Amount:     6,000.00   Deposited to: 1010 Cash in Bank
+
+  Expected:
+  [ ] Invoice: Balance P7,440.00 (Open pa rin)
+  [ ] AR Aging: may utang na P7,440.00 ang Calapan City Hall
+  [ ] VAT Summary: may Output VAT na P1,440.00
+
+
+TC17. Fixed asset at depreciation                            [ACC]
+  Books > Fixed Assets > Add
+    Name:        Commercial Chest Freezer
+    Cost:        36,000.00     Salvage: 0
+    Useful life: 60 months     Paid from: 1010 Cash in Bank
+  Pagkatapos: Run depreciation para sa November 2026
+
+  Expected:
+  [ ] Purchase: Dr 1500 / Cr 1010, P36,000.00
+  [ ] Depreciation: P600.00 / buwan (Dr 6500 / Cr 1510)
+  [ ] Book value: P35,400.00
+
+
+TC18. Journal entry na hindi pantay (NEGATIVE TEST)          [ACC]
+  Books > Journal Entries > New
+    Dr 1010 Cash in Bank   5,000
+    Cr 3000 Owner's Capital 4,000
+
+  Expected:
+  [ ] TINANGGIHAN: "Entry is not balanced"
+  Ayusin sa 5,000 / 5,000 at i-save, tapos i-REVERSE ito.
+  [ ] May reversal entry, at "reversed by" sa original
+
+
+TC19. Naka-lock na buwan (NEGATIVE TEST)                     [ACC]
+  Admin > Period Closing > Lock month: October 2026
+  Subukang mag-post ng journal na may petsang 2026-10-15
+
+  Expected:
+  [ ] TINANGGIHAN (naka-lock ang Oktubre)
+  (Pagkatapos ng test: Unlock latest month kung kailangan.)
+
+
+=====================================================================
+ E. SECURITY AT ROLES
+=====================================================================
+
+TC20. Login lockout                                          [ACC]
+  Mag-logout. Mag-login gamit ang maling password nang 3 beses.
+
+  Expected:
+  [ ] Ika-3 beses: naka-lock ng 1 minuto, may countdown
+  [ ] Pagkatapos ng 1 minuto: makakapag-login na sa tamang password
+
+
+TC21. Viewer: tingin lang                                    [ACC]
+  Mag-login bilang viewer@djs.local (password: TEST-ACCOUNTS.local.txt)
+
+  Expected:
+  [ ] Walang Add / Edit / Delete / Release salary na button
+  [ ] Walang Admin menu (Users, Settings, Backup)
+
+
+TC22. Backup bago ang lahat ng test                          [ACC]
+  Admin > Backup and Restore > Back up now
+
+  Expected:
+  [ ] May bagong backup na .sql sa listahan
+  (Kapag gusto ninyong ibalik ang data bago ang mga test: Restore.)
+
+
+=====================================================================
+ F. HULING PATUNAY (gawin pagkatapos ng lahat)
+=====================================================================
+
+TC23. Ang buong larawan                                      [ACC]
+  [ ] Enterprise Overview: live na numero ng POS, HR, Procurement
+      at Customer Logs
+  [ ] Journal Entries: nandoon ang POS-, SINV-, SRET-, EV- at
+      payroll entries
+  [ ] Trial Balance: PANTAY ang total Debit at Credit
+  [ ] Income Statement: kasama ang benta, kuryente, sahod at
+      depreciation
+  [ ] Balance Sheet: Assets = Liabilities + Equity
+  [ ] DJs-ERP-Monitor.bat: 4 of 4 CONNECTED, "Last call" ng POS,
+      HR at Procurement = bago lang
+
+
+=====================================================================
+  BUOD NG RESULTA
+    Pumasa: ____ / 23        Petsa: ____________
+    Hindi pumasa (TC#): ______________________________
+=====================================================================
