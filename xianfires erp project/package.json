@@ -16,7 +16,8 @@
     "test": "node tests/run-all.mjs",
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
-    "test:docker": "node tests/docker.mjs"
+    "test:docker": "node tests/docker.mjs",
+    "test:performance": "node tests/performance.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
